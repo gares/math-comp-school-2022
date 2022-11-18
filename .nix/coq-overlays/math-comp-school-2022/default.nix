@@ -6,6 +6,7 @@
 
 { lib, mkCoqDerivation, which, coq,
   coq-elpi, hierarchy-builder, mathcomp,
+  git,
   ## declare extra dependencies here, to be used in propagateBuildInputs e.g.
   # , mathcomp, coq-elpi
   version ? null }:
@@ -41,6 +42,7 @@ with lib; mkCoqDerivation {
   ## - arbitrary nix packages (you need to require them at the beginning of the file)
   ## - Coq packages (require them at the beginning of the file)
   ## - OCaml packages (use `coq.ocamlPackages.xxx`, no need to require them at the beginning of the file)
+  nativeBuildInputs = [ git ];
   propagatedBuildInputs = [ coq mathcomp coq-elpi hierarchy-builder 
                             coq.ocamlPackages.dune_2 ]; ## e.g. `= [ mathcomp coq-elpi ]`
 
