@@ -1,0 +1,7 @@
+*.vo
+*.vok
+*.vos
+*.tmpx
+.*.aux
+*.glob
+udoc
