@@ -1,117 +1,124 @@
 From mathcomp Require Import all_ssreflect.
 
-Implicit Type P Q R : Prop.
+(** Elements *)
 
-(** *** Exercise 0:
-    - Define not. In type theory negation is defined in terms
-      of [False].
-*)
+Definition elements {A} (f : _ -> A) n :=
+  let l := iota 0 n.+1 in zip l (map f l).
 
-Definition not P := 
-(*D*) P -> False
-.
+(** Triangular number *)
+Definition delta n := (n.+1 * n)./2.
 
-(** *** Exercise 1:
-    - Prove the negation of the excluded middle.
-*)
-Lemma ex0 P : not (P /\ not P).
-Proof.
-(*D*)by move=> [p np]; apply: np; apply p.
-Qed.
+Compute elements delta 10.
 
-(** *** Exercise 2:
-    - Declare iff (the constructor being called [iff_intro]).
-    - Define iff1 of the given type
-*)
-Inductive iff P Q :=
-(*D*)  iff_intro (p2q : P -> Q) (q2p : Q -> P)
-.
+(** Hints : halfD half_bit_double *)
+Lemma deltaS n : delta n.+1 = delta n + n.+1.
+Admitted.
 
-Definition iff1 P Q : iff P Q -> P -> Q :=
-(*D*)  fun x => match x with iff_intro f _ => f end.
+(** Hints   big_ord_recr big_ord_recl big_ord0 *)
+Lemma deltaE n : delta n = \sum_(i < n.+1) i.
+Admitted.
 
-(** *** Exercise 3:
-    - Declare xor: two constructors, both have two arguments
-    - Prove the following lemmas
-*)
+(* Hints half_leq *)
+Lemma leq_delta m n : m <= n -> delta m <= delta n.
+Admitted.
 
-Inductive xor P Q : Prop :=
-(*D*) | xorL (p : P) (np : not Q)
-(*D*) | xorR (no : not P) (q : Q)
-.
+(** Hints sqrnD *)
+Lemma delta_square n : (8 * delta n).+1 = n.*2.+1 ^ 2.
+Admitted.
 
-Lemma xorC P Q : iff (xor P Q) (xor Q P).
-Proof.
-(*D*)apply: iff_intro; case=> [p nq|np q]; by [ apply: xorL | apply: xorR ].
-Qed.
+(**  Triangular root *)
+Definition troot n := 
+ let l := iota 0 n.+2 in
+ (find (fun x => n < delta x) l).-1.
 
+Compute elements troot 10.
 
-Lemma xor1 P Q : (xor P Q) -> not Q -> P.
-Proof.
-(*D*)case=> [p _| np q] nq.
-(*D*)  by apply: p.
-(*D*)case: (nq q).
-Qed.
+Lemma troot_gt0 n : 0 < n -> 0 < troot n.
+Admitted.
 
-Lemma xor2 P Q Z : (xor P Q) -> (xor Q Z) -> iff P Z.
-Proof.
-(*D*)by case=> [??|??]; case=>[??|??].
-Qed.
+(** Hints before_find find_size size_iota nth_iota *)
+Lemma leq_delta_root m : delta (troot m) <= m.
+Admitted.
 
-(** *** Exercise 4:
-    - Declare exists2
-    - Prove a lemma ex1 -> ex2 T
-*)
+(** Hints hasP mem_iota half_bit_double half_leq nth_find nth_iota *)
+Lemma ltn_delta_root m : m < delta (troot m).+1.
+Admitted.
 
-Inductive ex2 T (P Q : pred T) : Prop :=
-(*D*)  ex2_intro (x : T) (p : P x) (q : Q x)
-.
+Lemma leq_root_delta m n : (n <= troot m) = (delta n <= m).
+Admitted.
 
-Lemma ex2T T (P : pred T) : (exists x, P x) -> (ex2 T P P).
-Proof.
-(*D*)by case=> x px; apply: (ex2_intro _ _ _ x).
-Qed.
+Lemma leq_troot m n : m <= n -> troot m <= troot n.
+Admitted.
 
-(** *** Exercise 5:
-    - Write the induction principle for lists
-*)
-Definition induction_seq A (P : seq A -> Prop) :
-  P nil -> (forall a l, P l -> P (a :: l)) -> forall l, P l :=
-(*D*) fun pn pc =>
-(*D*)    fix IH l : P l :=
-(*D*)       match l with nil => pn | cons a l1 => pc a l1 (IH l1) end
-.
+Lemma trootE m n : (troot m == n) = (delta n <= m < delta n.+1).
+Admitted.
 
+Lemma troot_deltaK n : troot (delta n) = n.
+Admitted.
 
-(** *** Exercise 6:
-    - remeber [=> /view] to prove the following lemma
-    - the two relevant views are [prime_gt1] and [dvdn_leq]
-    - Note: [=> /view] combines well with [->] (lesson 3)
-    - Hint: the proof can be a one liner [by move=> ....]
-    - Recall: the notation "_ < _ <= _" hides a conjunction
-*)
-About prime_gt1.
-About dvdn_leq.
+(**  The modulo for triangular numbers *)
+Definition tmod n := n - delta (troot n).
 
-Lemma ex_view p : prime p -> p %| 7 -> 1 < p <= 7.
-Proof.
-(*D*)by move=> /prime_gt1 -> /dvdn_leq ->.
-Qed.
+Lemma tmod_delta n : tmod (delta n) = 0.
+Admitted.
 
-(** *** Exercise 7:
-    - Define the indexed data type of Cherry tree:
-      + the index is a bool and must be truee iff the tree is completely
-        flourished
-      + leaves can be either Flower or Bud
-      + the third constructor is called Node and has two sub trees
-*)
-Inductive cherryt : bool -> Type :=
-(*D*)  | Flower : cherryt true
-(*D*)  | Bud    : cherryt false
-(*D*)  | Node   f (l : cherryt f) (r :cherryt f) : cherryt f.
+Lemma tmodE n : n = delta (troot n) + tmod n.
+Admitted.
 
-Check Node _ Flower Flower : cherryt true.
-Check Node _ Bud Bud       : cherryt false.
-Fail Check Node _ Flower Bud.
+Lemma leq_tmod_troot n : tmod n <= troot n.
+Admitted.
+
+Lemma ltn_troot m n : troot m < troot n -> m < n.
+Admitted.
+
+Lemma leq_tmod m n : troot m = troot n -> (tmod m <= tmod n) = (m <= n).
+Admitted.
+
+Lemma leq_troot_mod m n : 
+   m <= n = 
+   ((troot m < troot n) || ((troot m == troot n) && (tmod m <= tmod n))).
+Admitted.
+
+(** Fermat Numbers *)
+
+Definition fermat n := (2 ^ (2 ^ n)).+1.
+
+Compute elements (prime \o fermat) 4.
+
+(** Hints : subn_sqr subnBA odd_double_half *)
+Lemma dvd_exp_odd a k :  0 < a -> odd k -> a.+1 %| (a ^ k).+1.
+Admitted.
+
+(** Hints: logn_gt0 mem_primes dvdn2 *)
+Lemma odd_log_eq0 n : 0 < n -> logn 2 n = 0 -> odd n.
+Admitted.
+
+(** Hints pfactor_dvdnn logn_div pfactorK *)
+Lemma odd_div_log n : 0 < n -> odd (n %/ 2 ^ logn 2 n).
+Admitted.
+
+(** Hints divnK pfactor_dvdnn prime_nt_dvdP prime_nt_dvdP *)
+Lemma prime_2expS m : 0 < m -> prime (2 ^ m).+1 -> m = 2 ^ logn 2 m.
+Admitted.
+
+(** Hints odd_exp neq_ltn expn_gt0 *)
+Lemma odd_fermat n : odd (fermat n).
+Admitted.
+
+(** Hint subn_sqr *)
+Lemma dvdn_exp2m1 a k : a.+1 %| (a ^ (2 ^ k.+1)).-1.
+Admitted.
+
+Lemma fermat_gt1 n : 1 < fermat n.
+Admitted.
+
+(** Hints subnK expnD expnM *)
+Lemma dvdn_fermat m n : m < n -> fermat m %| (fermat n).-2.
+Admitted.
+
+(** Hints gcdnMDl coprimen2 *)
+Lemma coprime_fermat m n : m < n -> coprime (fermat m) (fermat n).
+Admitted.
+
 
 

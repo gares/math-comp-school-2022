@@ -1,557 +1,469 @@
+(** 
+#<div class="slide">#
+** Objective of this course
+
+  Give you access to the 
+  #<a href="http://math-comp.github.io/math-comp/">Mathematical Components library</a>#
+
+  - formalization principles
+  - proof language
+  - familiarize with some theories
+
+
+#</div>#
+
+----------------------------------------------------------
+#<div class="slide">#
+** Why another library? Why another language?
+
+  - large, consistent, library organized as a programming language
+    library (interfaces, overload, naming conventions, ...)
+  - maintainable in the long term (compact, stable, ...)
+  - validated on large formalization projects
+
+#<div class="note">(notes)<div class="note-text">#
+The mathematical components library was used to formalize the
+#<a href="https://en.wikipedia.org/wiki/Feit%E2%80%93Thompson_theorem">
+Odd Order Theorem (Feit Thompson)
+</a>#, literally a 250 pages book. Such proof amounts to 40k lines
+of Coq scripts, on top of 120k lines of mathematical components.
+The library has been maintained for more than 10 years now.
+#</div></div>#
+
+#</div>#
+
+----------------------------------------------------------
+#<div class="slide">#
+** Roadmap of the first 2 lessons
+
+  - boolean reflection (small scale reflection)
+  - the ssreflect proof language (SSReflect)
+  - basic libraries ([ssrbool], [ssrnat], [seq])
+
+#</div>#
+
+----------------------------------------------------------
+#<div class="slide">#
+** Disclaimer: this is not standard Coq
+
+  - things are done differently, very differently, than usual
+  - it is not easy to appreciate the benefits on small examples,
+    but we will try hard ;-)
+  - not enough time to explain eveything, I'll focus on
+    intuition rather than technical details
+#</div>#
+
+----------------------------------------------------------
+----------------------------------------------------------
+#<div class="slide">#
+** Boolean reflection
+
+  - when a concept is "computable", lets represent it as a
+    computable function (a program), not as an inductive relation
+  - Coq knows how to compute, even symbolically, and computation is
+    a very stable form of automation
+  - functions (to bool) are a "simple" concept in type theory
+    - Excluded Middle (EM) just holds
+    - Uniqueness of Identity Proofs holds uniformly
+
+#<div>#
+*)
+
 From mathcomp Require Import all_ssreflect.
 
-Set Implicit Arguments.
-Unset Strict Implicit.
-Unset Printing Implicit Defensive.
-(** 
-
-----------------------------------------------------------
-#<div class="slide">#
-** The Coq proof assistant and the Mathematical Components library
-
-Objective: learn the Coq system in the MC library
-
-*** Roadmap
-
-- #<a href="https://www-sop.inria.fr/teams/marelle/coq-18/lesson1.html">lesson 1</a>#: Functions and computations
-  - #<a href="https://www-sop.inria.fr/teams/marelle/coq-18/exercise1.html">exercise</a> <!-- and <a href="https://www-sop.inria.fr/teams/marelle/coq-18/exercise1-solution.html">solution</a>-->#
-
-- #<a href="https://www-sop.inria.fr/teams/marelle/coq-18/lesson2.html">lesson 2</a>#: First steps in formal proofs
-  - #<a href="https://www-sop.inria.fr/teams/marelle/coq-18/exercise2.html">exercise</a> <!-- and <a href="https://www-sop.inria.fr/teams/marelle/coq-18/exercise2-solution.html">solution</a>-->#
-
-- #<a href="https://www-sop.inria.fr/teams/marelle/coq-18/lesson3.html">lesson 3</a>#: A few more steps in formal proofs
-  - #<a href="https://www-sop.inria.fr/teams/marelle/coq-18/exercise3.html">exercise</a> <!-- and <a href="https://www-sop.inria.fr/teams/marelle/coq-18/exercise3-solution.html">solution</a>-->#
-
-- #<a href="https://www-sop.inria.fr/teams/marelle/coq-18/lesson4.html">lesson 4</a>#: Type theory
-  - #<a href="https://www-sop.inria.fr/teams/marelle/coq-18/exercise4.html">exercise</a> <!-- and <a href="https://www-sop.inria.fr/teams/marelle/coq-18/exercise4-solution.html">solution</a>-->#
-
-- #<a href="https://www-sop.inria.fr/teams/marelle/coq-18/lesson5.html">lesson 5</a>#: Boolean reflection
-  - #<a href="https://www-sop.inria.fr/teams/marelle/coq-18/exercise5.html">exercise</a> <!-- and <a href="https://www-sop.inria.fr/teams/marelle/coq-18/exercise5-solution.html">solution</a>-->#
-
-- #<a href="https://www-sop.inria.fr/teams/marelle/coq-18/lesson6.html">lesson 6</a>#: Real proofs, finally!
-  - #<a href="https://www-sop.inria.fr/teams/marelle/coq-18/exercise6.html">exercise</a> <!-- and <a href="https://www-sop.inria.fr/teams/marelle/coq-18/exercise6-solution.html">solution</a>-->#
-
-- #<a href="https://www-sop.inria.fr/teams/marelle/coq-18/lesson7.html">lesson 7</a>#: Generic theories
-  - #<a href="https://www-sop.inria.fr/teams/marelle/coq-18/exercise7.html">exercise</a> <!-- and <a href="https://www-sop.inria.fr/teams/marelle/coq-18/exercise7-solution.html">solution</a>-->#
-
-- #<a href="https://www-sop.inria.fr/teams/marelle/coq-18/lesson8.html">lesson 8</a>#: Subtypes
-  - #<a href="https://www-sop.inria.fr/teams/marelle/coq-18/exercise8.html">exercise</a> <!-- and <a href="https://www-sop.inria.fr/teams/marelle/coq-18/exercise8-solution.html">solution</a>-->#
-
-*** Teaching material
-
-- Slides and exercises
-  #<a href="https://www-sop.inria.fr/teams/marelle/coq-18/">https://www-sop.inria.fr/teams/marelle/coq-18/</a>#
-- Coq (#<a href="https://coq.inria.fr/download">software</a>#
-  and #<a href="https://coq.inria.fr/distrib/current/refman/">user manual</a>#, in particular the chapter about #<a href="https://coq.inria.fr/distrib/current/refman/proof-engine/ssreflect-proof-language.html">SSReflect</a>#)
-- Mathematical Components
-  (#<a href="http://math-comp.github.io/math-comp/">software</a># and
-  #<a href="https://math-comp.github.io/mcb/">book</a>#)
-
-
-#<p><br/><p>#
+Module BooleanReflection.
+(**
+#</div>#
 
 #<div class="note">(notes)<div class="note-text">#
-You don't need to install Coq in order to follow this
-class, you just need a recent browser thanks to
-#<a href="https://github.com/ejgallego/jscoq">jsCoq</a>#.
+Decideable predicates are quite common in both computer
+science and mathematics. On this class or predicates the
+excluded middle principle needs not to be an axiom; in particular
+its computational content can be expressed inside Coq as a program.
+Writing this program in Coq may be non trivial (e.g. being a prime
+number requires some effort) but once the program is written it
+provides notable benefits.  First, one can use the program as a
+decision procedure for closed terms. Second, the proofs of such
+predicate are small. E.g. a proof of [prime 17 = true] is just
+[erefl true].
+Last, the proofs of these predicates are irrelevant (i.e. unique).
+This means that we can form subtypes without problems. E.g. the
+in habitants of the subtype of prime numbers [{ x | prime x = true }]
+are pairs, the number (relevant) and the proof (always [erefl true]).
+Hence when we compare these pairs we can ignore the proof part, that is,
+prime numbers behave exactly as numbers.
 #</div></div>#
 
 #</div>#
-
 ----------------------------------------------------------
 #<div class="slide">#
-** Lesson 1: summary
 
-- functions
-- simple data
-- containers
-- symbolic computations
-- higher order functions and mathematical notations
-
-#</div>#
-
-----------------------------------------------------------
-#<div class="slide">#
-** Functions
-
-Functions are built using the [fun .. => ..] syntax.
-The command [Check] verifies that a term is well typed.
+** The first predicate: leq
+   - order relation on [nat] is a program
+   - [if-is-then] syntax (simply a 2-way match-with-end)
+   - [.+1] syntax (postfix notations [.something] are recurrent)
 
 #<div>#
 *)
-Check (fun n => 1 + n + 1).
-(**
-#</div>#
+Fixpoint leq (n m : nat) : bool :=
+  if n is p.+1 then
+    if m is q.+1 then leq p q
+    else false
+  else true.
 
-Notice that the type of [n] was inferred and that
-the whole term has type [nat -> nat], where [->]
-is the function space.
-
-Function application is written by writing the function
-on the left of the argument (eg, not as in the mathematical
-practice).
-
-#<div>#
-*)
-Check 2.
-Check (fun n => 1 + n + 1) 2.
-(**
-#</div>#
-
-Notice how [2] has a type that fits, and hence
-the type of the function applied to [2] is [nat].
-
-Terms (hence functions) can be given a name using
-the [Definition] command. The command offers some
-syntactic sugar for binding the function arguments.
-
-#<div>#
-*)
-Definition f := (fun n => 1 + n + 1).
-(* Definition f n := 1 + n + 1. *)
-(* Definition f (n : nat) := 1 + n + 1. *)
-(**
-#</div>#
-
-Named terms can be printed.
-
-#<div>#
-*)
-Print f.
-(**
-#</div>#
-
-Coq is able to compute with terms, in particular
-one can obtain the normal form via the [Eval lazy in]
-command.
-
-#<div>#
-*)
-Eval lazy in f 2.
-(**
-#</div>#
-
-Notice that "computation" is made of many steps.
-In particular [f] has to be unfolded (delta step)
-and then the variable substituted for the argument
-(beta).
-
-#<div>#
-*)
-Eval lazy delta [f] in f 2.
-Eval lazy delta [f] beta in f 2.
-(**
-#</div>#
-
-Nothing but functions (and their types) are built-in in Coq.
-All the rest is defined, even [1], [2] and [+] are not primitive.
-
-#<p><br/><p>#
-
-#<div class="note">(notes)<div class="note-text">#
-
-This slide corresponds to
-section 1.1 of
-#<a href="https://math-comp.github.io/mcb/">the Mathematical Components book</a>#
-#</div></div>#
-
-#</div>#
-
-----------------------------------------------------------
-#<div class="slide">#
-** Data types
-
-Data types can be declared using the [Inductive] command.
-
-Many of them are already available in the Coq library called
-[Prelude] that is automatically loaded. We hence just print
-them.
-
-[Inductive bool := true | false.]
-
-#<div>#
-*)
-Print bool.
-(**
-#</div>#
-
-This command declares a new type [bool] and declares
-how the terms (in normal form) of this type are built.
-Only [true] and [false] are canonical inhabitants of
-[bool].
-
-To use a boolean value Coq provides the [if..then..else..]
-syntax.
-
-#<div>#
-*)
-Definition twoVtree (b : bool) := if b then 2 else 3.
-Eval lazy in twoVtree true.
-Eval lazy delta in twoVtree true.
-Eval lazy delta beta in twoVtree true.
-Eval lazy delta beta iota in twoVtree true.
-(**
-#</div>#
-
-We define a few boolean operators that will come in handy
-later on.
-
-#<div>#
-*)
-Definition andb (b1 b2 : bool) := if b1 then b2 else false.
-Definition orb (b1 b2 : bool) := if b1 then true else b2.
-
-Infix "&&" := andb.
-Infix "||" := orb.
-
-Check true && false || false.
-(**
-#</div>#
-
-The [Infix] command lets one declare infix notations.
-Precedence and associativity is already declared in the
-prelude of Coq, here we just associate the constants
-[andb] and [orb] to these notataions.
-
-Natural numbers are defined similarly to booleans:
-
-[Inductive nat := O | S (n : nat).]
-
-#<div>#
-*)
-Print nat.
-(**
-#</div>#
-
-Coq provides a special notation for literals, eg [3],
-that is just sugar for [S (S (S O))].
-
-The Mathematical Components library adds on top of that
-the postfix [.+1], [.+2], .. for iterated applications
-of [S] to terms other than [O].
-
-#<div>#
-*)
-Check 3.
-Check (fun x => (x + x).+2).
-Eval lazy in (fun x => (x + x).+2) 1.
-(**
-#</div>#
-
-In order to use natural numbers Coq provides two
-tools. An extended [if..then..else..] syntax to
-extract the argument of [S] and the [Fixpoint]
-command to define recusrsive functions.
-
-#<div>#
-*)
-Definition pred (n : nat) :=
-  if n is p.+1 then p else 0.
-
-Eval lazy in pred 7.
-(**
-#</div>#
-
-Notice that [p] is a binder. When the [if..then..else..]
-is evaluated, and [n] put in normal form, then if it
-is [S t] the variable [p] takes [t] and the then-branch
-is taken.
-
-Now lets define addition using recursion
-
-#<div>#
-*)
-Fixpoint addn n m :=
-  if n is p.+1 then (addn p m).+1 else m.
-Infix "+" := addn.
-Eval lazy in 3 + 2.
-(**
-#</div>#
-
-The [if..then..else..] syntax is just sugar for
-[match..with..end].
-
-#<div>#
-*)
-Print addn.
-(**
-#</div>#
-
-Let's now write the equality test for natural numbers
-
-#<div>#
-*)
-Fixpoint eqn n m :=
-  match n, m with
-  | 0, 0 => true
-  | p.+1, q.+1 => eqn p q
-  | _, _ => false
-  end.
-Infix "==" := eqn.
-Eval lazy in 3 == 4.
-(**
-#</div>#
-
-Other examples are subtraction and order
-
-#<div>#
-*)
-Fixpoint subn m n : nat :=
-  match m, n with
-  | p.+1, q.+1 => subn p q
-  | _ , _ => m
-  end.
-
-Infix "-" := subn.
-
-Eval lazy in 3 - 2.
-Eval lazy in 2 - 3. (* truncated *)
-
-Definition leq m n := m - n == 0.
-
+Arguments leq !n !m.
 Infix "<=" := leq.
 
-Eval lazy in 4 <= 5.
-(**
+(** 
 #</div>#
 
-#<p><br/><p>#
-
 #<div class="note">(notes)<div class="note-text">#
-
-All the constants defined in this slide are already
-defined in Coq's prelude or in Mathematical Components.
-The main difference is that [==] is not specific to
-[nat] but overloaded (it works for most data types).
-This topic is to be developed in lesson 4.
-
-This slide corresponds to
-section 1.2 of
-#<a href="https://math-comp.github.io/mcb/">the Mathematical Components book</a>#
+We give a taste of boolean reflection by examples
+  - these examples, to stay simple, are a bit artificial
+  - in the library the same concepts are defeined in a slightly
+    different way, but following the same ideas
 #</div></div>#
 
 #</div>#
-
-#</div>#
-
-----------------------------------------------------------
+------------------------------------------------------
 #<div class="slide">#
-** Containers
-
-Containers let one aggregate data, for example to form a
-pair or a list.  The interesting characteristic of containers
-is that they are polymorphic: the same container can be used
-to hold terms of many types.
-
-[Inductive seq (A : Type) := nil | cons (hd : A) (tl : seq A).]
+ ** The first proof about leq
+   - [... = true] to "state" something
+   - proof by computation
+   - [by []] to say, provable by trivial means (no mean is inside []).
+   - [by tac] to say: tac must solve the goal (up to trivial leftovers)
 
 #<div>#
 *)
-Check nil.
-Check cons 3 [::].
+Lemma leq0n n : (0 <= n) = true.
+Proof. (* compute. *) by []. Qed.
+
 (**
 #</div>#
 
-We learn that [[::]] is a notation for the empty sequence
-and that the type parameter [?A] is implicit.
+#</div>#
+------------------------------------------------------
+#<div class="slide">#
+** Another lemma about leq
+   - equality as a double implication
+   - naming convention
 
 #<div>#
 *)
-Check 1 :: nil.
-Check [:: 3; 4; 5 ].
+Lemma leqSS n m : (n.+1 <= m.+1) = (n <= m).
+Proof. (* simpl. *) by []. Qed.
+
 (**
 #</div>#
 
-The infix [::] notation stands for [cons]. This one is mostly
-used to pattern match a sequence.
+#</div>#
+------------------------------------------------------
+#<div class="slide">#
+** Lets (not) use these lemmas
+   - elim with naming and automatic clear of n
+   - indentation for subgoals
+   - no need to mention lemmas proved by computation
+   - apply, exact, rewrite
+#<div>#
+*)
+Lemma leqnn n : (n <= n) = true.
+Proof.
+(*#
+elim: n => [|m IHm].
+  by apply: leq0n.  exact: leq0n.
+by rewrite leqSS IHm.
+#*)
+by elim: n. Qed.
 
-The notation [[:: .. ; .. ]] can be used to form sequences
-by separating the elements with [;]. When there are no elements
-what is left is [[::]] that is the empty seqeunce.
+(** 
+#</div>#
 
-And of course we can use sequences with other data types
+#</div>#
+------------------------------------------------------
+#<div class="slide">#
+*** Connectives can be booleans too 
 
 #<div>#
 *)
-Check [:: 3; 4; 5 ].
-Check [:: true; false; true ].
-(**
+Definition andb (b1 b2 : bool) : bool :=
+  if b1 then b2 else false.
+Infix "&&" := andb.
+
+Definition orb (b1 b2 : bool) : bool :=
+  if b1 then true else b2.
+Infix "||" := orb.
+
+Definition negb b : bool :=
+  if b then false else true.
+Notation "~~ b" := (negb b).
+
+(** 
 #</div>#
 
-Let's now define the [size] function.
-
+#</div>#
+------------------------------------------------------
+#<div class="slide">#
+*** Proofs by truth tables
+   - we can use EM to reason about boolean predicates
+     and connectives
+   - [case:]
+   - bookkeeping [/=]
+   - naming convention: [C] suffix
 #<div>#
 *)
-Fixpoint size A (s : seq A) :=
-  if s is _ :: tl then (size tl).+1 else 0.
-
-Eval lazy in size [:: 1; 8; 34].
-(**
-#</div>#
-
-Given that the contents of containers are of an
-arbitrary type many common operations are parametrized
-by functions that are specific to the type of the
-contents.
-
-[[
-Fixpoint map A B (f : A -> B) s :=
-if s is e :: tl then f e :: map f tl else nil.
-]]
-
-#<div>#
+Lemma andbC b1 b2 : (b1 && b2) = (b2 && b1).
+Proof.
+(*
+case: b1 => /=.
+  by case: b2.
+by case: b2.
 *)
-Definition l := [:: 1; 2; 3].
-Eval lazy in [seq x.+1 | x <- l].
-(**
+by case: b1; case: b2. Qed.
+
+(** 
 #</div>#
-
-The #<a href="http://math-comp.github.io/math-comp/htmldoc/mathcomp.ssreflect.seq.html">seq</a>#
-library of Mathematical Components contains many combinators. Their syntax
-is documented in the header of the file.
-
-#<p><br/><p>#
 
 #<div class="note">(notes)<div class="note-text">#
-
-This slide corresponds to
-section 1.3 of
-#<a href="https://math-comp.github.io/mcb/">the Mathematical Components book</a>#
+Naming convention is key to find lemmas in a large library.
+It is worth mentioning here
+- [C] for commutativity
+- [A] for associativity
+- [K] for cancellation
 #</div></div>#
 
-
 #</div>#
-
-----------------------------------------------------------
+------------------------------------------------------
 #<div class="slide">#
-** Symbols
-
-The section mecanism is used to describe a context under
-which definitions are made. Coq lets us not only define
-terms, but also compute with them in that context.
-
-We use this mecanism to talk about symbolic computation.
-
+*** Bookkeeping 101
+   - defective case (stack model, the _top_ implicit tactic argument)
+   - tactic=>
+   - tactic:        (caveat: tactic != apply or exact)
+   - "rename", "reorder"
 #<div>#
 *)
-Section symbols.
-Variables v : nat.
-
-Eval lazy in pred v.+1 .
-Eval lazy in pred v .
-(**
-#</div>#
-
-Computation can take place in presence of variables
-as long as constructors can be consumed. When no
-more constructors are available computation is
-stuck.
-
-Let's not look at a very common higher order
-function.
-
-#<div>#
+Lemma negb_and :
+  forall b c, ~~ (b && c) = ~~ b || ~~ c.
+Proof.
+(*
+move=> b. move=> c. move: b. move: c.
+move=> c b. move: b c.
+move=> b; case: b; move=> c; case: c.
 *)
+by case; case. Qed.
 
-Fixpoint foldr A T f (a : A) (s : seq T) :=
-  if s is x :: xs then f x (foldr f a xs) else a.
-(**
-#</div>#
-
-The best way to understand what [foldr] does 
-is to postulate a variable [f] and compute. 
-
-#<div>#
-*)
-
-Variable f : nat -> nat -> nat.
-
-Eval lazy in foldr f    3 [:: 1; 2 ].
-
-(**
-#</div>#
-
-If we plug [addn] in place of [f] we
-obtain a term that evaluates to a number.
-
-#<div>#
-*)
-
-Eval lazy in foldr addn 3 [:: 1; 2 ].
-
-End symbols.
-
+End BooleanReflection.
 (**
 #</div>#
 
 #<div class="note">(notes)<div class="note-text">#
-
-This slide corresponds to
-sections 1.4 and 1.5 of
-#<a href="https://math-comp.github.io/mcb/">the Mathematical Components book</a>#
+We say that the goal (under the horizontal bar) is a stack, since
+items can only be accessed accorrding to a stack discipline.
+If the goal is [forall x y, x = 1 + 2 * y -> odd x] one has to
+deal with [x] and [y] before accessing [x = 1 + 2 * y].
 #</div></div>#
 
 #</div>#
-
-----------------------------------------------------------
+------------------------------------------------------
 #<div class="slide">#
-** Higher order functions and mathematical notations
+** Recap: formalization approach and basic tactics
+   - boolean predicates and connectives
+   - think "up to" computation
+   - [case], [elim], [move], [:], [=>], basic [rewrite]
+   - [if-is-then-else], [.+1]
+   - naming convetion
 
-Let's try to write this formula in Coq
-
-#$$ \sum_{i=1}^n (i * 2 - 1) = n ^ 2 $$#
-
-We need a bit of infrastruture
+#</div>#
+------------------------------------------------------
+------------------------------------------------------
+#<div class="slide">#
+** The real MathComp library
+  
+   Things to know:
+   - [Search head_symbol (pat _ term) "string" name]
+   - [(a < b)] is a notation for [(a.+1 <= b)]
+   - [==] stands for computable equality (overloaded)
+   - [!=] is [~~ (_ == _)]
+   - [is_true] coercion
 
 #<div>#
 *)
-Fixpoint iota m n := if n is u.+1 then m :: iota m.+1 u else [::].
+Search _ (_ <= _) in ssrnat.
+Locate "_ < _".
+Check (forall x, x.+1 <= x).
+Search _ orb "C" in ssrbool.
+Print commutative.
+Check (3 == 4) || (3 <= 4).
+Eval compute in (3 == 4) || (3 <= 4).
+Check (true == false).
+Check (3 != 4).
 
-Eval lazy in iota 0 5.
+Lemma test_is_true_coercion : true.
+Proof. unfold is_true. by []. Qed.
 
 (**
 #</div>#
 
-Combining [iota] and [foldr] we can get pretty
-close to the LaTeX source for the formula above.
+#</div>#
+-------------------------------------------------------------
+#<div class="slide">#
+** Equality
+   - privileged role (many lemmas are stated with = or is_true)
+   - the [eqP] view: "is_true (a == b)   <->    a = b"
+   - [=> /eqP] (both directions)
+   - [=> ->] (on the fly rewrite, "subst")
+   - notation [.*2]
+
+#<div>#
+*)
+Lemma test_eqP n m :
+  n == m -> n.+1 + m.+1 = m.+1.*2.
+Proof.
+(*#
+Check eqP.
+move=> /eqP. move=> /eqP. move=> /eqP Enm. rewrite Enm.
+Search _ (_ + _) _.*2 in ssrnat.
+exact: addnn.
+#*)
+by move=> /eqP ->; rewrite -addnn. Qed.
+
+(**
+#</div>#
+
+#</div>#
+-------------------------------------------------------------
+#<div class="slide">#
+ ** Infix [==] is overloaded
+   - and [eqP] is too
+#<div>#
+*)
+Lemma test2_eqP b1 b2 :
+  b1 == ~~ b2 -> b1 || b2.
+Proof.
+(*
+Search _ orb in ssrbool.
+*)
+by move=> /eqP->; exact: orNb.
+Qed.
+
+(**
+#</div>#
+
+#</div>#
+------------------------------------------------------------
+#<div class="slide">#
+** Views are just lemmas 
+   (plus some automatic adaptors)
+   - lemmas like [A -> B] can be used as views too
+   - boolean connectives have associated views
+   - [=> [ ... ]]
 
 #<div>#
 *)
 
-Notation "\sum_ ( m <= i < n ) F" :=
-  (foldr (fun i a => F + a) 0 (iota m (n-m))).
+Lemma test_leqW i j k :
+  (i <= k) && (k.+1 <= j) -> i <= j.+1.
+Proof.
+(*# move=> /andP. case. move=> /leqW. move=> leq_ik1. #*)
+move=> /andP[/leqW leq_ik1 /leqW leq_k1j1].
+exact: leq_trans leq_ik1 leq_k1j1.
+Qed.
 
-Check \sum_(1 <= x < 5) (x * 2 - 1).
-Eval lazy in \sum_(1 <= x < 5) (x * 2 - 1).
 (**
 #</div>#
 
-#<p><br/><p>#
+#</div>#
+------------------------------------------------------------
+#<div class="slide">#
+** The reflect predicate
+   - [reflect P b] is the preferred way to state that
+     the predicate [P] (in [Prop]) is logically equivalent
+     to [b=true]
 
-#<div class="note">(notes)<div class="note-text">#
+#<div>#
+*)
+Module reflect_for_eqP.
 
-This slide corresponds to
-section 1.6 of
-#<a href="https://math-comp.github.io/mcb/">the Mathematical Components book</a>#
-#</div></div>#
+Print reflect.
 
+Fixpoint eqn m n :=
+  match m, n with
+  | 0, 0 => true
+  | j.+1,k.+1 => eqn j k
+  | _, _ => false
+  end.
+Arguments eqn !m !n.
+
+(**
 #</div>#
 
+#</div>#
 ----------------------------------------------------------
 #<div class="slide">#
-** Lesson 1: sum up
+** Proving the reflection lemma for eqn
+    - the convenience lemma [iffP]
+    - the [congr] tactic
+    - trivial branches //
+    - loaded induction [elim: n m]
+#<div>#
+*)
+Lemma myeqP m n : reflect (m = n) (eqn m n).
+Proof.
+(*#
+apply: (iffP idP) => [|->]; last by elim: n.
+elim: m n; first by case.
+move=> n IHn m eq_n1m.
+case: m eq_n1m => // m eq_n1m1.
+congr (_.+1).
+exact: IHn.
+#*)
+apply: (iffP idP) => [|->]; last by elim: n.
+by elim: m n => [|m IHm] // [|n] // /IHm->.
+Qed.
 
-- [fun .. => ..]
-- [Check]
-- [Definition]
-- [Print]
-- [Eval lazy]
-- [Inductive] declarations [bool], [nat], [seq].
-- [match .. with .. end] and [if .. is .. then .. else ..]
-- [Fixpoint]
-- [andb] [orb] [eqn] [leq] [addn] [subn] [size] [foldr]
+Lemma test_myeqP n m : (eqn n m) -> m = n.
+Proof. by move=> /myeqP ->. Qed.
 
+End reflect_for_eqP.
+
+(** 
 #</div>#
 
+#</div># 
+--------------------------------------
+#<div class="slide">#
+** rewrite, one command to rule them all
+  - rewrite
+  - side condition and // ? 
+  - rewrite a boolean predicate (is_true hides an eqaution)
+#<div>#
+*)
 
+Lemma test_leq_cond p : prime p -> p.-1.+1 + p = p.*2.
+Proof.
+(*#
+move=> pr_p.
+Search _ predn in ssrnat.
+rewrite prednK.
+  by rewrite addnn.
+Search _ prime leq 0.
+by apply: prime_gt0.
+#*)
+by move=> pr_p; rewrite prednK ?addnn // prime_gt0.
+Qed.
+
+(**
+#</div>#
+
+#</div># 
+----
+#<div class="slide">#
+** References for this lesson
+  - SSReflect #<a href="https://hal.inria.fr/inria-00258384">manual</a>#
+  - documentation of the
+       #<a href="http://math-comp.github.io/math-comp/htmldoc/libgraph.html">library</a>#
+    - in particular #<a href="http://math-comp.github.io/math-comp/htmldoc/mathcomp.ssreflect.ssrbool.html">ssrbool</a>#
+    - in particular #<a href="http://math-comp.github.io/math-comp/htmldoc/mathcomp.ssreflect.ssrnat.html">ssrnat</a>#
+  - #<a href="http://math-comp.github.io/mcb/">Book</a># (draft) on the Mathematical Components library
+    #<img src="https://math-comp.github.io/mcb/cover-front-web.png"/>#
+#</div># 
 *)

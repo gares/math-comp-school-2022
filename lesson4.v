@@ -1,517 +1,352 @@
-
-From mathcomp Require Import all_ssreflect.
-
+From mathcomp Require Import all_ssreflect. 
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
 (** 
 
-----------------------------------------------------------
-#<div class="slide">#
-** Lesson 4: summary
+----
+** Lesson 4 Arithmetics
+  - Order
+  - Division
+  - Primality
 
-- Curry Howard: the big picture
-  + dependent function space
-- Predicates and connectives
-  + introduction
-  + elimination
-- Induction
-- Consistency
-- Dependent elimination
-
-#</div>#
-
-----------------------------------------------------------
-#<div class="slide">#
-** Curry Howard
-
-We link typed programs to statements with a proof.
-
-Let's play a game in which we use inductive types
-as our satements.
-
-#<div>#
 *)
 
-Check nat : Type.
 
-Definition zero : nat := 0.
+(**
+  ** Reminder  
+*)
 
-Lemma zero_bis : nat.
+Check nat.
+
+Print nat.
+
+Check O.
+
+Check S O.
+
+Check S (S O).
+
+Compute 3.+1.
+
+(**  Proof by case *)
+
+Goal forall (P : pred nat), 
+     (P 0) -> (forall n, P n.+1) -> forall n, P n.
 Proof.
-apply: 0.
+move=> P H0 SH n.
+case: n => [|n].
+  exact: H0.
+by apply: SH.
 Qed.
 
-Print zero.
-Print zero_bis.
+(**  Proof by induction *)
 
-
-(**
-#</div>#
-
-We learn that 0 is a term of type nat, but Coq
-also accepts it as a proof of nat.
-
-#<div style='color: red; font-size: 150%;'>#
-In type theory: [p] is a proof of [T] 
-means that [p] inhabits the type [T].
-#</div>#
-
-Now let's look at the function space.
-
-#<div>#
-*)
-
-Check nat -> nat  :  Type.
-
-Definition silly : nat -> nat := fun x => x.
-
-Lemma sillier : nat -> nat.
-Proof. move=> x. apply: x. Qed.
-
-Print silly.
-Print sillier.
-
-(**
-#</div>#
-
-The function space [->] can represent implication.
-An inhabitant of [A -> B] is a function turning
-a proof of [A] into a proof of [B] (a program
-taking in input a term of type [A] and returning
-a term of type [B]).
-
-The function space of type theory is *dependent*.
-
-#<div>#
-*)
-
-Section DependentFunction.
-
-Variable P : nat -> Type.
-Variable p1 : P 1.
-
-
-Check forall x, P x.
-Check forall x : nat, P 1.
-
-Check fun x : nat => p1.
-     
-
-(**
-#</div>#
-
-We managed to build (introduce) an arrow and a forall using [fun].
-Let's see how we can use (eliminate) an arrow or a forall.
-
-#<div>#
-*)
-
-Check factorial.
-Check factorial 2.
-
-Variable px1 : forall x, P x.+1.
-
-Check px1.
-Check px1 3.
-
-End DependentFunction.
-
-(**
-#</div>#
-
-Following the Curry Howard correspondence *application*
-lets one call a function [f : A -> B] on [a : A] to
-obtain a term of type [B]. If the type of [f] is
-a dependent arrow (forall) [f : forall x : A, B x]
-then the argument [a] appears in the type of
-term we obtain, that is [f a] has type [B a].
-
-In other words application instantiates universally
-quantified lemmas and implements modus ponens.
-
-Lemmas can be seen as views to transform assumptions.
-
-#<div>#
-*)
-
-Section Views.
-
-Variable P : nat -> Type.
-Variable Q : nat -> Type.
-Variable p2q : forall x, P x -> Q x.
-
-Goal P 3 -> True.
+Goal forall (P : pred nat), 
+     (P 0) -> (forall n, P n -> P n.+1) -> forall n, P n.
 Proof.
-move=> (*/p2q*) p3.
-Abort.
-
-End Views.
-
-(**
-#</div>#
-
-So far we used [nat] (and [P]) as a predicate and [->] for implication.
-
-Can we use inductive types to model other predicates or connectives?
-
-#<p><br/><p>#
-
-#<div class="note">(notes)<div class="note-text">#
-
-This slide corresponds to
-section 4.x of
-#<a href="https://math-comp.github.io/mcb/">the Mathematical Components book</a>#
-#</div></div>#
-
-
-#</div>#
-
-----------------------------------------------------------
-#<div class="slide">#
-** Predicates and connectives
-
-Let's start with #$$ \top $$#
-
-Note: here the label [Prop] could be a synonym of [Type].
-
-#<div>#
-*)
-
-Print True.
-
-Definition trivial1 : True := I.
-
-Definition trivial2 : True -> nat :=
-  fun t =>
-    match t with I => 3 end.
-
-Lemma trivial3 : True -> nat.
-Proof.
-move=> t. case: t. apply: 3.
+move=> P H0 SH n.
+elim: n => [|n IH].
+  exact: H0.
+by apply: SH.
 Qed.
 
-(**
-#</div>#
 
-Now let's look at #$$ \bot $$#
+(** Eqtype *)
 
-#<div>#
-*)
+Check eqn.
 
-Print False.
+Compute 1 == 1.
 
-Fail Definition hard1 : False := what.
+Compute 2 == 3.
 
-Definition ex_falso A : False -> A :=
-  fun abs => match abs with end.
+Print eqn.
 
-Lemma ex_falso2 A : False -> A.
+Goal forall m n, m.+1 == n.+1 -> m == n.
 Proof.
-move=> abs. case: abs.
+move=> m n mEn.
+exact: mEn.
 Qed.
+ 
+(** Addition *)
 
-(**
-#</div>#
+Check addn.
 
-Connectives: #$$ \land $$# and #$$\lor $$#
+Check addn 2 3.
 
-#<div>#
-*)
+Compute 2 + 3.
 
-Section Connectives.
-
-Print and.
-
-Variable A : Prop.
-Variable B : Prop.
-Variable C : Prop.
-
-Variable a : A.
-Variable b : B.
-
-Check conj a b.
-
-Definition and_elim_left : and A B -> A :=
-  fun ab => match ab with conj a b => a end.
-
-
-Lemma and_elim_left2 : and A B -> A.
-Proof. case=> l r. apply: l. Qed.
-
-Print or.
-
-Check or_introl a : or A B.
-Check or_intror b : or A B.
-
-Definition or_elim :
-  A \/ B -> (A -> C) -> (B -> C) -> C :=
- fun aob a2c b2c =>
-   match aob with
-   | or_introl a => a2c a
-   | or_intror b => b2c b
-   end.
-
-Lemma or_elim_example : A \/ B -> C.
+Goal forall m n, m.+1 + n = (m + n).+1.
 Proof.
-move=> aob.
-case: aob.
-Abort.
-
-(**
-#</div>#
-
-Quantifier #$$ \exists $$#
-
-#<div>#
-*)
-
-Print ex.
-
-Lemma ex_elim P : (exists x : A, P x) -> True.
-Proof.
-case => x px.
-Abort.
-
-End Connectives.
-
-(**
-#</div>#
-
-#<p><br/><p>#
-
-#<div class="note">(notes)<div class="note-text">#
-
-This slide corresponds to
-section 4.x of
-#<a href="https://math-comp.github.io/mcb/">the Mathematical Components book</a>#
-#</div></div>#
-
-
-#</div>#
-----------------------------------------------------------
-#<div class="slide">#
-** Induction
-
-We want to prove theorems by induction, right?
-Hence there must be a term that corresponds to the induction principle.
-This term is a recursive function.
-
-Note: [Fixpoint] is just sugar for [Definition] followed by [fix].
-
-#<div>#
-*)
-
-About nat_ind.
-
-Definition ind :
-  forall P : nat -> Prop,
-    P 0 -> (forall n : nat, P n -> P n.+1) -> forall n : nat, P n :=
-  fun P p0 pS =>
-    fix IH n : P n :=
-      match n with
-      | O => p0
-      | S p => pS p (IH p)
-      end.
-
-(**
-#</div>#
-
-#<p><br/><p>#
-
-#<div class="note">(notes)<div class="note-text">#
-
-This slide corresponds to
-section 4.x of
-#<a href="https://math-comp.github.io/mcb/">the Mathematical Components book</a>#
-#</div></div>#
-
-----------------------------------------------------------
-#<div class="slide">#
-** Consistency
-
-We give here the intuition why some terms that are in principle
-well typed are rejected by Coq and why Coq is consistent.
-
-#<div>#
-*)
-Print False.
-Print True.
-(**
-#</div>#
-
-What does it mean that [t : T] and [T] is not [False]?
-
-#<div>#
-*)
-Check (match 3 with O => I | S _ => I end) : True.
-(**
-#</div>#
-
-Constructors are not the only terms that can inhabit a type.
-Hence we cannot simply look at terms, but we could look at
-their normal form.
-
-Subject reduction: [t : T] and [t ~> t1] then [t1 : T].
-We claim there is not such [t1] (normal form) that
-inhabits [False].
-
-We have to reject [t] that don't have a normal form.
-
-Exaustiveness of pattern matching:
-
-#<div>#
-*)
-
-Lemma helper x : S x = 0 -> False. Proof. by []. Qed.
-
-Fail Definition partial n : n = 0 -> False :=
-  match n with
-  | S x => fun p : S x = 0 => helper x p
-(*  | 0 => fun _ => I*)
-  end.
-
-Fail Check partial 0 (erefl 0). (* : False *)
-
-Fail Compute partial 0 (erefl 0). (* = ??? : False *)
-
-(**
-#</div>#
-
-According to Curry Howard this means that in a case
-split we did not forget to consider a branch!
-
-Termination of recursion:
-
-#<div>#
-*)
-
-Fail Fixpoint oops (n : nat) : False := oops n.+1.
-
-Fail Check oops 3. (* : False *)
-
-Fail Compute oops 3. (* = ??? : False *)
-
-(**
-#</div>#
-
-According to Curry Howard this means that we did not
-do any circular argument.
-
-Non termination is subtle since a recursive call could
-be hidden in a box.
-
-#<div>#
-*)
-
-Fail Inductive hidden := Hide (f : hidden -> False).
-
-Fail Definition oops (hf : hidden) : False :=
-  match hf with Hide f => f hf end.
-
-Fail Check oops (Hide oops). (* : False *)
-
-Fail Compute oops (Hide oops). (* = ??? : False *)
-
-(**
-#</div>#
-
-This condition of inductive types is called positivity:
-The type of [Hide] would be [(hidden -> False) -> hidden],
-where the first occurrence of [hidden] is on the left (negative)
-of the arrow.
-
-#<p><br/><p>#
-
-#<div class="note">(notes)<div class="note-text">#
-
-This slide corresponds to
-section 3.2.3 of
-#<a href="https://math-comp.github.io/mcb/">the Mathematical Components book</a>#
-#</div></div>#
-
-
-#</div>#
-
-----------------------------------------------------------
-#<div class="slide">#
-** Inductive types with indexes (casse-tête)
-
-... and their elimination.
-
-The intuition, operationally.
-
-Inductive types can express tricky invariants:
-
-#<div>#
-*)
-
-(* Translucent box, we know if it is empty or not without opening it *)
-Inductive tbox : bool -> Type :=
-  | Empty          : tbox false
-  | Full (n : nat) : tbox true.
-
-Check Empty.
-Check Full 3.
-
-Definition default (d : nat) (f : bool) (b : tbox f) : nat :=
-  match b with
-  | Empty => d
-  | Full x => x
-  end.
-
-(* Why this complication? (believe me, not worth it) *)
-Definition get (b : tbox true) : nat :=
-  match b with Full x => x end.
-
-(* the meat: why is the elimination tricky? *)
-Lemma default_usage f (b : tbox f) : 0 <= default 3 b .
-Proof.
-case: b.
-Fail Check @default 3 f Empty.
-  by [].
+move=> m n.
 by [].
 Qed.
 
-(**
-#</div>#
+Search _ (_.+1 + _ = _.+1) in ssrnat.
 
-Take home:
-- the elimination of an inductive data type with indexes
-  expresses equations between the value of the indexes
-  in the type of the eliminated term and the value of the
-  indexes prescribed in the declatation of the inductive data
-- the implicit equations are substituted automatically at
-  elimination time
-- working with indexed data is hard, too hard :-/
-- we can still make good use of indexes when we define "spec" lemmas,
-  argument of the next lecture
+Goal forall m n, m + n.+1 = (m + n).+1.
+Proof.
+move=> m n.
+elim: m => [|m IH].
+  by [].
+rewrite !addSn.
+rewrite IH.
+by [].
+Qed.
 
-#<p><br/><p>#
+Search _ (_ + _.+1 = _.+1) in ssrnat.
 
-#<div class="note">(notes)<div class="note-text">#
+Search _ (_.+1 + _ = _ + _.+1) in ssrnat.
 
-This slide corresponds to
-section 4.x of
-#<a href="https://math-comp.github.io/mcb/">the Mathematical Components book</a>#
-#</div></div>#
+(** Subtraction *)
 
-#</div>#
+Check subn.
 
-----------------------------------------------------------
-#<div class="slide">#
-** Lesson 4: sum up
+Check subn 3 2.
 
-- In Coq terms/types play a double role:
-  + programs and their types
-  + statements and their proofs
-- Inductives can be used to model predicates and
-  connectives
-- Pattern machind and recursion can model induction
-- The empty type is, well, empty, hence Coq is consistent
-- Inductives with indexes
+Compute (3 - 2).
 
-#</div>#
+Compute 3 - 4.
 
+Goal forall n, 0 - n = 0.
+Proof.
+move=> n.
+by [].
+Qed.
+
+Search _ left_zero subn in ssrnat.
+
+Goal forall n, n - 0 = n.
+Proof.
+case => [|n].
+- by [].
+by [].
+Qed.
+
+Search _ (_.+1 - 0 = _) in ssrnat.
+Search _ (_.+1 - _.+1 = _) in ssrnat.
+
+
+(** 
+    Order 
 *)
+
+
+Check leq.
+
+Check (0 <= 2).
+
+Compute (0 <= 2).
+
+Print leq.
+
+(** One overloaded definition *)
+
+Goal forall m n, m >= n -> n <= m.
+Proof.
+by [].
+Qed.
+
+Goal forall m n, m.+1 <= n -> m < n.
+Proof.
+by [].
+Qed.
+
+Goal forall n, n <= n.+1.
+Proof.
+elim=> [|n IH].
+  by [].
+exact: IH.
+Qed.
+
+Search _ (?_1 <= ?_1.+1) in ssrnat.
+
+(** Reflexivity *)
+
+Search _ (?_1 <= ?_1) in ssrnat.
+
+(** Antisymmetric *)
+
+Search _ (~~ _) (_ <= _) in ssrnat.
+Search _ (_ == _) (_ <= _) in ssrnat.
+
+(** Transitivity *)
+
+Search _ nat "trans" in ssrnat.
+
+Goal forall m n p, m < n -> n <= p -> m < p.
+Proof.
+move=> m n p.
+have trans := leq_trans.
+have trans_Sm_n := leq_trans (_ : m < n) (_ : n <= p).
+by [].
+Qed.
+
+Goal forall (P : pred nat), 
+      P 0 ->
+      (forall m,  (forall n, n <= m -> P n) -> P m.+1) ->
+      (forall m, P m).
+Proof.
+move=> P HC IHs m.
+move: (leqnn m).
+move: {-2}m.
+elim: m => [|m IH].
+  by case.
+case=> // n nLm.
+apply: IHs => k kLn.
+apply: IH.
+apply: leq_trans kLn nLm.
+Qed.
+
+Goal forall a b c,
+   a < b -> b < c -> a <= c.
+Proof.
+move=> a b c aLb bLc.
+apply: leq_trans (_ : b <= _).
+  by apply: ltnW.
+by apply: ltnW.
+Qed.
+
+(** Scaling down  *)
+
+Check leq_eqVlt.
+
+Goal forall (P : pred nat) m n, P n ->
+    (forall m, m < n -> P m) -> m <= n -> P m.
+Proof.
+move=> P m n Pn PL.
+rewrite leq_eqVlt.
+move=> /orP[|].
+  move/eqP->.
+  by [].
+exact: PL.
+Qed.
+
+(** Addition *)
+
+Search  _ (_ <= _ + _) in ssrnat.
+
+Goal forall m n, n <= m -> n.*2 <= m + n.
+Proof.
+move=> m n nLm.
+rewrite -addnn.
+rewrite leq_add2r.
+by [].
+Qed.
+
+(** Multiplication *)
+
+Search  _ (_ <= _ * _) in ssrnat.
+
+Goal forall m n, n <= m -> n ^ 2 <= m * n.
+Proof.
+move=> m n nLm.
+rewrite -mulnn.
+rewrite leq_mul2r.
+rewrite nLm.
+rewrite orbT.
+by [].
+Qed.
+
+(** Conditional comparison **)
+
+Check subset_leqif_cards.
+
+Search _ (_ <= _ ?= iff _) (_ && _) in ssrnat.
+
+(** Division **)
+
+Check (modn 21 2).
+Compute 21 %% 2.
+
+Check (divn 21 2).
+Compute 21 %/ 2.
+
+Check (dvdn 2 21).
+Compute 2 %| 21.
+
+Print dvdn.
+
+Search (_ %| _ + _) in div.
+
+Search ((_ + _) %/ _) in div.
+
+Search (?_1 %/ ?_1) in div.
+
+Compute 0 %/ 0.
+
+Search (_ %| _ * _) in div.
+
+Search ((_ * _) %/ _) in div.
+
+(** odd **)
+
+Compute odd 4.
+Compute odd 5.
+Print odd.
+
+Search _ odd (_ %% _) in div.
+
+(** gcd & lcm **)
+
+Compute gcdn 42 49.
+
+Compute lcmn 42 49.
+
+Search _ gcdn lcmn in div.
+
+Search _ gcdn (_ * _) in div.
+
+(** Coprime **)
+
+Check coprime.
+
+Compute coprime 3 5.
+Compute coprime 21 7.
+
+Print coprime.
+
+Search _ coprime (_ %| _) in div prime.
+
+(** Primality **)
+
+Check prime.
+
+Compute prime 21.
+
+Compute prime 22.
+
+Compute prime 23.
+
+Print prime.
+
+Compute primes 23.
+
+Check primeP.
+
+Goal prime 2.
+Proof.
+apply/primeP.
+split.
+  by [].
+move=> d.
+case: d.
+  by [].
+case.
+  by [].
+by case.
+Qed.
+
+Search _ prime (_ %| _) in div prime.
+
+Check logn.
+
+Compute logn 3 8.
+
+Compute logn 3 9.
+
+Search _ logn in prime.
+
+
+

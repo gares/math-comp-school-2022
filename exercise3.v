@@ -1,233 +1,279 @@
-(** Cheat sheet available at
-      #<a href='https://www-sop.inria.fr/teams/marelle/types18/cheatsheet.pdf'>https://www-sop.inria.fr/teams/marelle/types18/cheatsheet.pdf</a>#
-*)
-
 From mathcomp Require Import all_ssreflect.
-
-Implicit Type p q r : bool.
-Implicit Type m n a b c : nat.
-
-(**
------------------------------------------------------------------
-#<div class="slide">#
-*** Exercise 1:
-    - prove this satement by induction
-#<div>#
-*)
-Lemma iterSr A n (f : A -> A) x : iter n.+1 f x = iter n f (f x).
-(*A*)Proof. by elim: n => //= n <-. Qed.
+Set Implicit Arguments.
+Unset Strict Implicit.
+Unset Printing Implicit Defensive.
 
 (**
-#</div>#
+  ----
+  ** Exercise 1 *)
 
-#<p><br/><p>#
-#</div>#
+(**
+Try to define a next function over 'I_n that correspond to the
+successor function over the natural plus the special case that
+"n -1" is mapped to zero *)
 
-----------------------------------------------------------
-#<div class="slide">#
-
-*** Exercise 2:
-    - look up the definition of [iter] (note there is an accumulator varying
-      during recursion)
-    - prove the following statement by induction
-
-#<div>#
-*)
-Lemma iter_predn m n : iter n predn m = m - n.
+Definition onext n (x : 'I_n) : 'I_n.
 Proof.
-(*D*)by elim: n m => [|n IHn] m; rewrite ?subn0//= IHn subnS.
-(*A*)Qed.
+refine (
+(* Sub takes two arguments *)
+  Sub
+(* Write the valued in the following line *)
+(*D*)(x.+1 %% n)
+(* Leave _ for the proof, you will fill it in by tactics later *)
+_
+).
+(*D*) by case: x => [m /= ltmn]; rewrite ltn_mod (leq_trans _ ltmn).
+Defined.
+
+Eval compute in val (onext (Ordinal (isT : 2 < 4))).
+Eval compute in val (onext (Ordinal (isT : 3 < 4))).
+
 (**
-#</div>#
-
-#<p><br/><p>#
-#</div>#
-
-----------------------------------------------------------
-#<div class="slide">#
-
-*** Exercise 3:
-
-Prove the sum of the lists [odds n] of exercise 1 is [n ^ 2].
-
-You can prove the following lemmas in any order, some are way easier
-than others.
-
-- Recall from exercise 1.
-#<div>#
-
+  ----
+  ** Exercise 2
 *)
-Definition add2list s := map (fun x => x.+2) s.
-Definition odds n := iter n (fun s => 1 :: add2list s) [::].
+
 (**
-#</div>#
-
-- We define a sum operation [suml].
-
-#<div>#
-
+   Show that injectivity is decidable for a function f : aT -> rT
+   with  aT a finite
 *)
-Definition suml := foldl addn 0.
-(**
-#</div>#
 
-- Any [foldl addn] can be rexpressed as a sum.
+Module MyInj.
 
-#<div>#
-*)
-Lemma foldl_addE n s : foldl addn n s = n + suml s.
+Check injective.
+
+Definition injectiveb (aT : finType) (rT : eqType) (f : aT -> rT) : bool :=
+(*D*) [forall x : aT, forall y : aT, (f x == f y) ==> (x == y)].
+
+Lemma injectiveP (aT : finType) (rT : eqType) (f : aT -> rT) :
+  reflect (injective f) (injectiveb f).
 Proof.
-(*D*)elim: s n => //= x s IHs n.
-(*D*)by rewrite /suml/= !IHs add0n addnA.
+(*D*)apply: (iffP forallP) => [Ibf x y Efxy|If x].
+(*D*)  by move: Ibf => /(_ x) /forallP /(_ y); rewrite Efxy eqxx => /eqP.
+(*D*)by apply/forallP=> y; apply/implyP => /eqP Efxy; apply/eqP; apply: If.
 (*A*)Qed.
+
+End MyInj.
+
 (**
-#</div>#
+  ----
+  ** Exercise 3
 
-
-- Not to break abstraction, prove [suml_cons].
-#<div>#
+  Build a function that maps an element of an ordinal to another element
+  of the same ordinal with a p subtracted from it.
 *)
-Lemma suml_cons n s : suml (n :: s) = n + suml s.
-(*A*)Proof. by rewrite /suml/= foldl_addE. Qed.
-(**
-#</div>#
 
-- Show how to sum a [add2list].
-
-#<div>#
-*)
-Lemma suml_add2list s : suml (add2list s) = suml s + 2 * size s.
+Lemma neg_offset_ord_proof n (i : 'I_n) (p : nat) : i - p < n.
 Proof.
-(*D*)elim: s => [|x s IHs] //=; rewrite !suml_cons IHs.
-(*D*)by rewrite !mulnS !addnS addnA.
+(*D*)apply: leq_ltn_trans (ltn_ord i).
+(*D*)apply: leq_subr.
 (*A*)Qed.
+
+Definition neg_offset_ord n (i : 'I_n) p := Ordinal (neg_offset_ord_proof i p).
+
+Eval compute in (val (neg_offset_ord (Ordinal (isT : 7 < 9)) 4)).
+
 (**
-#</div>#
-
-- Show the size of a [add2list].
-
-#<div>#
+  ----
+  ** Exercise 4
 *)
-Lemma size_add2list s : size (add2list s) = size s.
-(*A*)Proof. by apply: size_map. Qed.
+
 (**
-#</div>#
-
-- Show how many elments [odds] have.
-
-#<div>#
+   Try to formalize the following problem
 *)
-Lemma size_odds n : size (odds n) = n.
-(*A*)Proof. by elim: n => //= n; rewrite size_add2list => ->. Qed.
+
 (**
-#</div>#
-- Show the final statment.
-#<div>#
+  Given a parking  where the boolean indicates if the slot is occupied or not
 *)
-Lemma eq_suml_odds n : suml (odds n) = n ^ 2.
+
+Definition parking n := 'I_n -> 'I_n -> bool.
+
+(**
+   Number of cars at line i
+*)
+
+Definition sumL n (p : parking n) i := \sum_(j < n) p i j.
+
+(**
+   Number of cars at column j
+*)
+
+Definition sumC n (p : parking n) j := \sum_(i < n) p i j.
+
+(**
+   Show that if 0 < n there is always two lines, or two columns, or a column and a line
+   that have the same numbers of cars
+*)
+
+(* Two intermediate lemmas to use injectivity  *)
+
+Lemma leq_sumL n (p : parking n) i : sumL p i < n.+1.
 Proof.
-(*D*)elim: n => //= n IHn; rewrite suml_cons.
-(*D*)rewrite suml_add2list IHn addnCA addnA.
-(*D*)by rewrite -(addn1 n) sqrnD size_odds muln1.
+(*D*)have {2}<-: \sum_(i < n) 1 = n by rewrite -[X in _ = X]card_ord sum1_card.
+(*D*)by apply: leq_sum => k; case: (p _ _).
 (*A*)Qed.
-(**
-#</div>#
-#<br/>#
-#<div class="note">(hint)<div class="note-text">#
-For [eq_suml_odds], use [sqrnD]
-#</div></div>#
-#<p><br/><p>#
-#</div>#
 
-----------------------------------------------------------
-#<div class="slide">#
-
-*** Exercise 4:
-
-Prove the sum of the lists [odds n] is what you think.
-
-You may want to have at least one itermediate lemma to prove [oddsE]
-#<div>#
-*)
-Lemma oddsE n : odds n = [seq 2 * i + 1 | i <- iota 0 n].
+Lemma leq_sumC n (p : parking n) j : sumC p j < n.+1.
 Proof.
-(*D*)rewrite /odds; set k := (0 as X in iota X _).
-(*D*)rewrite -[1 in LHS]/(2 * k + 1).
-(*D*)elim: n k => //= n IHn k; rewrite {}IHn; congr (_ :: _).
-(*D*)by elim: n k => // n IHn k /=; rewrite IHn !mulnS.
+(*D*)have {2}<-: \sum_(i < n) 1 = n by rewrite -[X in _ = X]card_ord sum1_card.
+(*D*)by apply: leq_sum => k; case: (p _ _).
 (*A*)Qed.
-(**
-#</div>#
-#<br/>#
-#<div class="note">(hint)<div class="note-text">#
-this intermediate lemma would be:
-#<div>#
-*)
-Lemma oddsE_aux n k :
-  iter n (fun s : seq nat => 2 * k + 1 :: add2list s) [::] =
-  [seq 2 * i + 1 | i <- iota k n].
-(*D*)Proof.
-(*D*)elim: n k => //= n IHn k; rewrite {}IHn; congr (_ :: _).
-(*D*)by elim: n k => // n IHn k /=; rewrite IHn !mulnS.
-(*A*)Qed.
-(**
-#</div>#
-#</div></div>#
-#<br/>#
-#<div>#
-*)
-Lemma nth_odds n i : i < n -> nth 0 (odds n) i = 2 * i + 1.
+
+Lemma inl_inj {A B} : injective (@inl A B). Proof. by move=> x y []. Qed.
+Lemma inr_inj {A B} : injective (@inr A B). Proof. by move=> x y []. Qed.
+
+Lemma result n (p : parking n) : 0 < n ->
+  exists i, exists j,
+   [\/  (i != j) /\ (sumL p i = sumL p j),
+        (i != j) /\ (sumC p i = sumC p j) | sumL p i = sumC p j].
 Proof.
-(*D*)by move=> i_ltn; rewrite oddsE (nth_map 0) ?size_iota ?nth_iota.
+(*D*)case: n p => [//|[|n]] p _ /=.
+(*D*)  exists ord0, ord0; apply: Or33.
+(*D*)  by rewrite /sumL /sumC !big_ord_recl !big_ord0.
+(*D*)pose sLC (i : 'I_n.+2 + 'I_n.+2) :=
+(*D*)  match i with
+(*D*)  | inl i => Ordinal (leq_sumL p i)
+(*D*)  | inr i => Ordinal (leq_sumC p i) end.
+(*D*)have [sC_inj | /injectivePn /=] := altP (injectiveP sLC).
+(*D*)  have := max_card (mem (codom sLC)); rewrite card_codom // card_sum !card_ord.
+(*D*)  by rewrite !addnS !addSn !ltnS -ltn_subRL subnn ltn0.
+(*D*)move=> [[i|i] [[j|j] //=]]; [| |move: i j => j i|];
+(*D*)rewrite ?(inj_eq inj_inl, inj_eq inj_inr) => neq_ij [];
+(*D*)by exists i, j; do ?[exact: Or31|exact: Or32|exact: Or33].
 (*A*)Qed.
+
 (**
-#</div>#
-#<p><br/><p>#
-#</div>#
-
-----------------------------------------------------------
-#<div class="slide">#
-
-*** Exercise 5:
-
-Let us prove directly formula
-#$$ \sum_{i=0}^{n-1} (2 i + 1) = n ^ 2 $$#
-from lesson 1, slightly modified.
-
-Let us first define a custom sum operator:
-#<div>#
+  ----
+  ** Exercise 5
 *)
-Definition mysum m n F := (foldr (fun i a => F i + a) 0 (iota m (n - m))).
 
-Notation "\mysum_ ( m <= i < n ) F" := (mysum m n (fun i => F))
-  (at level 41, F at level 41, i, m, n at level 50,
-           format "'[' \mysum_ ( m  <=  i  <  n ) '/  '  F ']'").
 (**
-#</div>#
-- First prove a very useful lemma about summation
-#<div>#
-*)
-Lemma mysum_recl m n F : m <= n ->
-  \mysum_(m <= i < n.+1) F i = \mysum_(m <= i < n) F i + F n.
+   Prove the following state by induction and by following Gauss proof.
+ *)
+
+Lemma gauss_ex_p1 : forall n, (\sum_(i < n) i).*2 = n * n.-1.
 Proof.
-(*D*)move=> leq_mn; rewrite /mysum subSn// -addn1 iota_add subnKC//= foldr_cat/=.
-(*D*)by elim: (iota _ _) (F n) => [|x s IHs] k //=; rewrite IHs addnA.
+(*D*)elim=> [|n IH]; first by rewrite big_ord0.
+(*D*)rewrite big_ord_recr /= doubleD {}IH.
+(*D*)case: n => [|n /=]; first by rewrite muln0.
+(*D*)by rewrite -muln2 -mulnDr addn2 mulnC.
 (*A*)Qed.
-(**
-#</div>#
-- Now prove the main result
 
-Do NOT use [eq_suml_odds] above, it would take much more time
-
-#<div>#
-*)
-Lemma sum_odds n : \mysum_(0 <= i < n) (2 * i + 1) = n ^ 2.
+Lemma gauss_ex_p2 : forall n, (\sum_(i < n) i).*2 = n * n.-1.
 Proof.
-(*D*)elim: n => // n IHn; rewrite mysum_recl// IHn.
-(*D*)by rewrite -[n.+1]addn1 sqrnD muln1 addnAC addnA.
+(*D*)case=> [|n/=]; first by rewrite big_ord0.
+(*D*)rewrite -addnn.
+(*D*)have Hf i : n - i < n.+1.
+(*D*)  by apply: leq_trans (leq_subr _ _) _.
+(*D*)pose f (i : 'I_n.+1) := Ordinal (Hf i).
+(*D*)have f_inj : injective f.
+(*D*)  move=> x y /val_eqP/eqP H.
+(*D*)  apply/val_eqP => /=.
+(*D*)  rewrite -(eqn_add2l (n - x)) subnK -1?ltnS  //.
+(*D*)  by rewrite [n - x]H subnK -1?ltnS.
+(*D*)rewrite {1}(reindex_inj f_inj) -big_split /=.
+(*D*)rewrite -[X in _ = X * _]card_ord -sum_nat_const.
+(*D*)by apply: eq_bigr => i _; rewrite subnK // -ltnS.
 (*A*)Qed.
+
+Lemma gauss_ex_p3 : forall n, (\sum_(i < n) i).*2 = n * n.-1.
+Proof.
+(*D*)case=> [|n/=]; first by rewrite big_ord0.
+(*D*)rewrite -addnn {1}(reindex_inj rev_ord_inj) -big_split /=.
+(*D*)rewrite -[X in _ = X * _]card_ord -sum_nat_const.
+(*D*)by apply: eq_bigr => i _; rewrite subSS subnK // -ltnS.
+(*A*)Qed.
+
 (**
-#</div>#
-#<p><br/><p>#
-#</div>#
+  ----
+   ** Exercise 6
 *)
+
+Lemma sum_odd1 : forall n, \sum_(i < n) (2 * i + 1) = n ^ 2.
+Proof.
+(*D*)case=> [|n/=]; first by rewrite big_ord0.
+(*D*)rewrite big_split -big_distrr /= mul2n gauss_ex_p3 sum_nat_const.
+(*D*)by rewrite card_ord -mulnDr addn1 mulnn.
+(*A*)Qed.
+
+(**
+  ----
+  ** Exercise 7
+*)
+
+Lemma sum_exp : forall x n, x ^ n.+1 - 1 = (x - 1) * \sum_(i < n.+1) x ^ i.
+Proof.
+(*D*)move=> x n.
+(*D*)rewrite mulnBl big_distrr mul1n /=.
+(*D*)rewrite big_ord_recr [X in _ = _ - X]big_ord_recl /=.
+(*D*)rewrite [X in _ = _ - (_ + X)](eq_bigr (fun i : 'I_n =>  x * x ^ i))
+(*D*)      => [|i _]; last by rewrite -expnS.
+(*D*)rewrite [X in _ = X - _]addnC [X in _ = _ - X]addnC subnDA addnK.
+(*D*)by rewrite expnS expn0.
+(*A*)Qed.
+
+(**
+  ----
+ ** Exercise 8
+*)
+
+(** Prove the following state by induction and by using a similar trick
+   as for Gauss noticing that n ^ 3 = n * (n ^ 2) *)
+
+Lemma bound_square : forall n, \sum_(i < n) i ^ 2 <= n ^ 3.
+Proof.
+(*D*)move=> n.
+(*D*)rewrite expnS -[X in _ <= X * _]card_ord -sum_nat_const /=.
+(*D*)elim/big_ind2: _ => // [* |i]; first exact: leq_add.
+(*D*)by rewrite leq_exp2r // ltnW.
+(*A*)Qed.
+
+(**
+  ----
+  ** Exercise 9
+
+  Prove the following statement using only big operator theorems.
+  [big_cat_nat], [big_nat_cond], [big_mkcondl], [big1]
+*)
+Lemma sum_prefix_0 (f : nat -> nat) n m : n <= m ->
+  (forall k, k < n -> f k = 0) ->
+  \sum_(0 <= i < m) f i = \sum_(n <= i < m) f i.
+Proof.
+(*D*)pose H := big_cat_nat.
+(*D*)move => nm f0; rewrite (big_cat_nat addn_monoid _ f (leq0n n)) /=; last by [].
+(*D*)rewrite big_nat_cond big_mkcondl big1 ?add0n //.
+(*D*)move => i _; case cnd : (0 <= i < n) => //.
+(*D*)apply: f0.
+(*D*)by move/andP: cnd => [_ it].
+(*A*)Qed.
+
+(**
+  ----
+  ** Exercise 10
+*)
+
+(**
+  building a monoid law
+*)
+
+Section cex.
+
+Variable op2 : nat -> nat -> nat.
+
+Hypothesis op2n0 : right_id 0 op2.
+
+Hypothesis op20n : left_id 0 op2.
+
+Hypothesis op2A : associative op2.
+
+Hypothesis op2add : forall x y, op2 x y = x + y.
+
+Canonical Structure op2Mon : Monoid.law 0 :=
+  Monoid.Law op2A op20n op2n0.
+
+Lemma ex_op2 : \big[op2/0]_(i < 3) i = 3.
+Proof.
+(*D*)by rewrite !big_ord_recr big_ord0 /= !op2add.
+(*A*)Qed.
+
+End cex.

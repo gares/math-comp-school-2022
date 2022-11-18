@@ -1,273 +1,319 @@
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_ssreflect all_algebra zmodp.
+Set Implicit Arguments.
+Unset Strict Implicit.
+Unset Printing Implicit Defensive.
 
+Import GRing.Theory.
+Open Scope ring_scope.
 
-(** *** Exercise 1 :
-    - Prove this statement by induction  using big_nat_recr and big_geq
-    - alternatively by using big_morph
+Section CPGE.
+(** #<div class='slide'>#
+* Preliminaries
+
+ - Every morphism induces an ismorphism between a complement of its kernel and its image.  The function #<code>pinvmx</code># is the inverse of this isomporhism, but since the complement of the kernel that was used to produce #<code>pinvmx</code># is arbitrary, we must project the result of #<code>pinvmx</code># on S in order to get the specific inverse with image S.
+
+ - We thus define a matrix pinvmx_on S u, which represents the partial inverse of u that maps the image of u (represented by u) to S, and which is correct only when S is indeed a complement of kermx u.
+
+#<div>#
 *)
+Lemma pinvmx_on_key : unit. Proof. exact: tt. Qed.
+Definition pinvmx_on (F : fieldType) (m n : nat) (S : 'M_m)
+   (A : 'M[F]_(m, n)) : 'M_(n, m) :=
+ locked_with pinvmx_on_key (pinvmx A *m proj_mx S (kermx A)).
 
-Lemma sum_mull f (k n : nat) :
-  k * (\sum_(0 <= i < n) f i) = \sum_(0 <= i < n) (k * f i).
+Lemma pinvmx_on_sub (F : fieldType) (m n : nat) (S : 'M_(m))
+   (A : 'M[F]_(m, n)) : (pinvmx_on S A <= S)%MS.
 Proof.
-(*D*)(* elim: n => [|n IH]; first by rewrite !big_geq. *)
-(*D*)(* by rewrite !big_nat_recr //= mulnDr IH. *)
-(*D*)by apply: (big_morph (fun n => k * n)) => // x y; rewrite mulnDr.
+rewrite [pinvmx_on _ _]unlock.
+by rewrite (submx_trans (proj_mx_sub _ _ _)) ?genmxE.
 Qed.
 
-(** *** Exercise 2 :
-    - Prove this statement by using big_morph
-*)
-
-Lemma sum_mulr f (k n : nat) :
-  (\sum_(0 <= i < n) f i) * k = \sum_(0 <= i < n) (f i * k).
+Lemma mulmxKpV_on (F : fieldType) (m1 m2 n : nat) (S : 'M_(m2))
+  (A : 'M[F]_(m1, n)) (B : 'M_(m2, n)) :
+  (S :&: kermx B)%MS = 0 ->
+  (S + kermx B == 1%:M)%MS ->
+  (A <= B)%MS -> A *m pinvmx_on S B *m B = A.
 Proof.
-(*D*)(* elim: n => [|n IH]; first by rewrite !big_geq. *)
-(*D*)(* by rewrite !big_nat_recr //= mulnDl IH. *)
-(*D*)by apply: (big_morph (fun n => n * k)) => // x y; rewrite mulnDl.
-Qed.
-
-
-(** *** Exercise 3 :
-    - Prove this statement by induction.
-    - Relevant lemmas are
-        - doubleS odd_double addn0 addnn mulnn
-        - big_mkcond big_nat_recr big_geq
-*)
-
-Lemma sum_odd n : \sum_(0 <= i < n.*2 | odd i) i = n ^ 2.
-Proof.
-(*D*)elim: n => [|n IHn]; first by rewrite big_geq.
-(*D*)rewrite doubleS big_mkcond 2?big_nat_recr // -big_mkcond /=.
-(*D*)rewrite {}IHn odd_double /= addn0 -addnn -!mulnn.
-(*D*)by rewrite mulSn mulnC mulSn addnA addSn addnC.
-Qed.
-
-
-(** *** Exercise 4 :
-    - Prove this statement by induction.
-    - Relevant lemmas are
-        - doubleD muln2 addn2 big_nat_recr big_geq
-*)
-
-Lemma sum_gauss n : (\sum_(0 <= i < n) i).*2 = n * n.-1.
-Proof.
-(*D*)elim: n => [|n IH]; first by rewrite big_geq.
-(*D*)rewrite big_nat_recr //= doubleD {}IH.
-(*D*)case: n => [|n /=]; first by rewrite muln0.
-(*D*)by rewrite -muln2 -mulnDr addn2 mulnC.
-Qed.
-
+move=> SIkB0 SDkB1 subAB; rewrite [pinvmx_on _ _]unlock.
+(*D*)rewrite -[RHS](mulmxKpV subAB).
+(*D*)symmetry; apply: subr0_eq; rewrite -mulmxBl -mulmxBr (sub_kermxP _) //.
+(*D*)by rewrite mulmx_sub // proj_mx_compl_sub // (eqmxP SDkB1) submx1.
+(*A*)Qed.
 
 (**
-   In what follows we are going to mimic the proof of Gauss :
-
-<<
-       1 +     2 + .....        +  n.-2     + n.-1
- +  n.-1 +  n.-2 +              +     2     +    1
-
-   = n.-1 * n
->>
-
-**)
-
-
-(** *** Exercise 5 :
-    - Prove this statement without induction.
-    - Relevant lemma is big_nat_rev
+#</div>#
+#</div>#
 *)
+(** -------------------------------------------- *)
+(** #<div class='slide'>#
 
-Lemma sum_gauss_rev n : \sum_(0 <= i < n) (n.-1 - i)  = \sum_(0 <= i < n) i.
+* Exercices de mathématiques oraux X-ens Algebre 1
+
+* Exercise 6.12: Endomorphisms u such that Ker u = Im u.
+
+Let E be a vector space (any dimension, but in Coq we reason in finite
+dimension).
+#<div>#
+*)
+Section ex_6_12.
+
+Variables (F : fieldType) (n' : nat).
+Let n := n'.+1.
+
+Section Q1.
+(**
+#</div>#
+** Question 1.
+
+Let u be an endomorphism of E, such that Ker u = Im u and S be a
+complement of Im u, so that E is the direct sum of S and Im u.
+
+- First, prove that E is the direct sum of S and Ker u
+
+#<div># *)
+Variable (u : 'M[F]_n) (S : 'M[F]_n).
+Hypothesis eq_keru_imu : (kermx u :=: u)%MS.
+Hypothesis S_u_direct : (S :&: u)%MS = 0.
+Hypothesis S_u_eq1 : (S + u == 1)%MS.
+
+Fact S_ku_direct : (S :&: kermx u)%MS = 0.
 Proof.
-(*D*)rewrite [RHS]big_nat_rev /=.
-(*D*)by case: n => //.
-Qed.
+(*D*)apply/eqmx0P; rewrite !(cap_eqmx (eqmx_refl _) eq_keru_imu).
+(*D*)by rewrite !S_u_direct submx_refl.
+(*A*)Qed.
+Hint Resolve S_ku_direct.
 
-(** *** Exercise 6 :
-    - Prove this statement without induction.
-    - Relevant lemma is addnn
+Fact S_ku_eq1 : (S + kermx u == 1)%MS.
+(*A*)Proof. by rewrite !(adds_eqmx (eqmx_refl _) eq_keru_imu) S_u_eq1. Qed.
+Hint Resolve S_ku_eq1.
+
+Implicit Types (x y z : 'rV[F]_n).
+(** #</div># *)
+(** -------------------------------------------- *)
+(** #<div class='slide'>#
+
+*** Question 1.a.
+
+Show that for all x in E, there is a unique pair (y, z) in S² such
+that x = y + u (z), and pose v and z so that y = v(x) and z = w(x).
+
+Instead of defining y and z for each x, we now define explicitly the
+matrix that computes y and z from x.
+
+ - A direct consequence of this is that v and w will be morphisms by
+  construction, you can thus skip the part of the paper proof that
+  deals with this.
+
+#<div># *)
+Definition w := locked (proj_mx S u).
+Definition v := locked (proj_mx u S * pinvmx_on S u).
+(** #</div>#
+
+Note that we used locking in order to protect w and v from expanding
+unexpectedly during proofs.
+
+#</div>#
 *)
-Lemma sum_gauss_double n : (\sum_(0 <= i < n) i).*2  =
-       \sum_(0 <= i < n) i + \sum_(0 <= i < n) (n.-1 - i).
+(** -------------------------------------------- *)
+(** #<div class='slide'>#
+
+**** Question 1.a.i.
+
+Prove the following lemmas.
+
+#<div># *)
+Lemma wS x : (x *m w <= S)%MS.
 Proof.
-(*D*)by rewrite sum_gauss_rev addnn.
-Qed.
+unlock w.
+(*D*)by rewrite proj_mx_sub.
+(*A*)Qed.
 
-
-(** *** Exercise 7 :
-    - Prove this statement without induction.
-    - Relevant lemma are big_split and eq_big_nat
-*)
-
-Lemma sum_gaussD n :
-  \sum_(0 <= i < n) i + \sum_(0 <= i < n) (n.-1 - i) =
-           \sum_(0 <= i < n) n.-1.
+Lemma vS x : (x *m v <= S)%MS.
 Proof.
-(*D*)rewrite -big_split /=.
-(*D*)apply: eq_big_nat => i Hi.
-(*D*)rewrite addnC subnK //.
-(*D*)by case: n Hi.
-Qed.
+unlock v.
+(*D*) by rewrite mulmxA mulmx_sub ?pinvmx_on_sub.
+(*A*)Qed.
 
-
-(** *** Exercise 8 :
-    - Prove this statement without induction.
-    - Relevant lemma are sum_nat_const_nat
-*)
-
-Lemma sum_gauss_const n k : \sum_(0 <= i < n) k = n * k.
+Lemma w_id x : (x <= S)%MS -> x *m w = x.
 Proof.
-(*D*)by rewrite sum_nat_const_nat subn0.
-Qed.
+unlock w => xS.
+(*D*)by rewrite proj_mx_id ?S_u_direct.
+(*A*)Qed.
+(** #</div>#
 
+**** Question 1.a.ii.
 
-(** *** Exercise 9 :
-    - Prove this statement using exercises 5-8
-*)
-Lemma sum_gauss_alt1 n : (\sum_(0 <= i < n) i).*2 = n * n.-1.
+#<div># *)
+Lemma Su_rect x : x = x *m w + (x *m v) *m u.
 Proof.
-(*D*)by rewrite sum_gauss_double sum_gaussD sum_gauss_const.
-Qed.
+unlock v w.
+(*D*)rewrite [x *m (_ *_)]mulmxA mulmxKpV_on ?proj_mx_sub//.
+(*D*)by rewrite add_proj_mx // (eqmxP S_u_eq1) submx1.
+(*A*)Qed.
 
+(** #</div># #</div># *)
+(** -------------------------------------------- *)
+(** #<div class='slide'>#
 
-(** *** Exercise 10 :
-    - Prove this statement directly without using the lemmas
-    - defined in exercises 5-9
-*)
+**** Question 1.a.iii.
 
-Lemma sum_gauss_alt2 n : (\sum_(0 <= i < n) i).*2 = n * n.-1.
+From the following lemma
+
+#<div># *)
+Lemma Su_dec_eq0 y z : (y <= S)%MS -> (z <= S)%MS ->
+  (y + z *m u == 0) = (y == 0) && (z == 0).
 Proof.
-(*D*)rewrite -addnn [X in X + _ = _]big_nat_rev -big_split /=.
-(*D*)rewrite -[X in _ = X * _]subn0 -sum_nat_const_nat.
-(*D*)apply: eq_big_nat => i.
-(*D*)by case: n => // n /andP[iP iLn]; rewrite [_ + _]subnK.
+move=> yS zS; apply/idP/idP; last first.
+  by move=> /andP[/eqP -> /eqP ->]; rewrite add0r mul0mx.
+rewrite addr_eq0 -mulNmx => /eqP eq_y_Nzu.
+have : (y <= S :&: u)%MS by rewrite sub_capmx yS eq_y_Nzu submxMl.
+rewrite S_u_direct // submx0 => /eqP y_eq0.
+move/eqP: eq_y_Nzu; rewrite y_eq0 eq_sym mulNmx oppr_eq0 eqxx /= => /eqP.
+move=> /sub_kermxP; rewrite eq_keru_imu => z_keru.
+have : (z <= S :&: u)%MS by rewrite sub_capmx zS.
+by rewrite S_u_direct // submx0.
 Qed.
+(** #</div>#
+deduce
 
-
-(** ***  Now we try to prove the sum of squares.
-
-**)
-
-(** ***  We first define the property for a function to be increasing
-**)
-
-
-Definition fincr f := forall n, f n <= f n.+1.
-
-(** *** Exercise 11 :
-    - Prove this statement by induction
-*)
-
-Lemma fincrD f m n : fincr f -> f m <= f (n + m).
+#<div># *)
+Lemma Su_dec_uniq y y' z z' : (y <= S)%MS -> (z <= S)%MS ->
+                              (y' <= S)%MS -> (z' <= S)%MS ->
+  (y + z *m u == y' + z' *m u) = (y == y') && (z == z').
 Proof.
-(*D*)move=> Hf; elim: n => // n H; exact: leq_trans H (Hf _).
-Qed.
+(*D*)move=> yS zS y'S z'S; rewrite -subr_eq0 opprD addrACA -mulmxBl.
+(*D*)by rewrite Su_dec_eq0 ?addmx_sub ?eqmx_opp // !subr_eq0.
+(*A*)Qed.
+(** #</div># #</div># *)
+(** -------------------------------------------- *)
+(** #<div class='slide'>#
+**** Question 1.a.iii.
 
+Show some simplification lemmas
+- the two first are direct
+- the two last use Su_dec_uniq.
 
-(** *** Exercise 12 :
-    - Prove this statement using exercise 11
-    - Hint : subnK
-*)
+#<div># *)
+Lemma u2_eq0 : u *m u = 0.
+(*A*)Proof. by apply/sub_kermxP; rewrite eq_keru_imu. Qed.
 
-Lemma fincr_leq f m n : fincr f -> m <= n -> f m <= f n.
+Lemma u2K m (a : 'M_(m,n)) : a *m u *m u = 0.
+(*D*)Proof. by rewrite -mulmxA u2_eq0 mulmx0. Qed.
+
+Lemma uv x : (x <= S)%MS -> (x *m u) *m v = x.
 Proof.
-(*D*)by move=> Hf Hn; rewrite -(subnK Hn) fincrD.
-Qed.
+(*D*)move=> xS; have /eqP := Su_rect (x *m u).
+(*D*)rewrite -[X in X == _]add0r Su_dec_uniq ?sub0mx ?vS ?wS //.
+(*D*)by move=> /andP [_ /eqP <-].
+(*A*)Qed.
 
-
-(** *** Exercise 13 :
-        - Proof by induction
-        - Hints : addnCA subnK fincr_leq big_geq
-*)
-
-Lemma sum_consecutive n f :
-  fincr f -> f n = \sum_(0 <= i < n) (f i.+1 - f i) + f 0.
+Lemma uw x : (x <= S)%MS -> (x *m u) *m w = 0.
 Proof.
-(*D*)move=> Hf.
-(*D*)elim: n => [|n IH]; first by  rewrite big_geq.
-(*D*)by rewrite big_nat_recr //= addnAC -IH addnC subnK.
-Qed.
+(*D*)move=> xS; have /eqP := Su_rect (x *m u).
+(*D*)rewrite -[X in X == _]add0r Su_dec_uniq ?sub0mx ?vS ?wS //.
+(*D*)by move=> /andP [/eqP <-].
+(*A*)Qed.
+(** #</div># #</div># *)
+(** -------------------------------------------- *)
+(** #<div class='slide'>#
 
+*** Question 1.b.
 
-(** *** Exercise 14 :
-        - Proof using the previous lemma
-        - Hints : leq_exp2r
-*)
-Lemma sum_consecutive_cube n :
-  n^3 = \sum_(0 <= i < n) (i.+1 ^ 3 - i ^ 3).
+- Show that v is linear. (by definition)
+- Show that u o v + v o u = 1.
+
+#<pre>#
+Indeed u (v x) + v (u x)
+  = u (v x) + v (u (w x)) + v (u (u (v x))) by Su_rect
+  = u (v x) + v (u (w x)) by u2K
+  = u (v x) + w x by uv
+  = x by -Su_rect
+#</pre>#
+#<div># *)
+Lemma add_uv_vu : v *m u + u *m v = 1.
 Proof.
-(*D*)rewrite (sum_consecutive _ (fun i => i ^ 3)) ?addn0 //.
-(*D*)by move=> m; rewrite leq_exp2r.
-Qed.
+(*D*)apply/row_matrixP => i; rewrite !rowE; set x := delta_mx _ _.
+(*D*)rewrite mulmx1 mulmxDr !mulmxA {2}[x]Su_rect mulmxDl u2K addr0.
+(*D*)by rewrite uv ?wS // addrC -Su_rect.
+(*A*)Qed.
+(** #</div>#
 
+*** Question 1.c.
 
-(** *** We give the proof of a technical result
-*)
+- Show that w is linear.
+- Show that u o w + w o u = u.
 
-Ltac sring :=
-  rewrite !(expn1, expnS, =^~mul2n, mulSn, mulnS, addnS, addSn,
-          mulnDr, mulnDl, add0n, addn0, muln0, addnA, mulnA);
-  do ! congr (S _);
-  do ! ((congr (_ + _); [idtac]) ||  (rewrite [in LHS]addnC ?[in LHS]addnA //)).
-
-Lemma succ_cube n : n.+1 ^ 3 = n ^ 3  + (3 * n ^ 2 + 3 * n + 1).
-Proof. sring. Qed.
-
-(** *** Exercise 15 :
-        - Hints : big_split sum_mull sum_gauss sum_gauss_const
-*)
-Lemma sum_sum3 n :
-  \sum_(0 <= i < n) (6 * i ^ 2 + 6 * i + 2) =
-   6 * (\sum_(0 <= i < n)  i ^ 2) + 3 * n * n.-1 + n.*2.
+#<pre>#
+Indeed u (w x) + w (u x)
+  = u (w x) + w (u (w x)) + w (u (u (v x))) by Su_rect
+  = u (w x) + w (u (w x)) by u2K
+  = u (w x) by uw
+  = u (x - u (v x)) by  Su_rect
+  = u x by u2K
+#</pre>#
+#<div># *)
+Lemma add_wu_uw : w *m u + u *m w = u.
 Proof.
-(*D*)rewrite big_split big_split /=.
-(*D*)rewrite -!sum_mull sum_gauss_const.
-(*D*)by rewrite -mulnA -sum_gauss // -mul2n mulnA muln2.
-Qed.
+(*D*)apply/row_matrixP => i; rewrite !rowE; set x := delta_mx _ _.
+(*D*)rewrite mulmxDr !mulmxA {2}[x]Su_rect mulmxDl u2K addr0 uw ?wS // addr0.
+(*D*)by have /(canLR (addrK _)) <- := Su_rect x; rewrite mulmxBl u2K subr0.
+(*A*)Qed.
 
+End Q1.
+(** #</div># #</div># *)
+(** -------------------------------------------- *)
+(** #<div class='slide'>#
 
-(** *** Exercise 16 :
-        - Hints : big_split sum_mull sum_gauss sum_gauss_const
+** Questions 2 and 3
+
+Let u be a endomorphism of E such that u^2 = 0.
+
+- Q2. Suppose there is a v such that u v + v u = 1, prove the kernel and image of u are equal.
+
+- Q3. Suppose u != 0 and suppose there is a w such that uw + wu = u. Find a counter example of Ker u = Im u. (Hint: take u e1 = 0, u e2 = 0 and u e3 = e2 in 'M_3 and use a dimension argument).
+
+#<div>#
 *)
-Lemma sum_sum4 n :
- (n ^ 3).*2 = 6 * (\sum_(0 <= i < n)  i ^ 2) + 3 * n * n.-1 + n.*2.
+
+Section Q2.
+
+Variable (u : 'M[F]_n).
+
+Lemma u20_eq_u_kermx v : u ^+ 2 = 0 -> v *m u + u *m v = 1 -> (u == kermx u)%MS.
 Proof.
-(*D*)rewrite sum_consecutive_cube -sum_sum3 -mul2n sum_mull.
-(*D*)apply: eq_big_nat => i Hi.
-(*D*)by rewrite succ_cube addKn 2!mulnDr !mulnA.
-Qed.
+(*D*)move=> u20 vuDuv_eq1; apply/andP; split; first by apply/sub_kermxP.
+(*D*)apply/rV_subP => x /sub_kermxP xu_eq0.
+(*D*)have /(congr1 (fun w => x *m w)) := vuDuv_eq1; rewrite mulmx1 => <-.
+(*D*)by rewrite mulmxDr !mulmxA xu_eq0 mul0mx addr0 mulmx_sub.
+(*A*)Qed.
 
-(** *** Another technical lemma
-*)
+End Q2.
 
-Lemma sum_tech n : (n ^ 3).*2 = n * n.-1 * n.-1.*2.+1 + 3 * n * n.-1 + n.*2.
-Proof. by case: n => //= n1; sring. Qed.
+Section Q3.
 
+Hypothesis charF_neq2 : [char F]^'.-nat 2%N.
 
-(** *** Exercise 17 :
-      - Hint : addIn sum_sum4 sum_tech.
-*)
-Lemma sum_square n : 6 * (\sum_(0 <= i < n)  i ^ 2) =  n * n.-1 * n.-1.*2.+1.
+Let u : 'M[F]_3 :=
+(*D*)\matrix_(i, j) ((i == 2%N :> nat) && (j == 1%N :> nat))%:R.
+Let w : 'M[F]_3 :=
+(*D*)2%:R^-1 *: 1.
+
+Lemma u_neq0 : u != 0.
+(*D*)by apply/negP => /eqP /matrixP /(_ 2%:R 1) /eqP; rewrite !mxE !eqxx oner_eq0.
+(*A*)Qed.
+
+Lemma wuDuw_eq_u : w *m u + u *m w = u.
 Proof.
-(*D*)apply: (@addIn (3 * n * n.-1 + n.*2)).
-(*D*)by rewrite addnA -sum_sum4 sum_tech !addnA.
-Qed.
+(*D*)rewrite -scalemxAl -scalemxAr mul1mx mulmx1 -scalerDl.
+(*D*)by rewrite -mulr2n -mulr_natl divff ?natf_neq0 // scale1r.
+(*A*)Qed.
 
-(** *** Exercise 18 :
-     - Prove the theorem directly using only sum_gauss and the tactic sring.
-*)
-Lemma sum_square_alt n : 6 * (\sum_(0 <= i < n)  i ^ 2) =  n * n.-1 * n.-1.*2.+1.
+Lemma neq_u_kermxu : (u != kermx u)%MS.
 Proof.
-(*D*)apply: (@addIn (3 * n * n.-1 + n.*2)).
-(*D*)rewrite addnA -[6]/(2 * 3) -!mulnA mul2n (big_morph _ (mulnDr _) (muln0 _)).
-(*D*)rewrite -{1}sum_gauss -doubleMr (big_morph _ (mulnDr _) (muln0 _)).
-(*D*)rewrite -{3}[n]muln1 -{3}[n]subn0 -sum_nat_const_nat.
-(*D*)rewrite -!doubleD -!big_split /=.
-(*D*)rewrite (eq_big_nat _ _ (_ : forall i, _ -> _ = i.+1 ^ 3 - i ^3)) => [|i H]; last first.
-(*D*)  rewrite -[LHS](addKn (i ^ 3)); congr (_ - _).
-(*D*)  by sring.
-(*D*)apply: etrans (_ : (n^3).*2 = _).
-(*D*)  congr (_.*2).
-(*D*)  elim: n => [|n IH]; first by rewrite big_geq.
-(*D*)  by rewrite big_nat_recr //= IH addnC subnK // leq_exp2r.
-(*D*)by case: n => //= n1; sring.
-Qed.
+(*D*)suff: \rank u != \rank (kermx u) by apply: contraNneq=> <-.
+(*D*)by rewrite mxrank_ker; have := rank_leq_row u; case: (\rank _) => [|[|[]]].
+(*A*)Qed.
+
+End Q3.
+End ex_6_12.
+End CPGE.

@@ -1,476 +1,343 @@
-
+Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import all_ssreflect.
+(**
+#<div class="slide">#
+** Recap
 
-Set Implicit Arguments.
-Unset Strict Implicit.
-Unset Printing Implicit Defensive.
+ Proof language
+   - [: name], to prepare the goal for a tactic
+   - [=>] [name] [/view] [//] [/=] [{name}] [[]], to post-process the goal
+   - [rewrite lem -lem // /= /def]
+   - [apply: lem]
+ Library
+   - naming convention: [addnC], [eqP], [orbN], [orNb], ...
+   - notations: [.+1], [if-is-then-else]
+   - [Search _ (_ + _) in ssrnat]
+   - [Search _ addn "C" in ssrnat]
+   - Use the HTML doc!
+ Approach
+   - boolean predicates
+   - [reflect P b] to link bool with Prop
+
+#</div>#
+--------------------------------------------------------
+#<div class="slide">#
+** Today
+   - The [seq] library
+   - forward reasoning with [have]
+   - spec lemmas
+   - [rewrite] patterns
+
+#</div>#
+--------------------------------------------------------
+--------------------------------------------------------
+#<div class="slide">#
+** Sequences
+  - an alias for lists (used to be differnt)
+  - many notations
+
+#<div>#
+*)
+Check [::].
+Check [:: 3 ; 4].
+Check [::] ++ [:: true ; false].
+Eval compute in [seq x.+1 | x <- [:: 1; 2; 3]].
+Eval compute in [seq x <- [::3; 4; 5] | odd x ].
+Eval compute in rcons [:: 4; 5] 3.
+Eval compute in all odd [:: 3; 5].
+
+Module polylist.
+
+(**
+#</div>#
+
+#<div class="note">(notes)<div class="note-text">#
+Notations for sequentes are documented the header of the 
+#<a href="http://math-comp.github.io/math-comp/htmldoc/mathcomp.ssreflect.seq.html">seq.v</a># file.
+[rcons] is like [cons] but the new element is placed in the last position.
+Indeed it is not a real constructor, but rather a function that appends the singleton list.
+This special case of append has its own name and collection of theorems.
+#</div></div>#
+
+#</div>#
+--------------------------------------------------------
+#<div class="slide">#
+** Polymorphic lists
+   - This statement makes no assumptions on T
+   - recap: [// /= ->]
+
+#<div>#
+*)
+Lemma size_cat T (s1 s2 : seq T) : size (s1 ++ s2) = size s1 + size s2.
+Proof.  by elim: s1 => //= x s1 ->. Qed.
+
+End polylist.
+
+Eval compute in 3 \in [:: 7; 4; 3].
+
+Fail Check forall T : Type, forall x : T, x \in [:: x ].
 
 (** 
+#</div>#
 
-----------------------------------------------------------
+#</div>#
+--------------------------------------------------------
 #<div class="slide">#
-** Lesson 2: summary
-
-- statements
-- proofs by computation
-- proofs by case split
-- proofs by rewriting
-
-#<p><br/><p>#
-
-#</div>#
-
-----------------------------------------------------------
-#<div class="slide">#
-** Formal proofs 
-
-Today we learn how to state and prove theorems.
-We don't do that in the void, nor without a methodology.
-
-We work on top of the Mathematical Components library
-and we follow the Small Scale Reflection approach using
-the SSReflect proof language.
-
-The Mathematical Components library can be
-#<a href="http://math-comp.github.io/math-comp/">browsed online</a>#.
-The modules of interest are
-#<a href="https://github.com/math-comp/math-comp/blob/master/mathcomp/ssreflect/ssrnat.v">ssrnat</a>#
- and 
-#<a href="https://github.com/coq/coq/blob/master/plugins/ssr/ssrbool.v">ssrbool</a>#
- (see the headers for the doc).
-
-The SSReflect proof language
-(#<a href="https://coq.inria.fr/distrib/current/refman/proof-engine/ssreflect-proof-language.html">reference manual</a>#)
-is covered in full details by the Mathematical Components book.
-Here we just cover the basics.
-
-
-#<p><br/><p>#
-#</div>#
-
-----------------------------------------------------------
-#<div class="slide">#
-** Formal statements
-
-Most of the statements that we consider in Mathematical
-Components are equalities.
-
+** Had-hoc polymorphism
+  - T : Type |- l : list T 
+  - T : eqType |- l : list T
+  - eqType means: a type with a decidable equality (_ == _)
 #<div>#
 *)
 
-Check (_ = _).
-Locate "_ = _".
+Check forall T : eqType, forall x : T, x \in [:: x ].
 
 (**
 #</div>#
-
-For example, we can equate two expressions representing natural numbers.
-
-#<div>#
-
-*)
-
-Lemma addnA: forall (m n k : nat), m + (n + k) = (m + n) + k.
-Abort.
-
-(**
-#</div>#
-
-Addition is defined as left-associative.
-
-#<div>#
-*)
-
-Lemma addnA: forall (m n k : nat), m + (n + k) = m + n + k.
-Abort.
-
-(**
-#</div>#
-
-Quantifications can be set as parameters before the colon.
-
-#<div>#
-*)
-
-Lemma addnA (m n k : nat) : m + (n + k) = m + n + k.
-Abort.
-
-(**
-#</div>#
-
-In lesson 1 we have defined many boolean tests that can
-play the role of (decidable) predicates.
-
-#<div>#
-*)
-
-Check 0 <= 4. (* not a statement *)
-Check (0 <= 4) = true. (* a statement we can prove *)
-
-(**
-#</div>#
-
-#<div style='color: red; font-size: 150%;'>#
-Motto: whenever possible predicates are expressed as a programs.
-#</div>#
-
-This choice has a deep impact on the proofs we make in lesson 2 and 3 and
-the way we can form new types in lesson 4.
-
-Booleans can be coerced into statements.
-#<div>#
-*)
-
-Check is_true (* Definition is_true b := b = true *).
-
-(**
-#</div>#
-
-Tests can be turned into statements.
-
-#<div>#
-*)
-
-Check (_ <= _).
-
-Check is_true (_ <= _).
-
-Lemma leq0n (n : nat) : is_true (0 <= n).
-Abort.
-
-(**
-#</div>#
-
- the [is_true]
-"coercion" is automatically inserted by Coq.
-
-#<div>#
-*)
-
-Lemma leq0n (n : nat) : 0 <= n.
-Abort.
-
-(**
-#</div>#
-
-Equality statement between tests reads as  "if and only if".
-
-#<div>#
-*)
-
-Print Nat.sub.
-
-Lemma eqn_leq (m n : nat) : m == n = (m <= n) && (n <= m).
-Abort.
-
-(**
-#</div>#
-
-[(_ <= _) && (_ <= _)] has a special notation [(_ <= _ <= _)]
-
-#<div>#
-*)
-
-Lemma eqn_leq (m n : nat) : m == n = (m <= n <= m).
-Abort.
-
-(**
-#</div>#
-
-#<p><br/><p>#
 
 #<div class="note">(notes)<div class="note-text">#
-This slide corresponds to
-section 2.1 of
-#<a href="https://math-comp.github.io/mcb/">the Mathematical Components book</a>#
+Had-hoc polymorphism is a well established concept in object
+oriented programming languages and as well in functional
+languages equipped with type classes like Haskell.
+Whenever [T] is an [eqType], we have a comparison
+function for all terms of type [T] ([x] in the example above).
 #</div></div>#
 
-#<p><br/><p>#
 #</div>#
-----------------------------------------------------------
+--------------------------------------------------------
 #<div class="slide">#
-** Proofs by computation
-
-Our statements are programs. Hence they compute!
-
-The [by[]] tactic solves trivial goal (mostly) by
-computation.
-
-<<
-Fixpoint addn n m :=
-  if n is p.+1 then (addn p m).+1 else m.
->>
+** The \in notation
+   - overloaded as [(_ == _)]
+   - pushing \in with inE
+   - computable.
+   - rewrite !inE
 #<div>#
 *)
-
-Goal  2 + 2 = 4.
-Proof. by []. Qed.
-
-
-Lemma addSn m n : m.+1 + n = (m + n).+1.
-Proof. by []. Qed.
+Lemma test_in l : 3 \in [:: 4; 5] ++ l -> l != [::].
+Proof.
+by rewrite !inE => /=; apply: contraL => /eqP->.
+Qed.
 
 
 (**
 #</div>#
+
+#</div>#
+--------------------------------------------------------
+#<div class="slide">#
+** Forward reasoning
+   - have
+   - have :=
+   - have + views
+   - do I need eqType here?
+
+
+Definition of all
 <<
-Fixpoint subn m n : nat :=
+Fixpoint all a s := if s is x :: s' then a x && all a s' else true.
+>>
+
+Definition of count
+<<
+Fixpoint count a s := if s is x :: s' then a x + count s' else 0.
+>>
+
+A lemma linking the two concepts 
+
+#<div>#
+*)
+Lemma all_count (T : eqType) (a : pred T) s :
+  all a s = (count a s == size s).
+Proof.
+elim: s => //= x s.
+have EM_a : a x || ~~ a x.
+  by exact: orbN.
+move: EM_a => /orP EM_a. case: EM_a => [-> | /negbTE-> ] //= _.
+(*# have /orP[ ax | n_ax ] : a x || ~~ a x by case: (a x). #*)
+(*# Search _ count size in seq. #*)
+by rewrite add0n eqn_leq andbC ltnNge count_size.
+(*# have := boolP (a x). #*)
+Qed.
+
+(**
+#</div>#
+#</div>#
+--------------------------------------------------------
+--------------------------------------------------------
+#<div class="slide">#
+** Spec lemmas
+   - Inductive predicates to drive the proof
+#<div>#*)
+
+Module myreflect1.
+
+Inductive reflect (P : Prop) (b : bool) : Prop :=
+  | ReflectT (p : P) (e : b = true)
+  | ReflectF (np : ~ P) (e : b = false).
+
+Fixpoint eqn m n :=
   match m, n with
-  | p.+1, q.+1 => subn p q
-  | _ , _ => m
+  | 0, 0 => true
+  | j.+1,k.+1 => eqn j k
+  | _, _ => false
   end.
->>
-#<div>#
-*)
+Arguments eqn !m !n.
 
-Goal  2 - 4 = 0.
-Proof. by []. Qed.
+Axiom eqP : forall m n, reflect (m = n) (eqn m n).
 
-Lemma subn0 m n : m.+1 - n.+1 = m - n.
-Proof. by []. Qed.
+Lemma test_reflect1 m n : ~~ (eqn m n) || (n <= m <= n).
+Proof.
+case: (eqn m n) => /=.
+(*# case: (eqP m n) => [Enm -> | nE_mn ->] /=. #*)
+Admitted.
 
-(**
-#</div>#
-<<
-Definition leq m n := m - n == 0.
->>
-#<div>#
-*)
+End myreflect1.
 
-Goal  0 <= 4.
-Proof. by []. Qed.
+(*#
+Module myreflect2.
 
-(**
-#</div>#
+Inductive reflect (P : Prop) : bool-> Prop :=
+  | ReflectT (p : P) : reflect P true
+  | ReflectF (np : ~ P) : reflect P false.
 
-[_ < _] is just a notation for [_.+1 <= _].
+Fixpoint eqn m n :=
+  match m, n with
+  | 0, 0 => true
+  | j.+1,k.+1 => eqn j k
+  | _, _ => false
+  end.
+Arguments eqn !m !n.
 
-#<div>#
-*)
+Axiom eqP : forall m n, reflect (m = n) (eqn m n).
+Arguments eqP {m n}.
 
-Goal  3 < 3 = false.
-Proof. by []. Qed.
+Lemma test_reflect1 m n : ~~ (eqn m n) || (n <= m <= n).
+Proof.
+case: (@eqP m n) => [Enm | nE_mn ] /=.
+by case: eqP => [->|] //=; rewrite leqnn.
+Qed.
 
-Goal  4 <= 3 = false.
-Proof. by []. Qed.
+End myreflect2.
 
-Lemma leq0n n : 0 <= n.
-Proof. by []. Qed.
+Check (_ =P _).
+Check eqP.
 
-Lemma ltn0 n : n.+1 <= 0 = false.
-Proof. by []. Qed.
+#*)
 
-Lemma ltnS m n : (m.+1 <= n.+1) = (m <= n).
-Proof. by []. Qed.
+Inductive leq_xor_gtn m n : bool -> bool -> Prop :=
+  | LeqNotGtn of m <= n : leq_xor_gtn m n true false
+  | GtnNotLeq of n < m  : leq_xor_gtn m n false true.
 
-(**
-#</div>#
-
-Notice the naming convention.
-
-#<div>#
-*)
-
-Print negb.
-Locate "~~".
-Search negb in ssr.ssrbool.
-
-Lemma negbK (b : bool) : ~~ (~~ b) = b.
-Proof. Fail by []. Abort.
+Axiom leqP : forall m n : nat, leq_xor_gtn m n (m <= n) (n < m).
 
 (**
 #</div>#
 
-It is not always the case the computation solves all our
-problems. In particular here there are no constructors to
-consume, hence computation is stuck.
-
-To prove [negbK] we need a case split.
-
-#<p><br/><p>#
-
-
-#<div class="note">(notes)<div class="note-text">#
-This slide corresponds to
-section 2.2.1 of
-#<a href="https://math-comp.github.io/mcb/">the Mathematical Components book</a>#
-#</div></div>#
-
-#<p><br/><p>#
 #</div>#
-
-
-----------------------------------------------------------
+--------------------------------------------------------
 #<div class="slide">#
-** Proofs by case analysis 
-
-The proof of [negbK] requires a case analysis: given that
-[b] is of type bool, it can only be [true] or [false].
-
-The [case: term] command performs this proof step.
-
-#<div>#
-*)
-
-Lemma negbK b : ~~ (~~ b) = b.
+** Let's try out leqP on an ugly goal
+   - matching of indexes
+   - generalization of unresolved implicits
+   - instantiation by matching
+#<div>#*)
+Lemma test_leqP m n1 n2 :
+  (m <= (if n1 < n2 then n1 else n2)) =
+  (m <= n1) && (m <= n2) && ((n1 < n2) || (n2 <= n1)).
 Proof.
-case: b.
-  by [].
-by [].
-Qed.
-
-Lemma andbC (b1 b2 : bool) : b1 && b2 = b2 && b1.
-Proof.
-by case: b1; case: b2.
-Qed.
-
-Lemma orbN b : b || ~~ b.
-Proof.
-by case: b.
+case: leqP => [leqn21 | /ltnW ltn12 ]; rewrite /= andbT.
+  by rewrite andb_idl // => /leq_trans /(_ leqn21).
+by rewrite andb_idr // => /leq_trans->.
 Qed.
 
 (**
 #</div>#
-
-The constructors of [bool] have no arguments, but for
-example the second constructor of [nat] has one.
-
-In this case one has to complement the command by supplying
-names for these arguments.
-
-#<div>#
-*)
-
-Lemma leqn0 n : (n <= 0) = (n == 0).
+#</div>#
+--------------------------------------------------------
+#<div class="slide">#
+** Another commodity: [ifP]
+   - a spec lemma for if-then-else
+   - handy with case, since matching spares you to write
+     the expressions involved
+   - remark how the goal is used as a work space
+#<div>#*)
+Lemma test_ifP n m : if n <= m then 0 <= m - n else m - n == 0.
 Proof.
-case: n => [| p].
-  by [].
-by [].
+case: ifP => //.
+by move=> /negbT; rewrite subn_eq0 leqNgt negbK=> /ltnW.
 Qed.
 
 (**
 #</div>#
+#</div>#
 
-Sometimes case analysis is not enough.
-
-[[
-Fixpoint muln (m n : nat) : nat :=
-  if m is p.+1 then n + muln p n else 0.
-]]
-
-#<div>#
-*)
-Lemma muln_eq0 m n :
-(m * n == 0) = (m == 0) || (n == 0).
+--------------------------------------------------------
+#<div class="slide">#
+** Rewrite on steroids
+   - keyed matching
+   - instantiation
+   - localization
+#<div>#*)
+Lemma subterm_selection n m :
+  n + (m * 2).+1 = n * (m + m.+1).
 Proof.
-case: m => [|p].
-  by [].
-case: n => [|k]; last first. (* rotates the goals *)
-  by [].
+rewrite addnC.
+rewrite (addnC m).
+rewrite [_ + m]addnC.
+rewrite [in n * _]addnC.
+rewrite [X in _ = _ * X]addnC.
+rewrite [in RHS]addnC.
+Abort.
+
+Lemma occurrence_selection n m :
+  n + m = n + m.
+Proof.
+rewrite addnC.
+rewrite [in RHS]addnC.
+Abort.
+
+Lemma no_pattern_from_the_rewrite_rule n : n + 0 = n.
+Proof.
+rewrite -[n in RHS]addn0.
 Abort.
 
 (**
 #</div>#
-
-We don't know how to prove this yet.
-But maybe someone proved it already...
-
-#<div>#
-*)
-Search _ (_ * 0) in ssrnat. (*   :-(   *)
-Search _ muln 0 in ssrnat.
-Print right_zero.
-Search right_zero.
-
-(**
 #</div>#
-
-The [Search] command is quite primitive but also
-your best friend. 
-
-It takes a head pattern, the whildcard [_]
-in the examples above, followed by term or patterns,
-and finally a location, in this case the [ssrnat] library.
-
-Our first attempt was unsuccessful because
-standard properies (associativity, communtativity, ...)
-are expressed in Mathematical Components using
-higher order predicates.
-In this way these lemmas are very consistent, but also
-harder to find if one does not know that.
-
-The second hit is what we need to complete the proof.
-
-#<div class="note">(notes)<div class="note-text">#
-This slide corresponds to
-sections 2.2.2 and 2.5 of
-#<a href="https://math-comp.github.io/mcb/">the Mathematical Components book</a>#
-#</div></div>#
-
-#<p><br/><p>#
-#</div>#
-
-----------------------------------------------------------
+--------------------------------------------------------
 #<div class="slide">#
-** Proofs by rewriting
+** References for this lesson:
+  - SSReflect #<a href="https://hal.inria.fr/inria-00258384">manual</a>#
+  - documentation of the
+       #<a href="http://math-comp.github.io/math-comp/htmldoc/libgraph.html">library</a>#
+    - in particular #<a href="http://math-comp.github.io/math-comp/htmldoc/mathcomp.ssreflect.seq.html">seq</a>#
 
-The [rewrite] tactic uses an equation. If offers many
-more flags than the ones we will see (hint: check the
-Coq user manual, SSReflect chapter).
+#</div>#
+--------------------------------------------------------
+#<div class="slide">#
+** Demo:
+   - you should be now able to read this proof
 
-#<div>#
-*)
+#<div>#*)
 
-Lemma muln_eq0 m n :
-  (m * n == 0) = (m == 0) || (n == 0).
+Lemma dvdn_fact m n : 0 < m <= n -> m %| n`!.
 Proof.
-case: m => [|p].
-  by [].
-case: n => [|q].
-  rewrite muln0.
-  by [].
-by [].
+case: m => //= m; elim: n => //= n IHn; rewrite ltnS leq_eqVlt.
+by move=> /orP[ /eqP-> | /IHn]; [apply: dvdn_mulr | apply: dvdn_mull].
 Qed.
 
-(**
-#</div>#
-
-Let's now look at another example to learn more
-about [rewrite].
-
-#<div>#
-*)
-Lemma leq_mul2l m n1 n2 :
-  (m * n1 <= m * n2) = (m == 0) || (n1 <= n2).
+Lemma prime_above m : {p | m < p & prime p}.
 Proof.
-rewrite /leq.
-(* Search _ muln subn in ssrnat. *)
-rewrite -mulnBr.
-rewrite muln_eq0.
-by [].
+(*# Check pdivP. #*)
+have /pdivP[p pr_p p_dv_m1]: 1 < m`! + 1 by rewrite addn1 ltnS fact_gt0.
+exists p => //; rewrite ltnNge; apply: contraL p_dv_m1 => p_le_m.
+(*# Check dvdn_addr. #*)
+by rewrite dvdn_addr ?dvdn_fact ?prime_gt0 // gtnNdvd ?prime_gt1.
 Qed.
-
-(**
-#</div>#
-
-
-#<div class="note">(notes)<div class="note-text">#
-This slide corresponds to
-section 2.2.3 of
-#<a href="https://math-comp.github.io/mcb/">the Mathematical Components book</a>#
-#</div></div>#
-
-#<p><br/><p>#
-#</div>#
-
-----------------------------------------------------------
-#<div class="slide">#
-** Lesson 2: sum up
-
-- [by []] trivial proofs (including computation)
-- [case: m] case split
-- [rewrite t1 -t2 /def] rewrite
-
-#</div>#
-
+    
+(** 
+#</div># 
+#</div># 
 *)
+
+

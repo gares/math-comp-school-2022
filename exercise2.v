@@ -1,174 +1,100 @@
-(** Cheat sheet available at
-      #<a href='https://www-sop.inria.fr/teams/marelle/types18/cheatsheet.pdf'>https://www-sop.inria.fr/teams/marelle/types18/cheatsheet.pdf</a>#
-*)
-
+Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import all_ssreflect.
 
-Implicit Type p q r : bool.
-Implicit Type m n a b c : nat.
+(** # This is the <a href="http://math-comp.github.io/math-comp/htmldoc/mathcomp.ssreflect.seq.html">doc of seq</a>, use it! #*)
 
-(** *** 
-    Try to prove the following theorems using no
-    lemma and minimizing the number of applications of
-    the tactic case
+(**
+
+----
+Exercise 1: 
+    - look up the documentation of [take] and [drop]
+    - prove this by induction (mind the recursive argument)
 *)
+Lemma cat_take_drop T n (s : seq T) : take n s ++ drop n s = s.
+Proof.
+(*D*)by elim: s n => [|x s IHs] [|n] //=; rewrite IHs.
+(*A*)Qed.
 
-(** *** Exercise 1:
+(** Exercise 2:
+   - look at the definition of [take] and [size] and prove the following lemma
+   - the proof goes by cases 
 *)
+Lemma size_take T n (s : seq T) :
+  size (take n s) = if n < size s then n else size s.
+Proof.
+(*D*)have [le_sn | lt_ns] := leqP (size s) n; first by rewrite take_oversize.
+(*D*)by rewrite size_takel // ltnW.
+(*A*)Qed.
 
-Lemma andTb p : true && p = p.
-(*D*)Proof. by []. Qed.
-
-(** *** Exercise 2:
+(** Exercise 3:
+    - another proof by cases 
 *)
+Lemma takel_cat T n (s1 s2 : seq T) :
+  n <= size s1 -> take n (s1 ++ s2) = take n s1.
+Proof.
+(*D*)move=> Hn; rewrite take_cat ltn_neqAle Hn andbT.
+(*D*)by case: (n =P size s1) => //= ->; rewrite subnn take0 cats0 take_size.
+(*A*)Qed.
 
-Lemma andbT p : p && true = p.
-(*D*)Proof. by case: p. Qed.
-
-(** *** Exercise 3:
+(** Exercise 4:
+    - Look up the definition of [rot]
+    - Look back in this file the lemma [cat_take_drop] 
+    - can you rewrite with it right-to-left in the right-hand-side of the goal? 
 *)
+Lemma size_rot T n (s : seq T) : size (rot n s) = size s.
+Proof.
+(*D*)by rewrite -[s in RHS](cat_take_drop _ n) /rot !size_cat addnC.
+(*A*)Qed.
 
-Lemma orbC p q : p || q = q || p.
-(*D*)Proof. by case: p; case: q. Qed.
-
-(** *** Exercise 4:
+(** Exercise 5:
+    - which is the size of an empty sequence?
+    - Use lemmas about [size] and [filter] 
 *)
-Goal forall p q,    (p && q) || (   p && ~~ q) || 
-                 (~~ p && q) || (~~ p && ~~ q). 
-(*D*)Proof. by move=> p q; case: p; case: q. Qed.
+Lemma has_filter (T : eqType) a (s : seq T)  : has a s = (filter a s != [::]).
+Proof.
+(*D*)by rewrite -size_eq0 size_filter has_count lt0n.
+(*A*)Qed.
 
-(** *** Exercise 5 :
+(** Exercise 6:
+    - prove that by induction 
 *)
-Goal forall p q r, (p || q) && r = r && (p || q).
-(*D*)Proof. by move=> p q r; case: (p || q); case: r. Qed.
+Lemma filter_all T a (s : seq T) : all a (filter a s).
+Proof. 
+(*D*)by elim: s => //= x s IHs; case: ifP => //= ->. 
+(*A*)Qed.
 
-Goal forall n, n < n.+1.
-by [].
-Qed.
-
-(** *** Exercise 6  :
-   - look up what [==>] 
+(** Exercise 7:
+  - prove that view (one branch is by induction) 
 *)
-(*D*)Locate "==>".
-(*D*)Print implb.
-Lemma implybE p q : p ==> q = ~~ p || q.
-(*D*) Proof. by case: p. Qed.
+Lemma all_filterP T a (s : seq T) :
+  reflect (filter a s = s) (all a s).
+Proof.
+(*D*)apply: (iffP idP) => [| <-]; last exact: filter_all.
+(*D*)by elim: s => //= x s IHs /andP[-> Hs]; rewrite IHs.
+(*A*)Qed.
 
-(** *** Exercise 7  :
-    Try to prove using the case tactic and alternatively
-    without using the case tactic
+(** Exercise 8:
+    - induction once more 
 *)
+Lemma mem_cat (T : eqType) (x : T) s1 s2 :
+  (x \in s1 ++ s2) = (x \in s1) || (x \in s2).
+Proof.
+(*D*)by elim: s1 => //= y s1 IHs; rewrite !inE /= -orbA -IHs.
+(*A*)Qed.
 
-Lemma negb_imply p q : ~~ (p ==> q) = p && ~~ q.
-(*D*) (* Proof. by case: p. Qed. *)
-(*D*) Proof. by rewrite implybE negb_or negbK. Qed.
-
-
-(** *** Exercise 8  :
-    Try to prove using the case tactic and alternatively
-    without using the case tactic
+(** Exercise 9:
+    - prove this by induction on [s] 
 *)
-Lemma Peirce p q : ((p ==> q) ==> p) ==> p.
-(*D*) (* Proof. by case: p; case: q. Qed. *)
-(*D*) Proof. by rewrite implybE negb_imply implybE orbK orNb. Qed.
+Lemma allP (T : eqType) (a : pred T) (s : seq T) :
+  reflect (forall x, x \in s -> a x) (all a s).
+Proof.
+(*D*)elim: s => [|x s IHs] /=; first by exact: ReflectT.
+(*D*)rewrite andbC; case: IHs => IHs /=.
+(*D*)  apply: (iffP idP) => [Hx y|].
+(*D*)    by rewrite inE => /orP[ /eqP-> // | /IHs ].
+(*D*)  by move=> /(_ x); apply; rewrite inE eqxx.
+(*D*)by apply: ReflectF=> H; apply: IHs => y Hy; apply H; rewrite inE orbC Hy.
+(*A*)Qed.
 
 
-(** *** Exercise 9 :
-    - what is [(+)] ?
-    - prove this using move and rewrite
-*)
-Lemma find_me p q :  ~~ p = q -> p (+) q.
-(*D*)Locate "(+)".
-(*D*)Search _ addb negb.
-(*D*)Proof. by move=> np_q; rewrite -np_q addbN negb_add. Qed.
 
-
-(** ***
-    maxn defines the maximum of two numbers 
-*)
-
-Print maxn.
-Search maxn in ssrnat.
-
-(** ***
-    We define the maxinum of three number as 
-    folllow  
-*)
-
-Definition max3n a b c :=
-   if a < b then maxn b c else maxn a c.
-
-(** ***
-    Try to prove the following theorem
-    (you may use properties of maxn)
-*)
-
-
-(** *** Exercise 10
-*)
-
-Lemma max3n3n a : max3n a a a = a.
-(*D*) Proof. by rewrite /max3n if_same maxnn. Qed.
-
-(** *** Exercise 11
-*)
-Lemma max3E a b c : max3n a b c = maxn (maxn a b) c.
-(*D*) Proof. by rewrite /max3n /maxn; case: (a < b). Qed.
-
-(** *** Exercise 12
-*)
-Lemma max3n_213 a b c : max3n a b c = max3n b a c.
-(*D*) Proof. by rewrite max3E (maxnC a) -max3E. Qed.
-
-(** *** Exercise 13
-*)
-Lemma max3n_132 a b c : max3n a b c = max3n a c b.
-(*D*) Proof. by rewrite max3E -maxnA (maxnC b) maxnA -max3E. Qed.
-
-(** *** Exercise 14
-*)
-Lemma max3n_231 a b c : max3n a b c = max3n b c a.
-(*D*) Proof. by rewrite max3n_213 max3n_132. Qed.
-
-(** ***
-    We define functions that test if 3 natural numbers are
-    in increasing (or decreasing) order 
-*)
-
-Definition order3n (T : Type) (r : rel T) x y z := (r x y) && (r y z).
-Definition incr3n := order3n nat (fun x y => x <= y).
-Definition decr3n := order3n nat (fun x y => y <= x).
-
-(** *** Exercise 15
-*)
-Lemma incr3n_decr a b c : incr3n a b c = decr3n c b a.
-(*D*) Proof. by rewrite /incr3n /order3n andbC. Qed.
-
-(** *** Exercise 16
-*)
-
-Lemma incr3_3n a : incr3n a a a.
-(*D*) by rewrite /incr3n /order3n leqnn. Qed.
-
-(** *** Exercise 17
-*)
-
-Lemma decr3_3n a : decr3n a a a.
-(*D*) by rewrite -incr3n_decr incr3_3n. Qed.
-
-(** *** Exercise 18
-*)
-
-Lemma incr3n_leq12 a b c : incr3n a b c -> a <= b.
-(*D*) by rewrite /incr3n /order3n; case: (_ <= _). Qed.
-
-(** *** Exercise 19
-*)
-Lemma incr3n_leq23 a b c : incr3n a b c -> b <= c.
-(*D*) by rewrite /incr3n /order3n; case: (_ <= _). Qed.
-
-(** *** Exercise 20
-*)
-Lemma incr3n_eq a b c : incr3n a b a = (a == b).
-(*D*) by rewrite /incr3n /order3n eqn_leq. Qed.
- 

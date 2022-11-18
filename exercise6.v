@@ -1,164 +1,229 @@
-From mathcomp Require Import all_ssreflect.
-Set Implicit Arguments.
-Unset Strict Implicit.
-Unset Printing Implicit Defensive.
+From mathcomp Require Import all_ssreflect all_algebra.
+(** *** Exercices on polynomials
+- Formalisation of the algebraic  part of  a                          
+ simple proof that PI is irrational  described in:                   
+- http://projecteuclid.org/download/pdf_1/euclid.bams/1183510788    
+*)  
 
-Implicit Type p q r : bool.
-Implicit Type m n a b c : nat.
+Section Algebraic_part.
 
-(** *** Exercise 1:
+Open Scope ring_scope.
+Import GRing.Theory Num.Theory.
 
-Prove that the equation #$$ 8y = 6x + 1 $$# has no solution.
+(** *** Parameters definitions:
+- Let n na nb be  natural numbers
+- Suppose nb is a non zero nat: nb != 0
+- Define the corresponding rationals a , b 
+- Define pi as a/b.
+*)
+(* to complete  for na nb*)
+Variable n : nat.
+(*D*)Variables na nb: nat.
+Hypothesis nbne0: nb != 0%N.
 
-- Hint 1: take the modulo 2 of the equation.
-- Hint 2: [Search _ modn addn] and [Search _ modn muln]
-#<br/><div># *)
-Lemma ex1 x y : 8 * y != 6 * x + 1.
+Definition a:rat := (Posz na)%:~R.
+Definition b:rat := 
+(*D*)(Posz nb)%:~R.
+
+Definition pi := 
+(*D*)a / b.
+
+(** *** Definition of the polynomials:
+-  Look at the f definition: the factorial, the coercion nat :> R (as a Ring), etc...
+- Define F:{poly rat} using bigop.
+*)
+Definition f :{poly rat} := 
+  (n`!)%:R^-1 *: ('X^n * (a%:P -  b*:'X)^+n).
+
+(*D*)Definition F :{poly rat} := \sum_(i < n.+1) (-1)^i *: f^`(2*i).
+
+
+(** *** Prove that:
+- b is non zero rational.
+*)
+(* Some intermediary simple theorems *)
+Lemma bne0: b != 0.
+(*D*)Proof. by rewrite intr_eq0. Qed.
+(** *** Prove that:
+-  (a -  bX) has a size of 2
+*)
+Lemma P1_size: size (a%:P -  b*:'X) = 2%N.
 Proof.
-(*D*)apply/negP => /eqP /(congr1 (modn^~ 2)).
-(*D*)by rewrite -modnMml mul0n -modnDml -modnMml.
-(*A*)Qed.
+(*D*)have hs:  size (- (b *: 'X)) = 2%N.
+(*D*)  by rewrite size_opp size_scale ?bne0 // size_polyX.
+(*D*)by rewrite  addrC size_addl hs ?size_polyC //;  case:(a!= 0).
+Qed.
 
-(** #</div>#
-*** Exercise 2:
-
-The ultimate Goal of this exercise is to find the solutions of the equation
-#$$ 2^n = a^2 + b^2,$$# where n is fixed and a and b unkwown.
-
-We hence study the following predicate:
-#<div># *)
-Definition sol n a b := [&& a > 0, b > 0 & 2 ^ n == a ^ 2 + b ^ 2].
-(** #</div>#
-- First prove that there are no solutions when n is 0.
-
-  - Hint: do enough cases on a and b.
-#<div># *)
-Lemma sol0 a b : ~~ sol 0 a b.
-(*A*)Proof. by move: a b => [|[|[|a]]] [|[|[|b]]]. Qed.
-(** #</div>#
-- Now prove the only solution when n is 1.
-
-  - Hint: do enough cases on a and b.
-#<div># *)
-Lemma sol1 a b : sol 1 a b = (a == 1) && (b == 1).
-(*A*)Proof. by move: a b => [|[|[|a]]] [|[|[|b]]]. Qed.
-(** #</div>#
-- Now prove a little lemma that will guarantee that a and b are even.
-
-  - Hint 1: first prove [(x * 2 + y) ^ 2 = y ^ 2 %[mod 4]].
-  - Hint 2: [About divn_eq] and [Search _ modn odd]
-#<div># *)
-Lemma mod4Dsqr_even a b : (a ^ 2 + b ^ 2) %% 4 = 0 -> (~~ odd a) && (~~ odd b).
+(** *** Prove that:
+-  the lead_coef of (a -  bX) is -b.
+*)
+Lemma P1_lead_coef: lead_coef (a%:P -  b*:'X) = -b.
 Proof.
-(*D*)have sqr_x2Dy_mod4 x y : (x * 2 + y) ^ 2 = y ^ 2 %[mod 4].
-(*D*)  rewrite sqrnD addnAC mulnAC [2 * _]mulnC -mulnA -[2 * 2]/4.
-(*D*)  by rewrite expnMn -[2 ^ 2]/4 -mulnDl -modnDml modnMl.
-(*D*)rewrite {1}(divn_eq a 2) {1}(divn_eq b 2) -modnDm.
-(*D*)by rewrite !sqr_x2Dy_mod4 modnDm !modn2; do 2!case: odd.
-(*A*)Qed.
-(** #</div>#
-- Deduce that if n is greater than 2 and a and b are solutions, then they are even.
-#<div># *)
-Lemma sol_are_even n a b : n > 1 -> sol n a b -> (~~ odd a) && (~~ odd b).
+(*D*)rewrite addrC lead_coefDl.
+(*D*)  by rewrite lead_coefN lead_coefZ lead_coefX mulr1.
+(*D*)by rewrite size_opp size_scale ?bne0 // size_polyX size_polyC; case:(a!= 0).
+Qed.
+
+(** *** Prove that:
+-  the size of (a-X)^n is n.+1
+*)
+Lemma P_size : size ((a%:P -  b*:'X)^+n)  = n.+1.
+(*D*)elim:n=>[| n0 Hn0]; first by rewrite expr0 size_polyC.
+(*D*)rewrite exprS size_proper_mul.
+(*D*)  by rewrite P1_size /= Hn0.
+(*D*)by rewrite lead_coef_exp P1_lead_coef -exprS expf_neq0 // oppr_eq0 bne0.
+Qed.
+
+(* 2 useful lemmas for the  Qint predicat. *)
+Lemma int_Qint (z:int) : z%:~R \is a Qint.
+Proof. by apply/QintP; exists z. Qed.
+
+Lemma nat_Qint (m:nat) : m%:R \is a Qint.
+Proof. by apply/QintP; exists m. Qed.
+
+(** *** Prove that:
+- Exponent and composition of polynomials combine:
+*)
+Lemma comp_poly_exprn: 
+   forall (p q:{poly rat}) i, p^+i \Po q = (p \Po q) ^+i.
+(*D*)move=> p q; elim=>[| i Hi].
+(*D*)  by rewrite !expr0 comp_polyC.
+(*D*)by rewrite !exprS comp_polyM Hi.
+Qed.
+
+
+(** *** Prove that:
+- f's small coefficients are zero
+*)
+(* Let's begin the Niven proof *)
+Lemma f_small_coef0 i: (i < n)%N -> f`_i = 0.
 Proof.
-(*D*)case: n => [|[|n]]// _; rewrite /sol => /and3P[_ _ /eqP eq_a2Db].
-(*D*)by rewrite mod4Dsqr_even// -eq_a2Db !expnS mulnA modnMr.
-(*A*)Qed.
-(** #</div>#
-- Prove that the solutions for n are the halves of the solutions for n + 2.
+(*D*)move=> iltn;rewrite /f coefZ.
+(*D*)apply/eqP; rewrite mulf_eq0 invr_eq0 pnatr_eq0 eqn0Ngt (fact_gt0 n) /=.
+(*D*)by rewrite coefXnM iltn.
+Qed.
 
-  - Hint: [Search _ odd double] and [Search _ "eq" "mul"].
+(** *** Prove that:
+- f/n! as integral coefficients 
+*)
 
-#<div># *)
-Lemma solSS n a b : sol n.+2 a b -> sol n a./2 b./2.
+Lemma f_int i: (n`!)%:R * f`_i \is a Qint.
 Proof.
-(*D*)move=> soln2ab; have [//|a_even b_even] := andP (sol_are_even _ soln2ab).
-(*D*)rewrite /sol -[a]odd_double_half -[b]odd_double_half in soln2ab.
-(*D*)rewrite (negPf a_even) (negPf b_even) ?add0n ?double_gt0 in soln2ab.
-(*D*)rewrite /sol; move: soln2ab => /and3P[-> -> /=].
-(*D*)by rewrite -(addn2 n) expnD -!muln2 !expnMn -mulnDl eqn_mul2r.
-(*A*)Qed.
-(** #</div>#
-- Prove there are no solutions for n even
+(*D*)rewrite /f coefZ mulrA mulfV; last by rewrite pnatr_eq0 -lt0n (fact_gt0 n).
+(*D*)rewrite mul1r; apply/polyOverP.
+(*D*)rewrite rpredM ?rpredX ?polyOverX //.
+(*D*)by rewrite rpredB ?polyOverC ?polyOverZ ?polyOverX // int_Qint.
+Qed.
 
-  - Hint: Use [sol0] and [solSS].
-#<div># *)
-Lemma sol_even a b n : ~~ sol (2 * n) a b.
+(** *** Prove that:
+the f^`(i) (x) have integral values for x = 0
+*)
+Lemma derive_f_0_int: forall i, f^`(i).[0] \is a Qint.
 Proof.
-(*D*)elim: n => [|n IHn] in a b *; first exact: sol0.
-(*D*)by apply/negP; rewrite mulnS => /solSS; apply/negP.
-(*A*)Qed.
-(** #</div>#
-- Certify the only solution when n is odd.
+(*D*)move=> i.
+(*D*)rewrite horner_coef0 coef_derivn addn0 binomial.ffactnn.
+(*D*)case:(boolP (i <n)%N).
+(*D*)  move/f_small_coef0 ->.
+(*D*)  by rewrite mul0rn // int_Qint.
+(*D*)rewrite -leqNgt.
+(*D*)move/binomial.bin_fact <-.
+(*D*)rewrite /f coefZ -mulrnAl -mulr_natr mulrC rpredM //; last first.
+(*D*)  rewrite mulnC !natrM !mulrA  mulVf ?mul1r ?rpredM ?nat_Qint //.
+(*D*)  by rewrite  pnatr_eq0 eqn0Ngt (fact_gt0 n).
+(*D*)apply/polyOverP;rewrite rpredM // ?rpredX ?polyOverX //.
+(*D*)by rewrite ?rpredB ?polyOverC ?polyOverZ ?polyOverX // int_Qint.
+Qed.
 
-  - Hint 1: Use [sol1], [solSS] and [sol_are_even].
-  - Hint 2: Really sketch it on paper first!
-#<div># *)
-Lemma sol_odd a b n : sol (2 * n + 1) a b = (a == 2 ^ n) && (b == 2 ^ n).
+(** *** Deduce that:
+F (0) has an integral value
+*)
+
+Lemma F0_int : F.[0] \is a Qint.
 Proof.
-(*D*)apply/idP/idP=> [|/andP[/eqP-> /eqP->]]; last first.
-(*D*)  by rewrite /sol !expn_gt0/= expnD muln2 addnn -expnM mulnC.
-(*D*)elim: n => [|n IHn] in a b *; first by rewrite sol1.
-(*D*)rewrite mulnS !add2n !addSn => solab.
-(*D*)have [//|/negPf aNodd /negPf bNodd] := andP (sol_are_even _ solab).
-(*D*)rewrite /sol -[a]odd_double_half -[b]odd_double_half aNodd bNodd.
-(*D*)by rewrite -!muln2 !expnSr !eqn_mul2r IHn// solSS.
-(*A*)Qed.
-(** #</div>#
-*** Exercise 3:
-Certify the solutions of this problem.
+(*D*)rewrite /F horner_sum rpred_sum // =>  i _ ; rewrite !hornerE rpredM //.
+(*D*)  by rewrite -exprnP rpredX.
+(*D*)by rewrite derive_f_0_int.
+Qed.
 
-- Hint: Do not hesitate to take advantage of Coq's capabilities
-  for brute force case analysis
-#<div># *)
-Lemma ex3 n : (n + 4 %| 3 * n + 32) = (n \in [:: 0; 1; 6; 16]).
+(** *** Then prove 
+- the symmetry argument f(x) = f(pi -x).
+*)
+Lemma pf_sym:  f \Po (pi%:P -'X) = f.
 Proof.
-(*D*)apply/idP/idP => [Hn|]; rewrite !inE; last first.
-(*D*)  by move=> /or4P[] /eqP->.
-(*D*)have : n + 4 %| 3 * n + 32 - 3 * (n + 4) by rewrite dvdn_sub// dvdn_mull.
-(*D*)by rewrite mulnDr subnDl /= {Hn}; move: n; do 21?[case=>//].
-(*A*)Qed.
-(** #</div>#
-*** Exercise 4:
+(*D*)rewrite /f comp_polyZ;congr (_ *:_).
+(*D*)rewrite comp_polyM   !comp_poly_exprn.
+(*D*)rewrite comp_polyB comp_polyC !comp_polyZ !comp_polyX scalerBr /pi.
+(*D*)have h1:    b%:P * (a / b)%:P = a%:P.
+(*D*)  by rewrite polyCM mulrC -mulrA -polyCM mulVf ?bne0 // mulr1.
+(*D*)suff->: (a%:P - (b *: (a / b)%:P - b *: 'X)) = b%:P * 'X.
+(*D*)  rewrite exprMn mulrA - exprMn mulrC [X in _ = X] mulrC.
+(*D*)  congr (_ *_); congr (_^+_).
+(*D*)  rewrite mulrBr; congr (_ -_)=>//.
+(*D*)  by rewrite mul_polyC.
+(*D*)by rewrite -!mul_polyC h1 opprB addrA addrC addrA addNr add0r.
+Qed.
 
-Certify the result of the euclidean division of
-#$$a b^n - 1\quad\textrm{  by  }\quad b ^ {n+1}$$#
+(** *** Prove 
+- the symmetry for the derivative 
+*)
 
-#<div># *)
-Lemma ex4 a b n : a > 0 -> b > 0 -> n > 0 ->
-   edivn (a * b ^ n - 1) (b ^ n.+1) =
-   ((a - 1) %/ b, ((a - 1) %% b) * b ^ n + b ^ n - 1).
+Lemma  derivn_fpix i :
+      (f^`(i)\Po(pi%:P -'X))= (-1)^+i *: f^`(i).
 Proof.
-(*D*)move=> a_gt0 b_gt0 n_gt0; rewrite /divn modn_def.
-(*D*)have [q r aB1_eq r_lt] /= := edivnP (a - 1).
-(*D*)rewrite b_gt0 /= in r_lt.
-(*D*)have /(congr1 (muln^~ (b ^ n))) := aB1_eq.
-(*D*)rewrite mulnBl mulnDl mul1n.
-(*D*)move=> /(congr1 (addn^~ (b ^ n - 1))).
-(*D*)rewrite addnBA ?expn_gt0 ?b_gt0// subnK; last first.
-(*D*)  by rewrite -[X in X <= _]mul1n leq_mul2r a_gt0 orbT.
-(*D*)rewrite -mulnA -expnS -addnA => ->.
-(*D*)rewrite edivn_eq addnBA ?expn_gt0 ?b_gt0//.
-(*D*)rewrite subnS subn0 prednK ?addn_gt0 ?expn_gt0 ?b_gt0 ?orbT//.
-(*D*)rewrite -[X in _ + X]mul1n -mulnDl addn1 expnS.
-(*D*)by rewrite leq_mul2r r_lt orbT.
-(*A*)Qed.
-(** #</div>#
-*** Exercise 5:
+(*D*)elim:i ; first by rewrite /= expr0 scale1r pf_sym.
+(*D*)move => i Hi.
+(*D*)set fx := _ \Po _.
+(*D*)rewrite derivnS exprS -scalerA -derivZ -Hi deriv_comp !derivE.
+(*D*)by rewrite mulrBr mulr0 add0r mulr1 -derivnS /fx scaleN1r opprK.
+Qed.
 
-Prove that the natural number interval #$$[n!+2\ ,\ n!+n]$$#
-contains no prime number.
-
-- Hint: Use [Search _ prime dvdn], [Search _ factorial], ...
-
-#<div># *)
-Lemma ex5 n m : n`! + 2 <= m <= n`! + n -> ~~ prime m.
+(** *** Deduce that
+- F(pi) is an integer 
+*)
+Lemma FPi_int : F.[pi] \is a Qint.
 Proof.
-(*D*)move=> m_in; move: (m_in); rewrite -[m](@subnKC n`!); last first.
-(*D*)  by rewrite (@leq_trans (n`! + 2)) ?leq_addr//; by case/andP: m_in.
-(*D*)set k := (_ - _); rewrite !leq_add2l => /andP[k_gt1 k_le_n].
-(*D*)apply/primePn; right; exists k.
-(*D*)  by rewrite k_gt1/= -subn_gt0 addnK fact_gt0.
-(*D*)by rewrite dvdn_add// dvdn_fact// k_le_n (leq_trans _ k_gt1).
-(*A*)Qed.
-(** #</div># *)
+(*D*)rewrite /F horner_sum rpred_sum //.
+(*D*)move=> i _ ; rewrite !hornerE rpredM //.
+(*D*)  by rewrite -exprnP rpredX.
+(*D*)move:(derivn_fpix (2*i)).
+(*D*)rewrite  mulnC exprM sqrr_sign scale1r => <-.
+(*D*)by rewrite horner_comp !hornerE subrr derive_f_0_int.
+Qed.
+
+
+(** *** if you have time
+- you can prove the  equality  F^`(2) + F = f 
+- that is  needed by the analytic part of the Niven proof
+*)
+
+Lemma D2FDF : F^`(2) + F = f.
+Proof.
+(*D*)rewrite /F linear_sum /=.
+(*D*)rewrite (eq_bigr (fun i:'I_n.+1 => (((-1)^i *: f^`(2 * i.+1)%N)))); last first.
+(*D*)  move=> i _ ;rewrite !derivZ; congr (_ *:_).
+(*D*)  rewrite -!derivnS;congr (_^`(_)).
+(*D*)  by rewrite mulnS addnC addn2.
+(*D*)rewrite [X in _ + X]big_ord_recl muln0 derivn0.
+(*D*)rewrite -exprnP expr0 scale1r (addrC f) addrA -[X in _ = X]add0r.
+(*D*)congr (_ + _).
+(*D*)rewrite big_ord_recr addrC addrA -big_split big1=>[| i _].
+(*D*)  rewrite add0r /=; apply/eqP; rewrite scaler_eq0 -derivnS derivn_poly0.
+(*D*)    by rewrite eqxx orbT.
+(*D*)  suff ->: (size f) = (n + n.+1)%N by rewrite -plus_n_O leqnSn.
+(*D*)  rewrite /f size_scale; last first.
+(*D*)    by rewrite invr_neq0 // pnatr_eq0 -lt0n (fact_gt0 n).
+(*D*)  rewrite size_monicM ?monicXn //; last by rewrite -size_poly_eq0 P_size.
+(*D*)  by rewrite  size_polyXn P_size.
+(*D*)rewrite /bump /= -scalerDl.
+(*D*)apply/eqP;rewrite scaler_eq0 /bump -exprnP add1n exprSr.
+(*D*)by rewrite mulrN1 addrC subr_eq0 eqxx orTb.
+Qed.
+
+End Algebraic_part.
+
+(*D*)(* 
+(*D*)*** Local Variables: ***
+(*D*)*** coq-prog-args: ("-emacs-U" "-R" "/Users/lrg/coq/math-comp/mathcomp" "mathcomp" "-I" "/Users/lrg/coq/math-comp/mathcomp" ) ***
+(*D*)*** End: ***
+(*D*)*)
+
