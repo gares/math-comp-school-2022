@@ -318,10 +318,10 @@ rewrite -subr_eq0 [a - b]algCrect -normr_eq0 -sqrf_eq0.
 rewrite normC2_rect ?paddr_eq0 ?sqr_ge0 -?realEsqr ?Creal_Re ?Creal_Im //.
 by rewrite !sqrf_eq0 !raddfB ?subr_eq0.
 Qed.
-(*
-Lemma primitive_root_i : 4.-primitive_root 'i.
+
+Lemma primitive_root_i : 4.-primitive_root ('i : algC).
 Proof.
-(*D*)have : 'i ^+ 4 = 1 by rewrite [_ ^+ (2 * 2)]exprM sqrCi -signr_odd expr0.
+(*D*)have : 'i ^+ 4 = 1 :> algC by rewrite [_ ^+ (2 * 2)]exprM sqrCi -signr_odd expr0.
 (*D*)move=> /prim_order_exists [] // [//|[|[|[//|[//|//]]]]] /prim_expr_order.
 (*D*)  rewrite expr1 => /(congr1 (fun x => 'Im x)) /eqP.
 (*D*)  by rewrite Im_i (Creal_ImP _ _) ?oner_eq0 ?rpred1.
@@ -355,5 +355,4 @@ rewrite !in_cons in_nil ?orbF orbA orbAC !orbA orbAC -!orbA.
 (*D*)rewrite ?[val _ == _]eq_algC !raddfN /=.
 (*a*)by rewrite Re_i Im_i ?(Creal_ReP 1 _) ?(Creal_ImP 1 _) ?oppr0.
 (*A*)Qed.
-*)
 End GaussianIntegers.
