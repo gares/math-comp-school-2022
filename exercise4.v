@@ -1,124 +1,100 @@
+Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import all_ssreflect.
 
-(** Elements *)
+(** # This is the <a href="http://math-comp.github.io/math-comp/htmldoc/mathcomp.ssreflect.seq.html">doc of seq</a>, use it! #*)
 
-Definition elements {A} (f : _ -> A) n :=
-  let l := iota 0 n.+1 in zip l (map f l).
+(**
 
-(** Triangular number *)
-Definition delta n := (n.+1 * n)./2.
+----
+Exercise 1: 
+    - look up the documentation of [take] and [drop]
+    - prove this by induction (mind the recursive argument)
+*)
+Lemma cat_take_drop T n (s : seq T) : take n s ++ drop n s = s.
+Proof.
+(*D*)by elim: s n => [|x s IHs] [|n] //=; rewrite IHs.
+(*A*)Qed.
 
-Compute elements delta 10.
+(** Exercise 2:
+   - look at the definition of [take] and [size] and prove the following lemma
+   - the proof goes by cases 
+*)
+Lemma size_take T n (s : seq T) :
+  size (take n s) = if n < size s then n else size s.
+Proof.
+(*D*)have [le_sn | lt_ns] := leqP (size s) n; first by rewrite take_oversize.
+(*D*)by rewrite size_takel // ltnW.
+(*A*)Qed.
 
-(** Hints : halfD half_bit_double *)
-Lemma deltaS n : delta n.+1 = delta n + n.+1.
-Admitted.
+(** Exercise 3:
+    - another proof by cases 
+*)
+Lemma takel_cat T n (s1 s2 : seq T) :
+  n <= size s1 -> take n (s1 ++ s2) = take n s1.
+Proof.
+(*D*)move=> Hn; rewrite take_cat ltn_neqAle Hn andbT.
+(*D*)by case: (n =P size s1) => //= ->; rewrite subnn take0 cats0 take_size.
+(*A*)Qed.
 
-(** Hints   big_ord_recr big_ord_recl big_ord0 *)
-Lemma deltaE n : delta n = \sum_(i < n.+1) i.
-Admitted.
+(** Exercise 4:
+    - Look up the definition of [rot]
+    - Look back in this file the lemma [cat_take_drop] 
+    - can you rewrite with it right-to-left in the right-hand-side of the goal? 
+*)
+Lemma size_rot T n (s : seq T) : size (rot n s) = size s.
+Proof.
+(*D*)by rewrite -[s in RHS](cat_take_drop _ n) /rot !size_cat addnC.
+(*A*)Qed.
 
-(* Hints half_leq *)
-Lemma leq_delta m n : m <= n -> delta m <= delta n.
-Admitted.
+(** Exercise 5:
+    - which is the size of an empty sequence?
+    - Use lemmas about [size] and [filter] 
+*)
+Lemma has_filter (T : eqType) a (s : seq T)  : has a s = (filter a s != [::]).
+Proof.
+(*D*)by rewrite -size_eq0 size_filter has_count lt0n.
+(*A*)Qed.
 
-(** Hints sqrnD *)
-Lemma delta_square n : (8 * delta n).+1 = n.*2.+1 ^ 2.
-Admitted.
+(** Exercise 6:
+    - prove that by induction 
+*)
+Lemma filter_all T a (s : seq T) : all a (filter a s).
+Proof. 
+(*D*)by elim: s => //= x s IHs; case: ifP => //= ->. 
+(*A*)Qed.
 
-(**  Triangular root *)
-Definition troot n := 
- let l := iota 0 n.+2 in
- (find (fun x => n < delta x) l).-1.
+(** Exercise 7:
+  - prove that view (one branch is by induction) 
+*)
+Lemma all_filterP T a (s : seq T) :
+  reflect (filter a s = s) (all a s).
+Proof.
+(*D*)apply: (iffP idP) => [| <-]; last exact: filter_all.
+(*D*)by elim: s => //= x s IHs /andP[-> Hs]; rewrite IHs.
+(*A*)Qed.
 
-Compute elements troot 10.
+(** Exercise 8:
+    - induction once more 
+*)
+Lemma mem_cat (T : eqType) (x : T) s1 s2 :
+  (x \in s1 ++ s2) = (x \in s1) || (x \in s2).
+Proof.
+(*D*)by elim: s1 => //= y s1 IHs; rewrite !inE /= -orbA -IHs.
+(*A*)Qed.
 
-Lemma troot_gt0 n : 0 < n -> 0 < troot n.
-Admitted.
-
-(** Hints before_find find_size size_iota nth_iota *)
-Lemma leq_delta_root m : delta (troot m) <= m.
-Admitted.
-
-(** Hints hasP mem_iota half_bit_double half_leq nth_find nth_iota *)
-Lemma ltn_delta_root m : m < delta (troot m).+1.
-Admitted.
-
-Lemma leq_root_delta m n : (n <= troot m) = (delta n <= m).
-Admitted.
-
-Lemma leq_troot m n : m <= n -> troot m <= troot n.
-Admitted.
-
-Lemma trootE m n : (troot m == n) = (delta n <= m < delta n.+1).
-Admitted.
-
-Lemma troot_deltaK n : troot (delta n) = n.
-Admitted.
-
-(**  The modulo for triangular numbers *)
-Definition tmod n := n - delta (troot n).
-
-Lemma tmod_delta n : tmod (delta n) = 0.
-Admitted.
-
-Lemma tmodE n : n = delta (troot n) + tmod n.
-Admitted.
-
-Lemma leq_tmod_troot n : tmod n <= troot n.
-Admitted.
-
-Lemma ltn_troot m n : troot m < troot n -> m < n.
-Admitted.
-
-Lemma leq_tmod m n : troot m = troot n -> (tmod m <= tmod n) = (m <= n).
-Admitted.
-
-Lemma leq_troot_mod m n : 
-   m <= n = 
-   ((troot m < troot n) || ((troot m == troot n) && (tmod m <= tmod n))).
-Admitted.
-
-(** Fermat Numbers *)
-
-Definition fermat n := (2 ^ (2 ^ n)).+1.
-
-Compute elements (prime \o fermat) 4.
-
-(** Hints : subn_sqr subnBA odd_double_half *)
-Lemma dvd_exp_odd a k :  0 < a -> odd k -> a.+1 %| (a ^ k).+1.
-Admitted.
-
-(** Hints: logn_gt0 mem_primes dvdn2 *)
-Lemma odd_log_eq0 n : 0 < n -> logn 2 n = 0 -> odd n.
-Admitted.
-
-(** Hints pfactor_dvdnn logn_div pfactorK *)
-Lemma odd_div_log n : 0 < n -> odd (n %/ 2 ^ logn 2 n).
-Admitted.
-
-(** Hints divnK pfactor_dvdnn prime_nt_dvdP prime_nt_dvdP *)
-Lemma prime_2expS m : 0 < m -> prime (2 ^ m).+1 -> m = 2 ^ logn 2 m.
-Admitted.
-
-(** Hints odd_exp neq_ltn expn_gt0 *)
-Lemma odd_fermat n : odd (fermat n).
-Admitted.
-
-(** Hint subn_sqr *)
-Lemma dvdn_exp2m1 a k : a.+1 %| (a ^ (2 ^ k.+1)).-1.
-Admitted.
-
-Lemma fermat_gt1 n : 1 < fermat n.
-Admitted.
-
-(** Hints subnK expnD expnM *)
-Lemma dvdn_fermat m n : m < n -> fermat m %| (fermat n).-2.
-Admitted.
-
-(** Hints gcdnMDl coprimen2 *)
-Lemma coprime_fermat m n : m < n -> coprime (fermat m) (fermat n).
-Admitted.
+(** Exercise 9:
+    - prove this by induction on [s] 
+*)
+Lemma allP (T : eqType) (a : pred T) (s : seq T) :
+  reflect (forall x, x \in s -> a x) (all a s).
+Proof.
+(*D*)elim: s => [|x s IHs] /=; first by exact: ReflectT.
+(*D*)rewrite andbC; case: IHs => IHs /=.
+(*D*)  apply: (iffP idP) => [Hx y|].
+(*D*)    by rewrite inE => /orP[ /eqP-> // | /IHs ].
+(*D*)  by move=> /(_ x); apply; rewrite inE eqxx.
+(*D*)by apply: ReflectF=> H; apply: IHs => y Hy; apply H; rewrite inE orbC Hy.
+(*A*)Qed.
 
 
 

@@ -1,352 +1,343 @@
-From mathcomp Require Import all_ssreflect. 
-Set Implicit Arguments.
-Unset Strict Implicit.
-Unset Printing Implicit Defensive.
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import all_ssreflect.
+(**
+#<div class="slide">#
+** Recap
+
+ Proof language
+   - [: name], to prepare the goal for a tactic
+   - [=>] [name] [/view] [//] [/=] [{name}] [[]], to post-process the goal
+   - [rewrite lem -lem // /= /def]
+   - [apply: lem]
+ Library
+   - naming convention: [addnC], [eqP], [orbN], [orNb], ...
+   - notations: [.+1], [if-is-then-else]
+   - [Search _ (_ + _) in ssrnat]
+   - [Search _ addn "C" in ssrnat]
+   - Use the HTML doc!
+ Approach
+   - boolean predicates
+   - [reflect P b] to link bool with Prop
+
+#</div>#
+--------------------------------------------------------
+#<div class="slide">#
+** Today
+   - The [seq] library
+   - forward reasoning with [have]
+   - spec lemmas
+   - [rewrite] patterns
+
+#</div>#
+--------------------------------------------------------
+--------------------------------------------------------
+#<div class="slide">#
+** Sequences
+  - an alias for lists (used to be differnt)
+  - many notations
+
+#<div>#
+*)
+Check [::].
+Check [:: 3 ; 4].
+Check [::] ++ [:: true ; false].
+Eval compute in [seq x.+1 | x <- [:: 1; 2; 3]].
+Eval compute in [seq x <- [::3; 4; 5] | odd x ].
+Eval compute in rcons [:: 4; 5] 3.
+Eval compute in all odd [:: 3; 5].
+
+Module polylist.
+
+(**
+#</div>#
+
+#<div class="note">(notes)<div class="note-text">#
+Notations for sequentes are documented the header of the 
+#<a href="http://math-comp.github.io/math-comp/htmldoc/mathcomp.ssreflect.seq.html">seq.v</a># file.
+[rcons] is like [cons] but the new element is placed in the last position.
+Indeed it is not a real constructor, but rather a function that appends the singleton list.
+This special case of append has its own name and collection of theorems.
+#</div></div>#
+
+#</div>#
+--------------------------------------------------------
+#<div class="slide">#
+** Polymorphic lists
+   - This statement makes no assumptions on T
+   - recap: [// /= ->]
+
+#<div>#
+*)
+Lemma size_cat T (s1 s2 : seq T) : size (s1 ++ s2) = size s1 + size s2.
+Proof.  by elim: s1 => //= x s1 ->. Qed.
+
+End polylist.
+
+Eval compute in 3 \in [:: 7; 4; 3].
+
+Fail Check forall T : Type, forall x : T, x \in [:: x ].
 
 (** 
+#</div>#
 
-----
-** Lesson 4 Arithmetics
-  - Order
-  - Division
-  - Primality
-
+#</div>#
+--------------------------------------------------------
+#<div class="slide">#
+** Had-hoc polymorphism
+  - T : Type |- l : list T 
+  - T : eqType |- l : list T
+  - eqType means: a type with a decidable equality (_ == _)
+#<div>#
 *)
+
+Check forall T : eqType, forall x : T, x \in [:: x ].
+
+(**
+#</div>#
+
+#<div class="note">(notes)<div class="note-text">#
+Had-hoc polymorphism is a well established concept in object
+oriented programming languages and as well in functional
+languages equipped with type classes like Haskell.
+Whenever [T] is an [eqType], we have a comparison
+function for all terms of type [T] ([x] in the example above).
+#</div></div>#
+
+#</div>#
+--------------------------------------------------------
+#<div class="slide">#
+** The \in notation
+   - overloaded as [(_ == _)]
+   - pushing \in with inE
+   - computable.
+   - rewrite !inE
+#<div>#
+*)
+Lemma test_in l : 3 \in [:: 4; 5] ++ l -> l != [::].
+Proof.
+by rewrite !inE => /=; apply: contraL => /eqP->.
+Qed.
 
 
 (**
-  ** Reminder  
+#</div>#
+
+#</div>#
+--------------------------------------------------------
+#<div class="slide">#
+** Forward reasoning
+   - have
+   - have :=
+   - have + views
+   - do I need eqType here?
+
+
+Definition of all
+<<
+Fixpoint all a s := if s is x :: s' then a x && all a s' else true.
+>>
+
+Definition of count
+<<
+Fixpoint count a s := if s is x :: s' then a x + count s' else 0.
+>>
+
+A lemma linking the two concepts 
+
+#<div>#
 *)
-
-Check nat.
-
-Print nat.
-
-Check O.
-
-Check S O.
-
-Check S (S O).
-
-Compute 3.+1.
-
-(**  Proof by case *)
-
-Goal forall (P : pred nat), 
-     (P 0) -> (forall n, P n.+1) -> forall n, P n.
+Lemma all_count (T : eqType) (a : pred T) s :
+  all a s = (count a s == size s).
 Proof.
-move=> P H0 SH n.
-case: n => [|n].
-  exact: H0.
-by apply: SH.
+elim: s => //= x s.
+have EM_a : a x || ~~ a x.
+  by exact: orbN.
+move: EM_a => /orP EM_a. case: EM_a => [-> | /negbTE-> ] //= _.
+(*# have /orP[ ax | n_ax ] : a x || ~~ a x by case: (a x). #*)
+(*# Search _ count size in seq. #*)
+by rewrite add0n eqn_leq andbC ltnNge count_size.
+(*# have := boolP (a x). #*)
 Qed.
 
-(**  Proof by induction *)
+(**
+#</div>#
+#</div>#
+--------------------------------------------------------
+--------------------------------------------------------
+#<div class="slide">#
+** Spec lemmas
+   - Inductive predicates to drive the proof
+#<div>#*)
 
-Goal forall (P : pred nat), 
-     (P 0) -> (forall n, P n -> P n.+1) -> forall n, P n.
+Module myreflect1.
+
+Inductive reflect (P : Prop) (b : bool) : Prop :=
+  | ReflectT (p : P) (e : b = true)
+  | ReflectF (np : ~ P) (e : b = false).
+
+Fixpoint eqn m n :=
+  match m, n with
+  | 0, 0 => true
+  | j.+1,k.+1 => eqn j k
+  | _, _ => false
+  end.
+Arguments eqn !m !n.
+
+Axiom eqP : forall m n, reflect (m = n) (eqn m n).
+
+Lemma test_reflect1 m n : ~~ (eqn m n) || (n <= m <= n).
 Proof.
-move=> P H0 SH n.
-elim: n => [|n IH].
-  exact: H0.
-by apply: SH.
+case: (eqn m n) => /=.
+(*# case: (eqP m n) => [Enm -> | nE_mn ->] /=. #*)
+Admitted.
+
+End myreflect1.
+
+(*#
+Module myreflect2.
+
+Inductive reflect (P : Prop) : bool-> Prop :=
+  | ReflectT (p : P) : reflect P true
+  | ReflectF (np : ~ P) : reflect P false.
+
+Fixpoint eqn m n :=
+  match m, n with
+  | 0, 0 => true
+  | j.+1,k.+1 => eqn j k
+  | _, _ => false
+  end.
+Arguments eqn !m !n.
+
+Axiom eqP : forall m n, reflect (m = n) (eqn m n).
+Arguments eqP {m n}.
+
+Lemma test_reflect1 m n : ~~ (eqn m n) || (n <= m <= n).
+Proof.
+case: (@eqP m n) => [Enm | nE_mn ] /=.
+by case: eqP => [->|] //=; rewrite leqnn.
 Qed.
 
+End myreflect2.
 
-(** Eqtype *)
+Check (_ =P _).
+Check eqP.
 
-Check eqn.
+#*)
 
-Compute 1 == 1.
+Inductive leq_xor_gtn m n : bool -> bool -> Prop :=
+  | LeqNotGtn of m <= n : leq_xor_gtn m n true false
+  | GtnNotLeq of n < m  : leq_xor_gtn m n false true.
 
-Compute 2 == 3.
+Axiom leqP : forall m n : nat, leq_xor_gtn m n (m <= n) (n < m).
 
-Print eqn.
+(**
+#</div>#
 
-Goal forall m n, m.+1 == n.+1 -> m == n.
+#</div>#
+--------------------------------------------------------
+#<div class="slide">#
+** Let's try out leqP on an ugly goal
+   - matching of indexes
+   - generalization of unresolved implicits
+   - instantiation by matching
+#<div>#*)
+Lemma test_leqP m n1 n2 :
+  (m <= (if n1 < n2 then n1 else n2)) =
+  (m <= n1) && (m <= n2) && ((n1 < n2) || (n2 <= n1)).
 Proof.
-move=> m n mEn.
-exact: mEn.
-Qed.
- 
-(** Addition *)
-
-Check addn.
-
-Check addn 2 3.
-
-Compute 2 + 3.
-
-Goal forall m n, m.+1 + n = (m + n).+1.
-Proof.
-move=> m n.
-by [].
-Qed.
-
-Search _ (_.+1 + _ = _.+1) in ssrnat.
-
-Goal forall m n, m + n.+1 = (m + n).+1.
-Proof.
-move=> m n.
-elim: m => [|m IH].
-  by [].
-rewrite !addSn.
-rewrite IH.
-by [].
+case: leqP => [leqn21 | /ltnW ltn12 ]; rewrite /= andbT.
+  by rewrite andb_idl // => /leq_trans /(_ leqn21).
+by rewrite andb_idr // => /leq_trans->.
 Qed.
 
-Search _ (_ + _.+1 = _.+1) in ssrnat.
-
-Search _ (_.+1 + _ = _ + _.+1) in ssrnat.
-
-(** Subtraction *)
-
-Check subn.
-
-Check subn 3 2.
-
-Compute (3 - 2).
-
-Compute 3 - 4.
-
-Goal forall n, 0 - n = 0.
+(**
+#</div>#
+#</div>#
+--------------------------------------------------------
+#<div class="slide">#
+** Another commodity: [ifP]
+   - a spec lemma for if-then-else
+   - handy with case, since matching spares you to write
+     the expressions involved
+   - remark how the goal is used as a work space
+#<div>#*)
+Lemma test_ifP n m : if n <= m then 0 <= m - n else m - n == 0.
 Proof.
-move=> n.
-by [].
+case: ifP => //.
+by move=> /negbT; rewrite subn_eq0 leqNgt negbK=> /ltnW.
 Qed.
 
-Search _ left_zero subn in ssrnat.
+(**
+#</div>#
+#</div>#
 
-Goal forall n, n - 0 = n.
+--------------------------------------------------------
+#<div class="slide">#
+** Rewrite on steroids
+   - keyed matching
+   - instantiation
+   - localization
+#<div>#*)
+Lemma subterm_selection n m :
+  n + (m * 2).+1 = n * (m + m.+1).
 Proof.
-case => [|n].
-- by [].
-by [].
+rewrite addnC.
+rewrite (addnC m).
+rewrite [_ + m]addnC.
+rewrite [in n * _]addnC.
+rewrite [X in _ = _ * X]addnC.
+rewrite [in RHS]addnC.
+Abort.
+
+Lemma occurrence_selection n m :
+  n + m = n + m.
+Proof.
+rewrite addnC.
+rewrite [in RHS]addnC.
+Abort.
+
+Lemma no_pattern_from_the_rewrite_rule n : n + 0 = n.
+Proof.
+rewrite -[n in RHS]addn0.
+Abort.
+
+(**
+#</div>#
+#</div>#
+--------------------------------------------------------
+#<div class="slide">#
+** References for this lesson:
+  - SSReflect #<a href="https://hal.inria.fr/inria-00258384">manual</a>#
+  - documentation of the
+       #<a href="http://math-comp.github.io/math-comp/htmldoc/libgraph.html">library</a>#
+    - in particular #<a href="http://math-comp.github.io/math-comp/htmldoc/mathcomp.ssreflect.seq.html">seq</a>#
+
+#</div>#
+--------------------------------------------------------
+#<div class="slide">#
+** Demo:
+   - you should be now able to read this proof
+
+#<div>#*)
+
+Lemma dvdn_fact m n : 0 < m <= n -> m %| n`!.
+Proof.
+case: m => //= m; elim: n => //= n IHn; rewrite ltnS leq_eqVlt.
+by move=> /orP[ /eqP-> | /IHn]; [apply: dvdn_mulr | apply: dvdn_mull].
 Qed.
 
-Search _ (_.+1 - 0 = _) in ssrnat.
-Search _ (_.+1 - _.+1 = _) in ssrnat.
-
-
+Lemma prime_above m : {p | m < p & prime p}.
+Proof.
+(*# Check pdivP. #*)
+have /pdivP[p pr_p p_dv_m1]: 1 < m`! + 1 by rewrite addn1 ltnS fact_gt0.
+exists p => //; rewrite ltnNge; apply: contraL p_dv_m1 => p_le_m.
+(*# Check dvdn_addr. #*)
+by rewrite dvdn_addr ?dvdn_fact ?prime_gt0 // gtnNdvd ?prime_gt1.
+Qed.
+    
 (** 
-    Order 
+#</div># 
+#</div># 
 *)
-
-
-Check leq.
-
-Check (0 <= 2).
-
-Compute (0 <= 2).
-
-Print leq.
-
-(** One overloaded definition *)
-
-Goal forall m n, m >= n -> n <= m.
-Proof.
-by [].
-Qed.
-
-Goal forall m n, m.+1 <= n -> m < n.
-Proof.
-by [].
-Qed.
-
-Goal forall n, n <= n.+1.
-Proof.
-elim=> [|n IH].
-  by [].
-exact: IH.
-Qed.
-
-Search _ (?_1 <= ?_1.+1) in ssrnat.
-
-(** Reflexivity *)
-
-Search _ (?_1 <= ?_1) in ssrnat.
-
-(** Antisymmetric *)
-
-Search _ (~~ _) (_ <= _) in ssrnat.
-Search _ (_ == _) (_ <= _) in ssrnat.
-
-(** Transitivity *)
-
-Search _ nat "trans" in ssrnat.
-
-Goal forall m n p, m < n -> n <= p -> m < p.
-Proof.
-move=> m n p.
-have trans := leq_trans.
-have trans_Sm_n := leq_trans (_ : m < n) (_ : n <= p).
-by [].
-Qed.
-
-Goal forall (P : pred nat), 
-      P 0 ->
-      (forall m,  (forall n, n <= m -> P n) -> P m.+1) ->
-      (forall m, P m).
-Proof.
-move=> P HC IHs m.
-move: (leqnn m).
-move: {-2}m.
-elim: m => [|m IH].
-  by case.
-case=> // n nLm.
-apply: IHs => k kLn.
-apply: IH.
-apply: leq_trans kLn nLm.
-Qed.
-
-Goal forall a b c,
-   a < b -> b < c -> a <= c.
-Proof.
-move=> a b c aLb bLc.
-apply: leq_trans (_ : b <= _).
-  by apply: ltnW.
-by apply: ltnW.
-Qed.
-
-(** Scaling down  *)
-
-Check leq_eqVlt.
-
-Goal forall (P : pred nat) m n, P n ->
-    (forall m, m < n -> P m) -> m <= n -> P m.
-Proof.
-move=> P m n Pn PL.
-rewrite leq_eqVlt.
-move=> /orP[|].
-  move/eqP->.
-  by [].
-exact: PL.
-Qed.
-
-(** Addition *)
-
-Search  _ (_ <= _ + _) in ssrnat.
-
-Goal forall m n, n <= m -> n.*2 <= m + n.
-Proof.
-move=> m n nLm.
-rewrite -addnn.
-rewrite leq_add2r.
-by [].
-Qed.
-
-(** Multiplication *)
-
-Search  _ (_ <= _ * _) in ssrnat.
-
-Goal forall m n, n <= m -> n ^ 2 <= m * n.
-Proof.
-move=> m n nLm.
-rewrite -mulnn.
-rewrite leq_mul2r.
-rewrite nLm.
-rewrite orbT.
-by [].
-Qed.
-
-(** Conditional comparison **)
-
-Check subset_leqif_cards.
-
-Search _ (_ <= _ ?= iff _) (_ && _) in ssrnat.
-
-(** Division **)
-
-Check (modn 21 2).
-Compute 21 %% 2.
-
-Check (divn 21 2).
-Compute 21 %/ 2.
-
-Check (dvdn 2 21).
-Compute 2 %| 21.
-
-Print dvdn.
-
-Search (_ %| _ + _) in div.
-
-Search ((_ + _) %/ _) in div.
-
-Search (?_1 %/ ?_1) in div.
-
-Compute 0 %/ 0.
-
-Search (_ %| _ * _) in div.
-
-Search ((_ * _) %/ _) in div.
-
-(** odd **)
-
-Compute odd 4.
-Compute odd 5.
-Print odd.
-
-Search _ odd (_ %% _) in div.
-
-(** gcd & lcm **)
-
-Compute gcdn 42 49.
-
-Compute lcmn 42 49.
-
-Search _ gcdn lcmn in div.
-
-Search _ gcdn (_ * _) in div.
-
-(** Coprime **)
-
-Check coprime.
-
-Compute coprime 3 5.
-Compute coprime 21 7.
-
-Print coprime.
-
-Search _ coprime (_ %| _) in div prime.
-
-(** Primality **)
-
-Check prime.
-
-Compute prime 21.
-
-Compute prime 22.
-
-Compute prime 23.
-
-Print prime.
-
-Compute primes 23.
-
-Check primeP.
-
-Goal prime 2.
-Proof.
-apply/primeP.
-split.
-  by [].
-move=> d.
-case: d.
-  by [].
-case.
-  by [].
-by case.
-Qed.
-
-Search _ prime (_ %| _) in div prime.
-
-Check logn.
-
-Compute logn 3 8.
-
-Compute logn 3 9.
-
-Search _ logn in prime.
-
 
 
