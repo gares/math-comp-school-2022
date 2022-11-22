@@ -1,3 +1,4 @@
+From HB Require Import structures.
 From mathcomp Require Import all_ssreflect.
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -125,7 +126,7 @@ Lemma iseq n (x : 'I_n) : x \in 'I_n.
 Proof.
 set l := enum 'I_n.
 move: l; rewrite /= => l.
-have ordinal_finType := ordinal_finType.
+have ordinal_finType := [finType of 'I_n].
 have mem_enum := mem_enum.
 have enum_uniq := enum_uniq.
 have cardT := cardT.
@@ -204,8 +205,8 @@ Qed.
     - For functions there is an explicit construction [ffun x => body]
 #<div>#
 *)
-Check [finType of 'I_3 * 'I_4].
-Fail Check [finType of 'I_3 * nat].
+Check [finType of ('I_3 * 'I_4)%type].
+Fail Check [finType of ('I_3 * nat)%type].
 
 Lemma ipair : [forall x : 'I_3 * 'I_4, x.1 * x.2 < 12].
 Proof.
@@ -279,15 +280,17 @@ Qed.
     - The lemma monster_ord_can means that there is an injection from
       [forest_monster] into a known finite type. This gives a host of structure
       bridges to [eqType], [choiceType], [countType], [finiteType].
+    - [HB.howto] tells us which interfaces we have to satisfy
+    - we use the [Pcan*Mixin] helpers to do so
 #<div>#
 *)
-Canonical fm_eqType := EqType forest_monster (PcanEqMixin monster_ord_can).
-Canonical fm_choiceType :=
-  ChoiceType forest_monster (PcanChoiceMixin monster_ord_can).
-Canonical fm_countType :=
-  CountType forest_monster (PcanCountMixin monster_ord_can).
-Canonical fm_finType := FinType forest_monster
-                                   (PcanFinMixin monster_ord_can).
+
+HB.howto forest_monster finType.
+
+HB.instance Definition _ : hasDecEq    forest_monster := PcanEqMixin monster_ord_can.
+HB.instance Definition _ : hasChoice   forest_monster := PcanChoiceMixin monster_ord_can.
+HB.instance Definition _ : isCountable forest_monster := PcanCountMixin monster_ord_can.
+HB.instance Definition _ : isFinite    forest_monster := PcanFinMixin monster_ord_can.
 
 Check [finType of forest_monster].
 

@@ -1,3 +1,4 @@
+From HB Require Import structures.
 From mathcomp Require Import all_ssreflect.
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -15,8 +16,8 @@ successor function over the natural plus the special case that
 Definition onext n (x : 'I_n) : 'I_n.
 Proof.
 refine (
-(* Sub takes two arguments *)
-  Sub
+(* sub takes two arguments: a value and a proof *)
+  sub
 (* Write the valued in the following line *)
 (*D*)(x.+1 %% n)
 (* Leave _ for the proof, you will fill it in by tactics later *)
@@ -240,7 +241,7 @@ Lemma sum_prefix_0 (f : nat -> nat) n m : n <= m ->
   \sum_(0 <= i < m) f i = \sum_(n <= i < m) f i.
 Proof.
 (*D*)pose H := big_cat_nat.
-(*D*)move => nm f0; rewrite (big_cat_nat addn_monoid _ f (leq0n n)) /=; last by [].
+(*D*)move => nm f0; rewrite (big_cat_nat _ _ f (leq0n n)) /=; last by [].
 (*D*)rewrite big_nat_cond big_mkcondl big1 ?add0n //.
 (*D*)move => i _; case cnd : (0 <= i < n) => //.
 (*D*)apply: f0.
@@ -268,8 +269,9 @@ Hypothesis op2A : associative op2.
 
 Hypothesis op2add : forall x y, op2 x y = x + y.
 
-Canonical Structure op2Mon : Monoid.law 0 :=
-  Monoid.Law op2A op20n op2n0.
+
+
+HB.instance Definition _ := Monoid.isLaw.Build nat 0 op2 op2A op20n op2n0.
 
 Lemma ex_op2 : \big[op2/0]_(i < 3) i = 3.
 Proof.

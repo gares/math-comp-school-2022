@@ -1,3 +1,4 @@
+From HB Require Import structures.
 From mathcomp Require Import all_ssreflect.
 From mathcomp Require all_algebra.
 Set Implicit Arguments.
@@ -257,14 +258,12 @@ of the three blocks to see what happen.
 
 #<div>#
 *)
-Definition int_eqMixin := CanEqMixin natsum_of_intK.
-Canonical int_eqType := EqType int int_eqMixin.
+HB.instance Definition _ : hasDecEq int := CanEqMixin natsum_of_intK.
+HB.instance Definition _ : hasChoice int := CanChoiceMixin natsum_of_intK.
+HB.instance Definition _ : isCountable int := CanCountMixin natsum_of_intK.
 
-Definition int_choiceMixin := CanChoiceMixin natsum_of_intK.
-Canonical int_choiceType := ChoiceType int int_choiceMixin.
+HB.about int.
 
-Definition int_countMixin := CanCountMixin natsum_of_intK.
-Canonical int_countType := CountType int int_countMixin.
 (**
 #</div>#
 
@@ -304,12 +303,15 @@ Lemma oppzK : involutive oppz. Admitted.
 Lemma addzA : associative addz. Admitted.
 Lemma addNz : left_inverse (Posz 0) oppz addz. Admitted.
 
-Definition Mixin := ZmodMixin addzA addzC add0z addNz.
+Definition Mixin := GRing.isZmodule.Build int addzA addzC add0z addNz.
 
 End intZmod.
 End intZmod.
 
-Canonical int_ZmodType := ZmodType int intZmod.Mixin.
+HB.instance Definition _ := intZmod.Mixin.
+
+HB.about int.
+
 (**
 #</div>#
 
@@ -355,13 +357,14 @@ Lemma mul1z : left_id (Posz 1) mulz. Admitted.
 Lemma mulz_addl : left_distributive mulz (+%R). Admitted.
 Lemma onez_neq0 : (Posz 1) != 0. Proof. by []. Qed.
 
-Definition comMixin := ComRingMixin mulzA mulzC mul1z mulz_addl onez_neq0.
+Definition comMixin := GRing.Zmodule_isComRing.Build int mulzA mulzC mul1z mulz_addl onez_neq0.
 
 End intRing.
 End intRing.
 
-Canonical int_Ring := RingType int intRing.comMixin.
-Canonical int_comRing := ComRingType int intRing.mulzC.
+HB.instance Definition _ := intRing.comMixin.
+
+HB.about int.
 
 End InstantiationInteger.
 (**

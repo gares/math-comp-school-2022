@@ -1,3 +1,4 @@
+From HB Require Import structures.
 From mathcomp Require Import all_ssreflect all_algebra.
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -83,27 +84,12 @@ functions by "trivial subTyping".
 Definition mx_val R m n (A : 'M[R]_(m,n)) : {ffun 'I_m * 'I_n -> R} :=
   let: Matrix g := A in g.
 
-Canonical matrix_subType R m n :=
-  Eval hnf in [newType for @mx_val R m n].
+HB.instance Definition _ R m n := [isNew for (@mx_val R m n)].
 
-Definition matrix_eqMixin (R : eqType) m n :=
-  Eval hnf in [eqMixin of 'M[R]_(m, n) by <:].
-Canonical matrix_eqType (R : eqType) m n:=
-  Eval hnf in EqType 'M[R]_(m, n) (matrix_eqMixin R m n).
-Definition matrix_choiceMixin (R : choiceType) m n :=
-  [choiceMixin of 'M[R]_(m, n) by <:].
-Canonical matrix_choiceType (R : choiceType) m n :=
-  Eval hnf in ChoiceType 'M[R]_(m, n) (matrix_choiceMixin R m n).
-Definition matrix_countMixin (R : countType) m n :=
-  [countMixin of 'M[R]_(m, n) by <:].
-Canonical matrix_countType (R : countType) m n :=
-  Eval hnf in CountType 'M[R]_(m, n) (matrix_countMixin R m n).
-Canonical matrix_subCountType (R : countType) m n :=
-  Eval hnf in [subCountType of 'M[R]_(m, n)].
-Definition matrix_finMixin (R : finType) m n :=
-  [finMixin of 'M[R]_(m, n) by <:].
-Canonical matrix_finType (R : finType) m n :=
-  Eval hnf in FinType 'M[R]_(m, n) (matrix_finMixin R m n).
+HB.instance Definition _ (R : eqType) m n     := [Equality of 'M[R]_(m, n) by <:].
+HB.instance Definition _ (R : choiceType) m n := [Choice of 'M[R]_(m, n) by <:].
+HB.instance Definition _ (R : countType) m n  := [Countable of 'M[R]_(m, n) by <:].
+HB.instance Definition _ (R : finType) m n    := [Finite of 'M[R]_(m, n) by <:].
 
 (** #</div># *)
 (**

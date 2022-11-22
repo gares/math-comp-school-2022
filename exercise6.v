@@ -156,9 +156,9 @@ Proof.
 (*D*)have h1:    b%:P * (a / b)%:P = a%:P.
 (*D*)  by rewrite polyCM mulrC -mulrA -polyCM mulVf ?bne0 // mulr1.
 (*D*)suff->: (a%:P - (b *: (a / b)%:P - b *: 'X)) = b%:P * 'X.
-(*D*)  rewrite exprMn mulrA - exprMn mulrC [X in _ = X] mulrC.
+(*D*)  rewrite exprMn mulrA - exprMn [X in _ = X]mulrC.
 (*D*)  congr (_ *_); congr (_^+_).
-(*D*)  rewrite mulrBr; congr (_ -_)=>//.
+(*D*)  rewrite mulrC mulrBr; congr (_ -_)=>//.
 (*D*)  by rewrite mul_polyC.
 (*D*)by rewrite -!mul_polyC h1 opprB addrA addrC addrA addNr add0r.
 Qed.
