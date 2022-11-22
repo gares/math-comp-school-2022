@@ -1,9 +1,12 @@
-COQC=coqc
+COQC=eval $$(opam env); coqc
 MC=
 
 VS=$(filter-out %tmp.v,$(filter-out %-todo.v,$(wildcard *.v)))
 EX=$(filter-out %tmp.v,$(filter-out %-todo.v,$(wildcard exercise*.v)))
 FILES=$(VS:%.v=%.html) $(VS) $(EX:%.v=%-todo.v) $(EX:%.v=%-solution.html) demo-support-master.png
+
+OPAMROOT=$(shell pwd)/opam
+export OPAMROOT
 
 all: cheat-sheet/cheatsheet.pdf $(FILES)
 
@@ -24,7 +27,7 @@ check-ocaml-ver-%:
 upload: $(FILES) cheat-sheet/cheatsheet.pdf
 	scp $(FILES) FileSaver.js Blob.js local.css cheat-sheet/cheatsheet.pdf roquableu.inria.fr:/net/serveurs/www-sop/teams/marelle/MC-2022/
 
-%.html.tmp: %.v Makefile udoc
+%.html.tmp: %.v Makefile udoc $(OPAMROOT)
 	$(COQC) -w -notation-overridden,-undo-batch-mode $< > /dev/null
 	./udoc/_build/install/default/bin/udoc -t $* $< --with-header header.html --with-footer footer.html -o $@
 	@sed -ix -e 's?<textarea?<textarea class="coq-code"?' $@
@@ -38,6 +41,17 @@ upload: $(FILES) cheat-sheet/cheatsheet.pdf
 
 validate: $(VS) $(EX) test.v
 	for x in $^; do $(COQC) $$x || exit 1; done
+
+$(OPAMROOT):
+	(opam init --bare -n -j8;\
+	  opam switch create mc2022 4.09.1 -y;\
+	  opam repo add coq https://coq.inria.fr/opam/released;\
+	  opam repo add overlay file://$$PWD/opam-overlay;\
+	  opam update;\
+	  opam install coq-mathcomp-algebra-tactics.hierarchy-builder coq-mathcomp-field -y;\
+	  (opam install coqide -y || true))\
+	|| (rm -rf $(OPAMROOT); exit 1)
+# .PHONY: $(OPAMROOT)
 
 # Lessons
 lesson%.html: lesson%.html.tmp
