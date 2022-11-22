@@ -11,7 +11,6 @@ export OPAMROOT
 all: cheat-sheet/cheatsheet.pdf $(FILES)
 
 udoc:
-	git clone https://github.com/ejgallego/udoc.git
 	cd udoc && touch dune-workspace
 	cd udoc && make
 
@@ -60,7 +59,7 @@ lesson%.html: lesson%.html.tmp
 # test
 test.html: test.html.tmp
 	@mv $< $@
-	
+
 # Exercises
 exercise%.html: exercise%.html.tmp
 	@sed -e '/^(\*D\*).*$$/d' -e 's/^(\*A\*).*$$/Admitted./' -e 's/^(\*a\*).*$$/  admit./'  $< > $@

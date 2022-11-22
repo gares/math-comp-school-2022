@@ -1,0 +1,4 @@
+My intention is to make uDoc GPL3, however, it will have to be
+GPL 2+ while we keep parts of CoqDoc, which is LGPL2.1.
+
+coq2html is GPL2+

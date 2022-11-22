@@ -1,0 +1,6 @@
+(executable
+ (name coq2html)
+ (public_name coq2html)
+ (libraries str))
+
+(ocamllex coq2html)
