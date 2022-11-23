@@ -36,7 +36,7 @@ Module DefinitionMatrices.
 
 * Defining Matrices
 
-(Credits "ITP 2013 tutorial: The Mathematical Components library" by Enrico Tassi and Assia Mahboubi #<a href="http://ssr.msr-inria.inria.fr/doc/tutorial-itp13/">material here</a>#)
+(Credits "ITP 2013 tutorial: The Mathematical Components library" by Enrico Tassi and Assia Mahboubi)
 
 *)
 (** #<div># *)
