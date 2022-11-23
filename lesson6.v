@@ -2,7 +2,7 @@
 From elpi Require Import elpi.
 From HB Require Import structures.
 From mathcomp Require Import all_ssreflect.
-From mathcomp Require Import all_algebra.
+From mathcomp Require Import ssralg countalg poly polydiv. (* all_algebra *)
 
 Set Implicit Arguments.
 Unset Strict Implicit.

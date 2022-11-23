@@ -466,9 +466,9 @@ Qed.
 ** References for this lesson
   - SSReflect #<a href="https://hal.inria.fr/inria-00258384">manual</a>#
   - documentation of the
-       #<a href="http://math-comp.github.io/math-comp/htmldoc/libgraph.html">library</a>#
-    - in particular #<a href="http://math-comp.github.io/math-comp/htmldoc/mathcomp.ssreflect.ssrbool.html">ssrbool</a>#
-    - in particular #<a href="http://math-comp.github.io/math-comp/htmldoc/mathcomp.ssreflect.ssrnat.html">ssrnat</a>#
+       #<a href="https://math-comp.github.io/htmldoc_1_15_0/libgraph.html">library</a>#
+    - in particular #<a href="https://math-comp.github.io/htmldoc_1_15_0/mathcomp.ssreflect.ssrbool.html">ssrbool</a>#
+    - in particular #<a href="https://math-comp.github.io/htmldoc_1_15_0/mathcomp.ssreflect.ssrnat.html">ssrnat</a>#
   - #<a href="http://math-comp.github.io/mcb/">Book</a># (draft) on the Mathematical Components library
     #<img src="https://math-comp.github.io/mcb/cover-front-web.png"/>#
 #</div># 
