@@ -215,7 +215,7 @@ End AlgebraicStructuresInheritance.
 *)
 Module InstantiationInteger.
 
-From mathcomp Require Import ssralg.
+Import ssralg.
 Import GRing.Theory.
 Local Open Scope ring_scope.
 (**
@@ -264,8 +264,6 @@ HB.instance Definition _ : hasDecEq int := CanEqMixin natsum_of_intK.
 HB.instance Definition _ : hasChoice int := CanChoiceMixin natsum_of_intK.
 HB.instance Definition _ : isCountable int := CanCountMixin natsum_of_intK.
 
-HB.about int.
-
 (**
 #</div>#
 
@@ -311,8 +309,6 @@ End intZmod.
 End intZmod.
 
 HB.instance Definition _ := intZmod.Mixin.
-
-HB.about int.
 
 (**
 #</div>#
@@ -365,8 +361,6 @@ End intRing.
 End intRing.
 
 HB.instance Definition _ := intRing.comMixin.
-
-HB.about int.
 
 End InstantiationInteger.
 (**
@@ -510,7 +504,7 @@ Abbreviations are in the header of the file which introduce them. We list here t
 #<div>#
 *)
 Module Conventions.
-From mathcomp Require Import ssralg ssrnum.
+Import ssralg ssrnum.
 Import GRing.Theory.
 Local Open Scope ring_scope.
 
