@@ -91,7 +91,7 @@
   ## Cachix caches to use in CI
   ## Below we list some standard ones
   cachix.coq = {};
-  cachix.math-comp = {};
+  cachix.math-comp.authToken = "CACHIX_AUTH_TOKEN";
   cachix.coq-community = {};
 
   ## If you have write access to one of these caches you can
