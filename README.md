@@ -1,12 +1,18 @@
-
-
-To build your file
+## To build your file with opam
 
 ```
+make opam         # copy the output
 make lesson1.html
 ```
 
-To upload your file
+## To build your file with nix
+
+```
+nix-shell
+make lesson1.html
+```
+
+## To upload your file
 
 ```
 make upload FILE=lesson1.html
