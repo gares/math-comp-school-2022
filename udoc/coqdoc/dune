@@ -1,0 +1,8 @@
+(executable
+ (name udoc)
+ (public_name udoc)
+ (flags :standard -w -27-32-39)
+ (modules_without_implementation ast output)
+ (libraries str))
+
+(ocamllex cpretty)

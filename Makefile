@@ -1,17 +1,26 @@
-COQC=eval $$(opam env); coqc
+.PHONY: all udoc opam install
+COQC=coqc
 MC=
 
 VS=$(filter-out %tmp.v,$(filter-out %-todo.v,$(wildcard *.v)))
 EX=$(filter-out %tmp.v,$(filter-out %-todo.v,$(wildcard exercise*.v)))
 FILES=$(VS:%.v=%.html) $(VS) $(EX:%.v=%-todo.v) $(EX:%.v=%-solution.html) demo-support-master.png
 
+
 OPAMROOT=$(shell pwd)/opam
 export OPAMROOT
 
 all: cheat-sheet/cheatsheet.pdf $(FILES)
 
+install:
+	echo "We do not provide an install target"
+
+# opam: $(OPAMROOT)
+# 	echo "# run these:"
+# 	echo "export OPAMROOT=$(OPAMROOT)"
+# 	echo "eval $$(opam env)"
+
 udoc:
-	git clone https://github.com/ejgallego/udoc.git
 	cd udoc && touch dune-workspace
 	cd udoc && make
 
@@ -27,7 +36,7 @@ check-ocaml-ver-%:
 upload: $(FILES) cheat-sheet/cheatsheet.pdf
 	scp $(FILES) FileSaver.js Blob.js local.css cheat-sheet/cheatsheet.pdf roquableu.inria.fr:/net/serveurs/www-sop/teams/marelle/MC-2022/
 
-%.html.tmp: %.v Makefile udoc $(OPAMROOT)
+%.html.tmp: %.v Makefile udoc
 	$(COQC) -w -notation-overridden,-undo-batch-mode $< > /dev/null
 	./udoc/_build/install/default/bin/udoc -t $* $< --with-header header.html --with-footer footer.html -o $@
 	@sed -ix -e 's?<textarea?<textarea class="coq-code"?' $@
@@ -60,7 +69,7 @@ lesson%.html: lesson%.html.tmp
 # test
 test.html: test.html.tmp
 	@mv $< $@
-	
+
 # Exercises
 exercise%.html: exercise%.html.tmp
 	@sed -e '/^(\*D\*).*$$/d' -e 's/^(\*A\*).*$$/Admitted./' -e 's/^(\*a\*).*$$/  admit./'  $< > $@

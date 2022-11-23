@@ -87,7 +87,7 @@ Section GaussianIntegers.
 #<div>#
 *)
 Definition gaussInteger :=
-  [qualify a x | ('Re x \in Cint) && ('Im x \in Cint)].
+  [pred x : algC | ('Re x \in Cint) && ('Im x \in Cint)].
 (**
 #</div>#
 - You need to use qualifE to reduce (x \ in gaussInteger) to its definition.
@@ -95,9 +95,9 @@ Definition gaussInteger :=
 ** Question 4: Prove that integers are Gaussian integers
 #<div>#
 *)
-Lemma Cint_GI (x : algC) : x \in Cint -> x \is a gaussInteger.
+Lemma Cint_GI (x : algC) : x \in Cint -> x \in gaussInteger.
 Proof.
-(*D*)move=> x_int; rewrite qualifE (Creal_ReP _ _) ?(Creal_ImP _ _) ?Creal_Cint //.
+(*D*)move=> x_int; rewrite inE (Creal_ReP _ _) ?(Creal_ImP _ _) ?Creal_Cint //.
 (*D*)by rewrite x_int rpred0.
 (*A*)Qed.
 (** #</div>#
@@ -112,41 +112,33 @@ Lemma GI_subring : subring_closed gaussInteger.
 Proof.
 (*D*)split => [|x y /andP[??] /andP[??]|x y /andP[??] /andP[??]].
 (*D*)- by rewrite Cint_GI.
-(*D*)- by rewrite qualifE !raddfB /= ?rpredB.
-(*D*)by rewrite qualifE ReM ImM rpredB ?rpredD // rpredM.
+(*D*)- by rewrite inE !raddfB /= ?rpredB.
+(*D*)by rewrite inE ReM ImM rpredB ?rpredD // rpredM.
 (*A*)Qed.
 (**
 #</div>#
 - There follows the boilerplate to use the proof GI_subring in order to canonically provide a subring structure to the predicate gaussInteger.
 #<div>#
 *)
-
-(* FIXME 
-Fact GI_key : pred_key gaussInteger. Proof. by []. Qed.
-Canonical GI_keyed := KeyedQualifier GI_key.
-Canonical GI_opprPred := OpprPred GI_subring.
-Canonical GI_addrPred := AddrPred GI_subring.
-Canonical GI_mulrPred := MulrPred GI_subring.
-Canonical GI_zmodPred := ZmodPred GI_subring.
-Canonical GI_semiringPred := SemiringPred GI_subring.
-Canonical GI_smulrPred := SmulrPred GI_subring.
-Canonical GI_subringPred := SubringPred GI_subring.
+HB.instance Definition _ :=  GRing.isSubringClosed.Build _ _ GI_subring.
 (**
 #</div>#
 - Finally, we define the type of Gaussian Integer, as a sigma type of algebraic numbers. We soon prove that this is in fact a sub type.
 #<div>#
 *)
-Record GI := GIof {
-  algGI : algC;
-  algGIP : algGI \is a gaussInteger }.
+Record GI := GIof { algGI : algC; algGIP : algGI \in gaussInteger }.
 Hint Resolve algGIP.
 (**
 #</div>#
 
 - We provide the subtype property, this makes it possible to use the generic operator "val" to get an algC from a Gaussian Integer.
+- Moreover provide a commutative ring structure to the type GI, using the subring canonical property for the predicate gaussInteger
+
 #<div>#
 *)
-Canonical GI_subType := [subType for algGI].
+HB.instance Definition _ := [isSub for algGI].
+HB.instance Definition _ := [Choice of GI by <:].
+HB.instance Definition _ := [SubChoice_isSubComRing of GI by <:].
 (**
 #</div>#
 - We deduce that the real and imaginary parts of a GI are integers
@@ -160,25 +152,6 @@ Hint Resolve GIRe GIIm.
 
 Canonical ReGI x := GIof (Cint_GI (GIRe x)).
 Canonical ImGI x := GIof (Cint_GI (GIIm x)).
-(**
-#</div>#
-- We provide a ring structure to the type GI, using the subring canonical property for the predicate gaussInteger
-#<div>#
-*)
-Definition GI_eqMixin := [eqMixin of GI by <:].
-Canonical GI_eqType := EqType GI GI_eqMixin.
-Definition GI_choiceMixin := [choiceMixin of GI by <:].
-Canonical GI_choiceType := ChoiceType GI GI_choiceMixin.
-Definition GI_countMixin := [countMixin of GI by <:].
-Canonical GI_countType := CountType GI GI_countMixin.
-Definition GI_zmodMixin := [zmodMixin of GI by <:].
-Canonical GI_zmodType := ZmodType GI GI_zmodMixin.
-Definition GI_ringMixin := [ringMixin of GI by <:].
-Canonical GI_ringType := RingType GI GI_ringMixin.
-Definition GI_comRingMixin := [comRingMixin of GI by <:].
-Canonical GI_comRingType := ComRingType GI GI_comRingMixin.
-(* Definition GI_unitRingMixin := [unitRingMixin of GI by <:]. *)
-(* Canonical GI_unitRingType := UnitRingType GI GI_unitRingMixin. *)
 (**
 #</div>#
 
@@ -198,7 +171,7 @@ Canonical GI_comRingType := ComRingType GI GI_comRingMixin.
 *)
 Definition invGI (x : GI) := insubd x (val x)^-1.
 Definition unitGI := [pred x : GI | (x != 0)
-          && ((val x)^-1 \is a gaussInteger)].
+          && ((val x)^-1 \in gaussInteger)].
 (**
 #</div>#
 #</div># *)
@@ -227,15 +200,13 @@ Proof.
 Fact unitGI_out : {in [predC unitGI], invGI =1 id}.
 Proof.
 move=> x.
-(*D*)rewrite !inE /= /unitGI.
+(*D*)rewrite 2!inE /= /unitGI.
 (*D*)rewrite negb_and negbK => /predU1P [->|/negPf xGIF];
 (*D*)by apply: val_inj; rewrite /invGI ?val_insubd /= ?xGIF // invr0 if_same.
 (*A*)Qed.
 (*D*)
-Definition GI_comUnitRingMixin :=
-  ComUnitRingMixin mulGIr unitGIP unitGI_out.
-Canonical GI_unitRingType := UnitRingType GI GI_comUnitRingMixin.
-Canonical GI_comUnitRingType := [comUnitRingType of GI].
+HB.instance Definition _ :=
+  GRing.ComRing_hasMulInverse.Build GI mulGIr unitGIP unitGI_out.
 (**
 #</div>#
 #<div>#
@@ -247,14 +218,16 @@ Canonical GI_comUnitRingType := [comUnitRingType of GI].
 
 #<div>#
 *)
-Lemma conjGIE x : (x^* \is a gaussInteger) = (x \is a gaussInteger).
-(*A*)Proof. by rewrite ![_ \is a _]qualifE Re_conj Im_conj rpredN. Qed.
+Lemma conjGIE (x : algC) : (x^* \in gaussInteger) = (x \in gaussInteger).
+Proof.
+(*D*)by rewrite ![_ \in gaussInteger]inE Re_conj Im_conj/= rpredN.
+(*A*)Qed.
 (**
 #</div>#
 - We use this fact to build the conjugation of a Gaussian Integers
 #<div>#
 *)
-Fact conjGI_subproof (x : GI) : (val x)^* \is a gaussInteger.
+Fact conjGI_subproof (x : GI) : (val x)^* \in gaussInteger.
 Proof. by rewrite conjGIE. Qed.
 
 Canonical conjGI x := GIof (conjGI_subproof x).
@@ -315,7 +288,7 @@ Do unitGI_norm1 first, and come back to side lemmas later.
 #<div>#
 *)
 Lemma rev_unitrPr (R : comUnitRingType) (x y : R) :
-   x * y = 1 -> x \is a GRing.unit.
+   x * y = 1 -> x \in GRing.unit.
 Proof. by move=> ?; apply/unitrPr; exists y. Qed.
 
 Lemma eq_algC a b :
@@ -362,7 +335,5 @@ rewrite !in_cons in_nil ?orbF orbA orbAC !orbA orbAC -!orbA.
 (*D*)rewrite ?[val _ == _]eq_algC !raddfN /=.
 (*a*)by rewrite Re_i Im_i ?(Creal_ReP 1 _) ?(Creal_ImP 1 _) ?oppr0.
 (*A*)Qed.
-
-*)
 
 End GaussianIntegers.
