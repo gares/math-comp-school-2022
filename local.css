@@ -342,3 +342,19 @@ p {
 .slide-tooltip:hover .slide-tooltiptext-rightarrow {
     visibility: visible;
 }
+
+.button {
+    background-color: #e3e3e3; /* Green */
+    border: 1px;
+    padding: 2px;
+    padding-bottom: 1px;
+    color: black;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    border-radius: 4px;
+    border-style: solid;
+    font-size: 8px;
+    top: -1px;
+    position: relative;
+  }
