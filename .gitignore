@@ -4,5 +4,8 @@
 *.tmpx
 .*.aux
 *.glob
+*-todo.v
+lesson*html
+exercise*html
 udoc
 opam/

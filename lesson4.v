@@ -59,7 +59,7 @@ Module polylist.
 
 #<div class="note">(notes)<div class="note-text">#
 Notations for sequentes are documented the header of the 
-#<a href="http://math-comp.github.io/math-comp/htmldoc/mathcomp.ssreflect.seq.html">seq.v</a># file.
+#<a href="https://math-comp.github.io/htmldoc_1_15_0/mathcomp.ssreflect.seq.html">seq.v</a># file.
 [rcons] is like [cons] but the new element is placed in the last position.
 Indeed it is not a real constructor, but rather a function that appends the singleton list.
 This special case of append has its own name and collection of theorems.
@@ -315,8 +315,8 @@ Abort.
 ** References for this lesson:
   - SSReflect #<a href="https://hal.inria.fr/inria-00258384">manual</a>#
   - documentation of the
-       #<a href="http://math-comp.github.io/math-comp/htmldoc/libgraph.html">library</a>#
-    - in particular #<a href="http://math-comp.github.io/math-comp/htmldoc/mathcomp.ssreflect.seq.html">seq</a>#
+       #<a href="https://math-comp.github.io/htmldoc_1_15_0/libgraph.html">library</a>#
+    - in particular #<a href="https://math-comp.github.io/htmldoc_1_15_0/mathcomp.ssreflect.seq.html">seq</a>#
 
 #</div>#
 --------------------------------------------------------
