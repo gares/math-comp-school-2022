@@ -1,3 +1,12 @@
+
+From elpi Require Import elpi.
+From HB Require Import structures.
+From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_algebra.
+
+Set Implicit Arguments.
+Unset Strict Implicit.
+Unset Printing Implicit Defensive.
 (** 
 #<div class="slide">#
  ** The Polynomials Library : 
@@ -38,12 +47,7 @@ Polynomial {polyseq :> seq R; _ : last 1 polyseq != 0}.
 #<div>#
 *)
 
-
-From mathcomp Require Import all_ssreflect  all_algebra.
 Open Scope ring_scope.
-
-
-
 
 Check Polynomial.
 

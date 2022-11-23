@@ -1,4 +1,9 @@
-From mathcomp Require Import all_ssreflect all_algebra all_field.
+From elpi Require Import elpi.
+From HB Require Import structures.
+From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_algebra.
+From mathcomp Require Import all_field.
+
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.

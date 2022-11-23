@@ -1,9 +1,10 @@
+From elpi Require Import elpi.
 From HB Require Import structures.
 From mathcomp Require Import all_ssreflect.
+
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
-
 (**
   ----
   ** Exercise 1 *)
@@ -268,8 +269,6 @@ Hypothesis op20n : left_id 0 op2.
 Hypothesis op2A : associative op2.
 
 Hypothesis op2add : forall x y, op2 x y = x + y.
-
-
 
 HB.instance Definition _ := Monoid.isLaw.Build nat 0 op2 op2A op20n op2n0.
 

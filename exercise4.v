@@ -1,5 +1,10 @@
-Require Import mathcomp.ssreflect.ssreflect.
+From elpi Require Import elpi.
+From HB Require Import structures.
 From mathcomp Require Import all_ssreflect.
+
+Set Implicit Arguments.
+Unset Strict Implicit.
+Unset Printing Implicit Defensive.
 
 (** # This is the <a href="http://math-comp.github.io/math-comp/htmldoc/mathcomp.ssreflect.seq.html">doc of seq</a>, use it! #*)
 
@@ -43,7 +48,7 @@ Proof.
 *)
 Lemma size_rot T n (s : seq T) : size (rot n s) = size s.
 Proof.
-(*D*)by rewrite -[s in RHS](cat_take_drop _ n) /rot !size_cat addnC.
+(*D*)by rewrite -[s in RHS](cat_take_drop n) /rot !size_cat addnC.
 (*A*)Qed.
 
 (** Exercise 5:

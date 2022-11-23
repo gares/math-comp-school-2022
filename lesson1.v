@@ -1,3 +1,11 @@
+From elpi Require Import elpi.
+From HB Require Import structures.
+From mathcomp Require Import all_ssreflect.
+
+Set Implicit Arguments.
+Unset Strict Implicit.
+Unset Printing Implicit Defensive.
+
 (** 
 #<div class="slide">#
 ** Objective of this course
@@ -68,8 +76,6 @@ The library has been maintained for more than 10 years now.
 
 #<div>#
 *)
-
-From mathcomp Require Import all_ssreflect.
 
 Module BooleanReflection.
 (**

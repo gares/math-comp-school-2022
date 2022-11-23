@@ -1,4 +1,12 @@
-From mathcomp Require Import all_ssreflect all_algebra.
+From elpi Require Import elpi.
+From HB Require Import structures.
+From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_algebra.
+
+Set Implicit Arguments.
+Unset Strict Implicit.
+Unset Printing Implicit Defensive.
+
 (** *** Exercices on polynomials
 - Formalisation of the algebraic  part of  a                          
  simple proof that PI is irrational  described in:                   
