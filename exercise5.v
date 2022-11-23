@@ -120,6 +120,8 @@ Proof.
 - There follows the boilerplate to use the proof GI_subring in order to canonically provide a subring structure to the predicate gaussInteger.
 #<div>#
 *)
+
+(* FIXME 
 Fact GI_key : pred_key gaussInteger. Proof. by []. Qed.
 Canonical GI_keyed := KeyedQualifier GI_key.
 Canonical GI_opprPred := OpprPred GI_subring.
@@ -360,4 +362,7 @@ rewrite !in_cons in_nil ?orbF orbA orbAC !orbA orbAC -!orbA.
 (*D*)rewrite ?[val _ == _]eq_algC !raddfN /=.
 (*a*)by rewrite Re_i Im_i ?(Creal_ReP 1 _) ?(Creal_ImP 1 _) ?oppr0.
 (*A*)Qed.
+
+*)
+
 End GaussianIntegers.
