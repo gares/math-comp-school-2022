@@ -15,7 +15,7 @@ make lesson1.html
 ## To upload your file
 
 ```
-make upload FILE=lesson1.html
+make upload FILES=lesson1.html
 ```
 
 To test your file go to
