@@ -161,7 +161,11 @@ function prev_slide() {
 window.onload = init_slides;
 window.onbeforeunload = save_coq_snippets;
 window.onscroll = update_scrolled;
+</script>
 
+
+<script type="module">
+  import { JsCoq } from './node_modules/jscoq/jscoq.js';
 
 var jscoq_ids  = ['.coq-code'];
 var jscoq_opts = {

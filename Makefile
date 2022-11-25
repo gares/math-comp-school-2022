@@ -77,3 +77,9 @@ exercise%-solution.html: exercise%.html.tmp
 	@cp $< $@
 exercise%-todo.v: exercise%.v
 	@sed -e '/^(\*D\*).*$$/d' -e 's/^(\*A\*).*$$/Admitted./' -e 's/^(\*a\*).*$$/  admit./'  $< > $@
+
+serve: node_modules
+	python3 -m http.server
+
+node_modules:
+	tar -xzf deploy-v0.0.1.tgz
