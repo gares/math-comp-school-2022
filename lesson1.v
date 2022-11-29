@@ -346,6 +346,7 @@ Qed.
 #<div class="slide">#
  ** connectives like [&&] have a view as well
    - [andP] and [[]]
+   - [apply/viewP]
 #<div>#
 *)
 Lemma test_andP b1 b2 :
@@ -355,6 +356,8 @@ Proof.
 move=> /andP Hb1b2.
 case: Hb1b2.
 move=> Hb1 Hb2.
+apply/orP.
+
 by rewrite Hb1.
 *)
 move=> /andP[Hb1 Hb2].
