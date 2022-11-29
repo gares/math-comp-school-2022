@@ -5,270 +5,276 @@ From mathcomp Require Import all_ssreflect.
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
+(**
+  ----
+  ** Exercise 1 *)
 
-(** Elements *)
+(**
+Try to define a next function over 'I_n that correspond to the
+successor function over the natural plus the special case that
+"n -1" is mapped to zero *)
 
-Definition elements {A} (f : _ -> A) n :=
-  let l := iota 0 n.+1 in zip l (map f l).
-
-(** Triangular number *)
-Definition delta n := (n.+1 * n)./2.
-
-Compute elements delta 10.
-
-(** Hints : halfD half_bit_double *)
-Lemma deltaS n : delta n.+1 = delta n + n.+1.
+Definition onext n (x : 'I_n) : 'I_n.
 Proof.
-(*D*)rewrite /delta -addn2 mulnDl mulnC halfD.
-(*D*)rewrite !oddM andbF add0n mul2n.
-(*D*)by rewrite -{4}(half_bit_double n.+1 false).
+refine (
+(* sub takes two arguments: a value and a proof *)
+  sub
+(* Write the valued in the following line *)
+(*D*)(x.+1 %% n)
+(* Leave _ for the proof, you will fill it in by tactics later *)
+_
+).
+(*D*) by case: x => [m /= ltmn]; rewrite ltn_mod (leq_trans _ ltmn).
+Defined.
+
+Eval compute in val (onext (Ordinal (isT : 2 < 4))).
+Eval compute in val (onext (Ordinal (isT : 3 < 4))).
+
+(**
+  ----
+  ** Exercise 2
+*)
+
+(**
+   Show that injectivity is decidable for a function f : aT -> rT
+   with  aT a finite
+*)
+
+Module MyInj.
+
+Check injective.
+
+Definition injectiveb (aT : finType) (rT : eqType) (f : aT -> rT) : bool :=
+(*D*) [forall x : aT, forall y : aT, (f x == f y) ==> (x == y)].
+
+Lemma injectiveP (aT : finType) (rT : eqType) (f : aT -> rT) :
+  reflect (injective f) (injectiveb f).
+Proof.
+(*D*)apply: (iffP forallP) => [Ibf x y Efxy|If x].
+(*D*)  by move: Ibf => /(_ x) /forallP /(_ y); rewrite Efxy eqxx => /eqP.
+(*D*)by apply/forallP=> y; apply/implyP => /eqP Efxy; apply/eqP; apply: If.
 (*A*)Qed.
 
-(** Hints   big_ord_recr big_ord_recl big_ord0 *)
-Lemma deltaE n : delta n = \sum_(i < n.+1) i.
+End MyInj.
+
+(**
+  ----
+  ** Exercise 3
+
+  Build a function that maps an element of an ordinal to another element
+  of the same ordinal with a p subtracted from it.
+*)
+
+Lemma neg_offset_ord_proof n (i : 'I_n) (p : nat) : i - p < n.
 Proof.
-(*D*)elim: n => [|n IH]; first by rewrite big_ord_recl big_ord0.
-(*D*)by rewrite big_ord_recr /= -IH deltaS.
+(*D*)apply: leq_ltn_trans (ltn_ord i).
+(*D*)apply: leq_subr.
 (*A*)Qed.
 
-(* Hints half_leq *)
-Lemma leq_delta m n : m <= n -> delta m <= delta n.
+Definition neg_offset_ord n (i : 'I_n) p := Ordinal (neg_offset_ord_proof i p).
+
+Eval compute in (val (neg_offset_ord (Ordinal (isT : 7 < 9)) 4)).
+
+(**
+  ----
+  ** Exercise 4
+*)
+
+(**
+   Try to formalize the following problem
+*)
+
+(**
+  Given a parking  where the boolean indicates if the slot is occupied or not
+*)
+
+Definition parking n := 'I_n -> 'I_n -> bool.
+
+(**
+   Number of cars at line i
+*)
+
+Definition sumL n (p : parking n) i := \sum_(j < n) p i j.
+
+(**
+   Number of cars at column j
+*)
+
+Definition sumC n (p : parking n) j := \sum_(i < n) p i j.
+
+(**
+   Show that if 0 < n there is always two lines, or two columns, or a column and a line
+   that have the same numbers of cars
+*)
+
+(* Two intermediate lemmas to use injectivity  *)
+
+Lemma leq_sumL n (p : parking n) i : sumL p i < n.+1.
 Proof.
-(*D*)by move=> H; apply/half_leq/leq_mul.
+(*D*)have {2}<-: \sum_(i < n) 1 = n by rewrite -[X in _ = X]card_ord sum1_card.
+(*D*)by apply: leq_sum => k; case: (p _ _).
 (*A*)Qed.
 
-(** Hints sqrnD *)
-Lemma delta_square n : (8 * delta n).+1 = n.*2.+1 ^ 2.
+Lemma leq_sumC n (p : parking n) j : sumC p j < n.+1.
 Proof.
-(*D*)elim: n => // n IH.
-(*D*)rewrite deltaS mulnDr -addSn IH.
-(*D*)rewrite doubleS -addn1 -addnS -addSn addn1.
-(*D*)rewrite sqrnD -addnA /=.
-(*D*)congr (_ + _).
-(*D*)rewrite mulnS.
-(*D*)rewrite [_ * 2]mulSn mulnDr addnA.
-(*D*)congr (_ + _).
-(*D*)by rewrite mulnCA -muln2 -!mulnA mulnC.
+(*D*)have {2}<-: \sum_(i < n) 1 = n by rewrite -[X in _ = X]card_ord sum1_card.
+(*D*)by apply: leq_sum => k; case: (p _ _).
 (*A*)Qed.
 
-(**  Triangular root *)
-Definition troot n := 
- let l := iota 0 n.+2 in
- (find (fun x => n < delta x) l).-1.
+Lemma inl_inj {A B} : injective (@inl A B). Proof. by move=> x y []. Qed.
+Lemma inr_inj {A B} : injective (@inr A B). Proof. by move=> x y []. Qed.
 
-Compute elements troot 10.
-
-Lemma troot_gt0 n : 0 < n -> 0 < troot n.
+Lemma result n (p : parking n) : 0 < n ->
+  exists i, exists j,
+   [\/  (i != j) /\ (sumL p i = sumL p j),
+        (i != j) /\ (sumC p i = sumC p j) | sumL p i = sumC p j].
 Proof.
-(*D*)by case: n.
+(*D*)case: n p => [//|[|n]] p _ /=.
+(*D*)  exists ord0, ord0; apply: Or33.
+(*D*)  by rewrite /sumL /sumC !big_ord_recl !big_ord0.
+(*D*)pose sLC (i : 'I_n.+2 + 'I_n.+2) :=
+(*D*)  match i with
+(*D*)  | inl i => Ordinal (leq_sumL p i)
+(*D*)  | inr i => Ordinal (leq_sumC p i) end.
+(*D*)have [sC_inj | /injectivePn /=] := altP (injectiveP sLC).
+(*D*)  have := max_card (mem (codom sLC)); rewrite card_codom // card_sum !card_ord.
+(*D*)  by rewrite !addnS !addSn !ltnS -ltn_subRL subnn ltn0.
+(*D*)move=> [[i|i] [[j|j] //=]]; [| |move: i j => j i|];
+(*D*)rewrite ?(inj_eq inj_inl, inj_eq inj_inr) => neq_ij [];
+(*D*)by exists i, j; do ?[exact: Or31|exact: Or32|exact: Or33].
 (*A*)Qed.
 
-(** Hints before_find find_size size_iota nth_iota *)
-Lemma leq_delta_root m : delta (troot m) <= m.
+(**
+  ----
+  ** Exercise 5
+*)
+
+(**
+   Prove the following state by induction and by following Gauss proof.
+ *)
+
+Lemma gauss_ex_p1 : forall n, (\sum_(i < n) i).*2 = n * n.-1.
 Proof.
-(*D*)rewrite /troot leqNgt.
-(*D*)set l := iota _ _; set f := (fun _ => _).
-(*D*)case E : _.-1 => [|n] //.
-(*D*)have  /(before_find 0) : 
-(*D*)   (find f l).-1 < find f l by rewrite prednK // E.
-(*D*)rewrite E  nth_iota // /f => [->//|].
-(*D*)rewrite -[m.+2](size_iota 0) -E prednK; first by apply: find_size.
-(*D*)by case: find E.
+(*D*)elim=> [|n IH]; first by rewrite big_ord0.
+(*D*)rewrite big_ord_recr /= doubleD {}IH.
+(*D*)case: n => [|n /=]; first by rewrite muln0.
+(*D*)by rewrite -muln2 -mulnDr addn2 mulnC.
 (*A*)Qed.
 
-(** Hints hasP mem_iota half_bit_double half_leq nth_find nth_iota *)
-Lemma ltn_delta_root m : m < delta (troot m).+1.
+Lemma gauss_ex_p2 : forall n, (\sum_(i < n) i).*2 = n * n.-1.
 Proof.
-(*D*)rewrite /troot leqNgt.
-(*D*)set l := iota _ _; set f := (fun _ => _).
-(*D*)have Hfl : has f l.
-(*D*)  apply/hasP; exists m.+1; first by rewrite mem_iota leq0n leqnn.
-(*D*)  rewrite /f /delta -{1}[m.+1](half_bit_double _ false).
-(*D*)  by apply/half_leq; rewrite add0n -mul2n leq_mul2r orbT.
-(*D*)have := nth_find 0 Hfl; rewrite {1}/f.
-(*D*)case E : _.-1 => [|n] //.
-(*D*)  case: find E => // [] [|n] //.
-(*D*)  by rewrite nth_iota //=; case: (m).
-(*D*)rewrite nth_iota.
-(*D*)  by rewrite -E prednK // ltnNge ltnS.
-(*D*)by rewrite -(size_iota 0 m.+2) -has_find.
+(*D*)case=> [|n/=]; first by rewrite big_ord0.
+(*D*)rewrite -addnn.
+(*D*)have Hf i : n - i < n.+1.
+(*D*)  by apply: leq_trans (leq_subr _ _) _.
+(*D*)pose f (i : 'I_n.+1) := Ordinal (Hf i).
+(*D*)have f_inj : injective f.
+(*D*)  move=> x y /val_eqP/eqP H.
+(*D*)  apply/val_eqP => /=.
+(*D*)  rewrite -(eqn_add2l (n - x)) subnK -1?ltnS  //.
+(*D*)  by rewrite [n - x]H subnK -1?ltnS.
+(*D*)rewrite {1}(reindex_inj f_inj) -big_split /=.
+(*D*)rewrite -[X in _ = X * _]card_ord -sum_nat_const.
+(*D*)by apply: eq_bigr => i _; rewrite subnK // -ltnS.
 (*A*)Qed.
 
-Lemma leq_root_delta m n : (n <= troot m) = (delta n <= m).
+Lemma gauss_ex_p3 : forall n, (\sum_(i < n) i).*2 = n * n.-1.
 Proof.
-(*D*)case: leqP => [/leq_delta/leq_trans->//|dmLn].
-(*D*)  apply: leq_delta_root.
-(*D*)apply/sym_equal/idP/negP.
-(*D*)rewrite -ltnNge.
-(*D*)by apply: leq_trans (ltn_delta_root _) (leq_delta dmLn).
+(*D*)case=> [|n/=]; first by rewrite big_ord0.
+(*D*)rewrite -addnn {1}(reindex_inj rev_ord_inj) -big_split /=.
+(*D*)rewrite -[X in _ = X * _]card_ord -sum_nat_const.
+(*D*)by apply: eq_bigr => i _; rewrite subSS subnK // -ltnS.
 (*A*)Qed.
 
-Lemma leq_troot m n : m <= n -> troot m <= troot n.
+(**
+  ----
+   ** Exercise 6
+*)
+
+Lemma sum_odd1 : forall n, \sum_(i < n) (2 * i + 1) = n ^ 2.
 Proof.
-(*D*)by move=> mLn; rewrite leq_root_delta (leq_trans (leq_delta_root _)).
+(*D*)case=> [|n/=]; first by rewrite big_ord0.
+(*D*)rewrite big_split -big_distrr /= mul2n gauss_ex_p3 sum_nat_const.
+(*D*)by rewrite card_ord -mulnDr addn1 mulnn.
 (*A*)Qed.
 
-Lemma trootE m n : (troot m == n) = (delta n <= m < delta n.+1).
+(**
+  ----
+  ** Exercise 7
+*)
+
+Lemma sum_exp : forall x n, x ^ n.+1 - 1 = (x - 1) * \sum_(i < n.+1) x ^ i.
 Proof.
-(*D*)by rewrite ltnNge -!leq_root_delta -ltnNge ltnS -eqn_leq eq_sym.
+(*D*)move=> x n.
+(*D*)rewrite mulnBl big_distrr mul1n /=.
+(*D*)rewrite big_ord_recr [X in _ = _ - X]big_ord_recl /=.
+(*D*)rewrite [X in _ = _ - (_ + X)](eq_bigr (fun i : 'I_n =>  x * x ^ i))
+(*D*)      => [|i _]; last by rewrite -expnS.
+(*D*)rewrite [X in _ = X - _]addnC [X in _ = _ - X]addnC subnDA addnK.
+(*D*)by rewrite expnS expn0.
 (*A*)Qed.
 
-Lemma troot_deltaK n : troot (delta n) = n.
+(**
+  ----
+ ** Exercise 8
+*)
+
+(** Prove the following state by induction and by using a similar trick
+   as for Gauss noticing that n ^ 3 = n * (n ^ 2) *)
+
+Lemma bound_square : forall n, \sum_(i < n) i ^ 2 <= n ^ 3.
 Proof.
-(*D*)by apply/eqP; rewrite trootE leqnn deltaS -addn1 leq_add2l.
+(*D*)move=> n.
+(*D*)rewrite expnS -[X in _ <= X * _]card_ord -sum_nat_const /=.
+(*D*)elim/big_ind2: _ => // [* |i]; first exact: leq_add.
+(*D*)by rewrite leq_exp2r // ltnW.
 (*A*)Qed.
 
-(**  The modulo for triangular numbers *)
-Definition tmod n := n - delta (troot n).
+(**
+  ----
+  ** Exercise 9
 
-Lemma tmod_delta n : tmod (delta n) = 0.
+  Prove the following statement using only big operator theorems.
+  [big_cat_nat], [big_nat_cond], [big_mkcondl], [big1]
+*)
+Lemma sum_prefix_0 (f : nat -> nat) n m : n <= m ->
+  (forall k, k < n -> f k = 0) ->
+  \sum_(0 <= i < m) f i = \sum_(n <= i < m) f i.
 Proof.
-(*D*)by rewrite /tmod troot_deltaK subnn.
+(*D*)pose H := big_cat_nat.
+(*D*)move => nm f0; rewrite (big_cat_nat _ _ f (leq0n n)) /=; last by [].
+(*D*)rewrite big_nat_cond big_mkcondl big1 ?add0n //.
+(*D*)move => i _; case cnd : (0 <= i < n) => //.
+(*D*)apply: f0.
+(*D*)by move/andP: cnd => [_ it].
 (*A*)Qed.
 
-Lemma tmodE n : n = delta (troot n) + tmod n.
+(**
+  ----
+  ** Exercise 10
+*)
+
+(**
+  building a monoid law
+*)
+
+Section cex.
+
+Variable op2 : nat -> nat -> nat.
+
+Hypothesis op2n0 : right_id 0 op2.
+
+Hypothesis op20n : left_id 0 op2.
+
+Hypothesis op2A : associative op2.
+
+Hypothesis op2add : forall x y, op2 x y = x + y.
+
+HB.instance Definition _ := Monoid.isLaw.Build nat 0 op2 op2A op20n op2n0.
+
+Lemma ex_op2 : \big[op2/0]_(i < 3) i = 3.
 Proof.
-(*D*)by rewrite addnC (subnK (leq_delta_root _)).
+(*D*)by rewrite !big_ord_recr big_ord0 /= !op2add.
 (*A*)Qed.
 
-Lemma leq_tmod_troot n : tmod n <= troot n.
-Proof.
-(*D*)by rewrite leq_subLR -ltnS -addnS -deltaS ltn_delta_root.
-(*A*)Qed.
-
-Lemma ltn_troot m n : troot m < troot n -> m < n.
-Proof.
-(*D*)rewrite leq_root_delta deltaS => /(leq_trans _) -> //.
-(*D*)by rewrite {1}[m]tmodE ltn_add2l ltnS leq_tmod_troot.
-(*A*)Qed.
-
-Lemma leq_tmod m n : troot m = troot n -> (tmod m <= tmod n) = (m <= n).
-Proof.
-(*D*)by move=> tmEtn; rewrite {2}[m]tmodE {2}[n]tmodE tmEtn leq_add2l.
-(*A*)Qed.
-
-Lemma leq_troot_mod m n : 
-   m <= n = 
-   ((troot m < troot n) || ((troot m == troot n) && (tmod m <= tmod n))).
-Proof.
-(*D*)case: leqP => [|dmGdn] /= ; last first.
-(*D*)  apply/idP.
-(*D*)  apply: (leq_trans (_ : _ <= delta (troot m).+1)).
-(*D*)    by rewrite ltnW // ltn_delta_root.
-(*D*)  apply: (leq_trans (_ : _ <= delta (troot n))).
-(*D*)    by apply: leq_delta.
-(*D*)  by apply: leq_delta_root.
-(*D*)rewrite leq_eqVlt => /orP[/eqP dnEdm|dmLdn].
-(*D*)  rewrite dnEdm eqxx /=.
-(*D*)  by rewrite {1}[m]tmodE {1}[n]tmodE dnEdm leq_add2l.
-(*D*)rewrite (gtn_eqF dmLdn) /=.
-(*D*)apply/idP/negP.
-(*D*)rewrite -ltnNge.
-(*D*)apply: (leq_trans (ltn_delta_root _)).
-(*D*)apply: (leq_trans _ (leq_delta_root _)).
-(*D*)by apply: leq_delta.
-(*A*)Qed.
-
-(** Fermat Numbers *)
-
-Definition fermat n := (2 ^ (2 ^ n)).+1.
-
-Compute elements (prime \o fermat) 4.
-
-(** Hints : subn_sqr subnBA odd_double_half *)
-Lemma dvd_exp_odd a k : 
-  0 < a -> odd k -> a.+1 %| (a ^ k).+1.
-Proof.
-move=> aP kO.
-(*D*)rewrite -[k]odd_double_half {}kO add1n.
-(*D*)elim: {k}_./2 => [|k IH]; first by apply/dvdnn. 
-(*D*)rewrite doubleS.
-(*D*)rewrite (_ : (a ^ k.*2.+3).+1 = 
-(*D*)             (a ^ 2 * (a ^ k.*2.+1).+1) - (a ^ 2 - 1)); last first.
-(*D*)  rewrite mulnSr -expnD !addSn subnBA ?expn_gt0 ?aP //.
-(*D*)  by rewrite addnAC addnK addn1.
-(*D*)rewrite dvdn_sub ?dvdn_mull //.
-(*D*)by rewrite -{2}[1](exp1n 2) subn_sqr addn1 dvdn_mull.
-(*A*)Qed.
-
-(** Hints: logn_gt0 mem_primes dvdn2 *)
-Lemma odd_log_eq0 n : 0 < n -> logn 2 n = 0 -> odd n.
-Proof.
-(*D*)case: n => // n _ HL.
-(*D*)have : 2 \notin primes n.+1.
-(*D*)  rewrite -logn_gt0.
-(*D*)  by case: (logn 2 n.+1) HL.
-(*D*)by rewrite mem_primes /= dvdn2 negbK.
-(*A*)Qed.
-
-(** Hints pfactor_dvdnn logn_div pfactorK *)
-Lemma odd_div_log n : 0 < n -> odd (n %/ 2 ^ logn 2 n).
-Proof.
-(*D*)move=> nP.
-(*D*)apply: odd_log_eq0.
-(*D*)  rewrite divn_gt0 ?expn_gt0 //.
-(*D*)  apply: dvdn_leq => //.
-(*D*)  apply: pfactor_dvdnn.
-(*D*)rewrite logn_div.
-(*D*)  by rewrite pfactorK // subnn.
-(*D*)by apply: pfactor_dvdnn.
-(*A*)Qed.
-
-(** Hints divnK pfactor_dvdnn prime_nt_dvdP prime_nt_dvdP *)
-Lemma prime_2expS m : 
-  0 < m -> prime (2 ^ m).+1 -> m = 2 ^ logn 2 m.
-Proof.
-(*D*)move=> mP Hp.
-(*D*)pose a := 2 ^ logn 2 m.
-(*D*)pose b := m %/ a.
-(*D*)have : (2 ^ a).+1 %| (2 ^ m).+1. 
-(*D*)  rewrite -(divnK (pfactor_dvdnn 2 m)).
-(*D*)  rewrite mulnC expnM.
-(*D*)apply: dvd_exp_odd; first by apply: expn_gt0.
-(*D*)  by apply: odd_div_log.
-(*D*)have F : (2 ^ a).+1 != 1.
-(*D*)  by rewrite eq_sym neq_ltn ltnS expn_gt0.
-(*D*)move=> /(prime_nt_dvdP Hp).
-(*D*)move=> /(_ F) [] /eqP.
-(*D*)by rewrite eqn_exp2l // => /eqP{1}<-.
-(*A*)Qed.
-
-(** Hints oddX neq_ltn expn_gt0 *)
-Lemma odd_fermat n : odd (fermat n).
-Proof.
-(*D*)by rewrite /= oddX negb_or eq_sym neq_ltn expn_gt0.
-(*A*)Qed.
-
-(** Hint subn_sqr *)
-Lemma dvdn_exp2m1 a k : a.+1 %| (a ^ (2 ^ k.+1)).-1.
-Proof.
-(*D*)elim: k => /= [|k IH].
-(*D*)  rewrite expn1 -subn1 -{2}[1](exp1n 2) subn_sqr addn1 dvdn_mull //.
-(*D*)rewrite -subn1 -{2}[1](exp1n 2) expnS mulnC expnM subn_sqr.
-(*D*)by rewrite dvdn_mulr // subn1.
-(*A*)Qed.
-
-(** Hints subnK expnD expnM *)
-Lemma dvdn_fermat m n : m < n -> fermat m %| (fermat n).-2.
-Proof.
-(*D*)move=> mLn.
-(*D*)rewrite /fermat /= -(subnK mLn) -addSnnS addnC.
-(*D*)by rewrite expnD expnM dvdn_exp2m1.
-(*A*)Qed.
-
-Lemma fermat_gt1 n : 1 < fermat n.
-Proof.
-(*D*)by rewrite ltnS expn_gt0.
-(*A*)Qed.
-
-(** Hints gcdnMDl coprimen2 *)
-Lemma coprime_fermat m n : m < n -> coprime (fermat m) (fermat n).
-Proof.
-(*D*)move=> mLn.
-(*D*)rewrite /coprime -(subnK (fermat_gt1 n)) subn2.
-(*D*)case/dvdnP: (dvdn_fermat mLn) => k ->.
-(*D*)by rewrite gcdnMDl [_ == _]coprimen2 odd_fermat.
-(*A*)Qed.
-
-
-
+End cex.

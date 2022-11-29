@@ -9,347 +9,632 @@ Unset Printing Implicit Defensive.
 (** 
 
 ----
-** Lesson 4 Arithmetics
-  - Order
-  - Division
-  - Primality
+#<div class="slide">#
+** Roadmap for lessons 3 and 4
+
+    - finite types
+    - big operators
 
 *)
+
+(**
+#</div>#
+----
+#<div class="slide">#
+** Lesson 3 
+
+    - The math-comp library gives some support for finite types.
+    - ['I_n] is the the set of natural numbers smaller than n.
+    - [a : 'I_n] is composed of a value m and a proof that [m < n].
+
+    - Example : [oid] modifies the proof part with an equivalent one.
+
+#<div>#
+*)
+
+Definition oid n (x : 'I_n) : 'I_n.
+Proof.
+pose v := nat_of_ord x.
+pose H := ltn_ord x.
+pose H1 := leq_trans H (leqnn n).
+exact: Ordinal H1.
+Defined.
+
+(** 
+#</div>#
+** Note
+
+    - [nat_of_ord] is a coercion (see H)
+    - ['I_0] is an empty type
+#<div>#
+*)
+
+Lemma empty_i0 (x : 'I_0) : false.
+Proof. 
+case: x. 
+by [].
+Qed.
+
+(** 
+#</div>#
+#</div>#
+----
+#<div class="slide">#
+  ** Equality
+
+    - Every finite type is also an equality type.
+    - For ['I_n], only the value matters
+
+#<div>#
+*)
+
+Definition i3 := Ordinal (isT : 3 < 4).
+
+Lemma ieq : oid i3 == i3.
+Proof.
+exact: eqxx.
+Qed.
+
+Lemma ieq' (h : 3 < 4) : Ordinal h == i3.
+Proof.
+apply/eqP.
+pose H := val_inj.
+apply:val_inj.
+rewrite /=.
+by [].
+Qed.
+
+(**
+#</div>#
+#</div>#
+----
+#<div class="slide">#
+   ** An optimic map from [nat] to [ordinal] : [inord]
+
+    - If the expected type has shape 'I_n.+1
+    - Takes a natural number as input and return an element of 'I_n.+1
+    - The _same number_ if it is small enough, otherwise 0.
+
+#<div>#
+*)
+
+Check inord.
+
+Check inordK.
+
+Check inord_val.
+
+Example inord_val_3_4 : inord 3 = (Ordinal (isT : 3 < 4)) :> 'I_4.
+Proof.
+apply:val_inj. rewrite /=. rewrite inordK. by []. by [].
+Qed.
+
+(** 
+#</div>#
+#</div>#
+----
+#<div class="slide">#
+  ** Sequence
+
+    - a finite type can be seen as a sequence
+    - [enum T] gives this sequence.
+    - it is duplicate free.
+    - it relates to the cardinal of a finite type
+
+#<div>#
+*)
+
+Lemma iseq n (x : 'I_n) : x \in 'I_n.
+Proof.
+set l := enum 'I_n.
+move: l; rewrite /= => l.
+have ordinal_finType := [finType of 'I_n].
+have mem_enum := mem_enum.
+have enum_uniq := enum_uniq.
+have cardT := cardT.
+have cardE := cardE.
+by [].
+Qed.
+
+(** 
+#</div>#
+#</div>#
+----
+#<div class="slide">#
+  ** Boolean theory of finite types. 
+
+    - for finite type, boolean reflection can be extended to quantifiers
+    - getting closer to classical logic!
+
+#<div>#
+*)
+
+Lemma iforall (n : nat) : [forall x: 'I_n, x < n].
+Proof. 
+apply/forallP.
+rewrite /=.
+move=> x.
+exact: ltn_ord.
+Qed.
+
+Lemma iexists  (n : nat) : (n == 0) || [exists x: 'I_n, x == 0 :> nat].
+Proof.
+case: n.
+by [].
+move=> n.
+rewrite /=. (* optional, try removing this line. *)
+apply/existsP.
+pose H : 0 < n.+1 := isT.
+pose x := Ordinal H.
+exists x.
+by [].  (* mention function ord0. *)
+Qed.
+
+(** 
+#</div>#
+#</div>#
+----
+#<div class="slide">#
+  ** Selecting an element
+    - pick selects an element that has a given property
+    - pickP triggers the reflection
+#<div>#
+*)
+Check pick.
+
+Definition izero n (x : 'I_n) := odflt x [pick i : 'I_n | i == 0 :> nat].
+
+Lemma izero_def n (x : 'I_n.+1) : izero x == 0 :> nat.
+Proof.
+rewrite /izero.
+case: pickP.
+  rewrite /=.
+  by [].
+rewrite /=.
+move=> H.
+have := H (Ordinal (isT : 0 < n.+1)).
+rewrite /=.
+by [].
+Qed.
+
+(**
+#</div>#
+#</div>#
+----
+#<div class="slide">#
+  ** Building finite types
+    - SSR automatically discovers the pair of two finite types is finite
+    - For functions there is an explicit construction [ffun x => body]
+#<div>#
+*)
+Check [finType of ('I_3 * 'I_4)%type].
+Fail Check [finType of ('I_3 * nat)%type].
+
+Lemma ipair : [forall x : 'I_3 * 'I_4, x.1 * x.2 < 12].
+Proof.
+apply/forallP.
+rewrite /=.
+case.
+rewrite /=.
+move=> a b.
+have H := ltn_mul.
+rewrite -[12]/(3 * 4).
+apply: H.
+  by [].
+by [].
+Qed.
+
+Lemma ifun : [exists f : {ffun 'I_3 -> 'I_4}, forall x, f x == x :> nat].
+Proof.
+apply/existsP.
+rewrite /=.
+have H : forall n x, x < n -> x < n.+1.
+  move=> n x H.
+  rewrite ltnS.
+  by rewrite ltnW.
+exists [ffun x : 'I_3 => Ordinal (H 3 x (ltn_ord x))].
+apply/forallP.
+move=> x.
+have ffunE' := ffunE.
+rewrite ffunE'.
+rewrite /=.
+by [].
+Qed.
+
+(**
+#</div>#
+#</div>#
+----
+#<div class="slide">#
+  ** Installing the finite type structure for an arbitrary type
+    - When you have a type that you know is finite, you
+      need some work to make it recognized.
+
+#<div>#
+*)Inductive forest_monster :=
+  Lion | Tiger | Bear.
+
+Fail Check [finType of forest_monster].
+
+(**
+#</div>#
+    - Solution: exhibit an injection into a finite type.
+#<div>#
+*)
+Definition monster_ord m : 'I_3 :=
+  match m with
+    Lion => inord 0 | Tiger => inord 1 | _ => inord 2
+  end.
+
+Definition ord_monster (n : 'I_3) : option forest_monster :=
+  match val n with 0 => Some Lion | 1 => Some Tiger | _ => Some Bear end.
+
+Lemma monster_ord_can : pcancel monster_ord ord_monster.
+Proof.
+case.
+rewrite /=. rewrite /ord_monster. rewrite /= inordK. by []. by [].
+by rewrite /ord_monster /= inordK.
+by rewrite /ord_monster /= inordK.
+Qed.
+
+(**
+#</div>#
+    - The lemma monster_ord_can means that there is an injection from
+      [forest_monster] into a known finite type. This gives a host of structure
+      bridges to [eqType], [choiceType], [countType], [finiteType].
+    - [HB.howto] tells us which interfaces we have to satisfy
+    - we use the [Pcan*Mixin] helpers to do so
+#<div>#
+*)
+
+HB.howto forest_monster finType.
+
+HB.instance Definition _ : hasDecEq    forest_monster := PcanEqMixin monster_ord_can.
+HB.instance Definition _ : hasChoice   forest_monster := PcanChoiceMixin monster_ord_can.
+HB.instance Definition _ : isCountable forest_monster := PcanCountMixin monster_ord_can.
+HB.instance Definition _ : isFinite    forest_monster := PcanFinMixin monster_ord_can.
+
+Check [finType of forest_monster].
+
+(**
+#</div>#
+#</div>#
+   ----
+   ----
+#<div class="slide">#
+  ** Big operators
+    - Big operators provide a library to manipulate iterations in math-comp
+    - this is an encapsulation of the fold function
+ #<div>#
+*)
+Section F.
+
+Definition f (x : nat) := 2 * x.
+Definition g x y := x + y.
+Definition r := [::1; 2; 3].
+
+Lemma bfold : foldr (fun val res => g (f val) res) 0 r = 12.
+Proof.
+rewrite /=.
+rewrite /f.
+rewrite /g.
+by [].
+Qed.
+
+End F.
+
+(**
+#</div>#
+#</div>#
+----
+#<div class="slide">#
+   ** Notation
+
+    - iteration is provided by the \big notation
+    - the basic operation is on list
+    - special notations are introduced for usual case (\sum, \prod, \bigcap ..) 
+#<div>#
+*)
+Lemma bfoldl : \big[addn/0]_(i <- [::1; 2; 3]) i.*2 = 12.
+Proof.
+rewrite big_cons.
+rewrite big_cons.
+rewrite big_cons.
+rewrite big_nil.
+by [].
+Qed.
+
+Lemma bfoldlm : \big[muln/1]_(i <- [::1; 2; 3]) i.*2 = 48.
+Proof.
+rewrite big_cons.
+rewrite big_cons.
+rewrite big_cons.
+rewrite big_nil.
+by [].
+Qed.
+
+(**
+#</div>#
+#</div>#
+----
+#<div class="slide">#
+   ** Range 
+    - different ranges are provided
+#<div>#
+*)
+Lemma bfoldl1 : \sum_(1 <= i < 4) i.*2 = 12.
+Proof.
+have H := big_ltn.
+have H1 := big_geq.
+rewrite big_ltn.
+  rewrite big_ltn.
+    rewrite big_ltn.
+      rewrite big_geq.
+        by [].
+      by [].
+    by [].
+  by [].
+by [].
+Qed.
+
+Lemma bfoldl2 : \sum_(i < 4) i.*2 = 12.
+Proof.
+rewrite big_ord_recl.
+rewrite /=.
+rewrite big_ord_recl.
+rewrite /=.
+rewrite big_ord_recl.
+rewrite big_ord_recl.
+rewrite big_ord0.
+by [].
+Qed.
+
+Lemma bfoldl3 : \sum_(i : 'I_4) i.*2 = 12.
+Proof.
+exact: bfoldl2.
+Qed.
+
+(**
+#</div>#
+#</div>#
+----
+#<div class="slide">#
+   ** Filtering 
+    - it is possible to filter elements from the range 
+#<div>#
+*)
+Lemma bfoldl4 : \sum_(i <- [::1; 2; 3; 4; 5; 6] | ~~ odd i) i = 12.
+Proof.
+have big_pred0 := big_pred0.
+have big_hasC := big_hasC.
+pose x :=  \sum_(i < 8 | ~~ odd i) i.
+pose y :=  \sum_(0 <= i < 8 | ~~ odd i) i.
+rewrite big_cons.
+rewrite /=.
+rewrite big_cons.
+rewrite /=.
+rewrite big_cons.
+rewrite /=.
+rewrite big_cons.
+rewrite /=.
+rewrite big_cons.
+rewrite /=.
+rewrite big_cons.
+rewrite /=.
+rewrite big_nil.
+by [].
+Qed.
+
+(**
+#</div>#
+#</div>#
+----
+#<div class="slide">#
+   ** Switching range
+    - it is possible to change representation (big_nth, big_mkord).
+#<div>#
+*)
+Lemma bswitch :  \sum_(i <- [::1; 2; 3]) i.*2 = \sum_(i < 3) (nth 0 [::1; 2; 3] i).*2.
+Proof.
+have H := big_nth.
+rewrite (big_nth 0).
+rewrite /=.
+have H1 := big_mkord.
+rewrite big_mkord.
+by [].
+Qed.
+
+(**
+#</div>#
+#</div>#
+----
+#<div class="slide">#
+  ** Big operators and equality
+    - one can exchange function and/or predicate
+ #<div>#
+*)
+Lemma beql : 
+  \sum_(i < 4 | odd i || ~~ odd i) i.*2 =  \sum_(i < 4) i.*2.
+Proof.
+have H := eq_bigl.
+apply: eq_bigl.
+move=> u.
+by case: odd.
+Qed.
+
+Lemma beqr : 
+  \sum_(i < 4) i.*2 = \sum_(i < 4) (i + i).
+Proof.
+have H := eq_bigr.
+apply: eq_bigr.
+rewrite /=.
+move=> u _.
+rewrite addnn.
+by [].
+Qed.
+
+Lemma beq : 
+  \sum_(i < 4 | odd i || ~~ odd i) i.*2 = \sum_(i < 4) (i + i).
+Proof.
+have H := eq_big.
+apply: eq_big => [u|i Hi]; first by case: odd.
+by rewrite addnn.
+
+Qed.
+
+(**
+#</div>#
+#</div>#
+----
+#<div class="slide">#
+  ** Monoid structure
+    - one can use associativity to reorganize the bigop
+ #<div>#
+*)
+Lemma bmon1 : \sum_(i <- [::1; 2; 3]) i.*2 = 12.
+Proof.
+have H := big_cat.
+rewrite -[[::1; 2; 3]]/([::1] ++ [::2; 3]).
+rewrite big_cat.
+rewrite /=.
+rewrite !big_cons !big_nil.
+by [].
+Qed.
+
+Lemma bmon2 : \sum_(1 <= i < 4) i.*2 = 12.
+Proof.
+have H := big_cat_nat.
+rewrite (big_cat_nat _ _ _ (isT: 1 <= 2)).
+  rewrite /=.
+  rewrite big_ltn //=.
+  rewrite big_geq //.
+  by rewrite 2?big_ltn //= big_geq.
+by [].
+Qed.
+
+Lemma bmon3 : \sum_(i < 4) i.*2 = 12.
+Proof.
+have H := big_ord_recl.
+have H1 := big_ord_recr.
+rewrite big_ord_recr.
+rewrite /=.
+rewrite !big_ord_recr //=.
+rewrite big_ord0.
+by [].
+Qed.
+
+Lemma bmon4 : \sum_(i < 8 | ~~ odd i) i = 12.
+Proof.
+have H := big_mkcond.
+rewrite big_mkcond.
+rewrite /=.
+rewrite !big_ord_recr /=.
+rewrite big_ord0.
+by [].
+Qed.
+
+(**
+#</div>#
+#</div>#
+----
+#<div class="slide">#
+  ** Abelian Monoid structure
+    - one can use communitativity to massage the bigop
+ #<div>#
+*)
+
+Lemma bab : \sum_(i < 4) i.*2 = 12.
+Proof.
+have H := bigD1.
+pose x := Ordinal (isT: 2 < 4).
+rewrite (bigD1 x).
+  rewrite /=.
+  rewrite big_mkcond /=.
+  rewrite !big_ord_recr /= big_ord0.
+  by [].
+by [].
+Qed.
+
+Lemma bab1 : \sum_(i < 4) (i + i.*2) = 18.
+Proof.
+have H := big_split.
+rewrite big_split /=.
+rewrite !big_ord_recr ?big_ord0 /=.
+by [].
+Qed.
+
+Lemma bab2 : \sum_(i < 3) \sum_(j < 4) (i + j) =
+                 \sum_(i < 4) \sum_(j < 3) (i + j).
+Proof.
+have H := exchange_big.
+have H1 := reindex_inj.
+rewrite exchange_big.
+rewrite /=.
+apply: eq_bigr.
+move=> i _.
+apply: eq_bigr.
+move=> j _.
+by rewrite addnC.
+Qed.
+
+(**
+#</div>#
+#</div>#
+----
+#<div class="slide">#
+  ** Distributivity
+    - one can exchange sum and product
+ #<div>#
+*)
+Lemma bab3 : \sum_(i < 4) (2 * i) = 2 * \sum_(i < 4) i.
+Proof.
+have H := big_distrr.
+by rewrite big_distrr.
+Qed.
+
+Lemma bab4 : 
+  (\prod_(i < 3) \sum_(j < 4) (i ^ j)) = 
+  \sum_(f : {ffun 'I_3 -> 'I_4}) \prod_(i < 3) (i ^ (f i)).
+Proof.
+have H := big_distr_big.
+have H1 := big_distr_big_dep.
+rewrite  (big_distr_big ord0).
+rewrite /=.
+apply: eq_bigl.
+move=> f.
+rewrite /=.
+apply/forallP.
+rewrite /=.
+by [].
+Qed.
 
 
 (**
-  ** Reminder  
+#</div>#
+#</div>#
+----
+#<div class="slide">#
+  ** Property, Relation and Morphism
+ #<div>#
 *)
-
-Check nat.
-
-Print nat.
-
-Check O.
-
-Check S O.
-
-Check S (S O).
-
-Compute 3.+1.
-
-(**  Proof by case *)
-
-Goal forall (P : pred nat), 
-     (P 0) -> (forall n, P n.+1) -> forall n, P n.
+Lemma bap n : ~~ odd (\sum_(i < n) i.*2). 
 Proof.
-move=> P H0 SH n.
-case: n => [|n].
-  exact: H0.
-by apply: SH.
-Qed.
-
-(**  Proof by induction *)
-
-Goal forall (P : pred nat), 
-     (P 0) -> (forall n, P n -> P n.+1) -> forall n, P n.
-Proof.
-move=> P H0 SH n.
-elim: n => [|n IH].
-  exact: H0.
-by apply: SH.
-Qed.
-
-
-(** Eqtype *)
-
-Check eqn.
-
-Compute 1 == 1.
-
-Compute 2 == 3.
-
-Print eqn.
-
-Goal forall m n, m.+1 == n.+1 -> m == n.
-Proof.
-move=> m n mEn.
-exact: mEn.
-Qed.
- 
-(** Addition *)
-
-Check addn.
-
-Check addn 2 3.
-
-Compute 2 + 3.
-
-Goal forall m n, m.+1 + n = (m + n).+1.
-Proof.
-move=> m n.
-by [].
-Qed.
-
-Search _ (_.+1 + _ = _.+1) in ssrnat.
-
-Goal forall m n, m + n.+1 = (m + n).+1.
-Proof.
-move=> m n.
-elim: m => [|m IH].
-  by [].
-rewrite !addSn.
-rewrite IH.
-by [].
-Qed.
-
-Search _ (_ + _.+1 = _.+1) in ssrnat.
-
-Search _ (_.+1 + _ = _ + _.+1) in ssrnat.
-
-(** Subtraction *)
-
-Check subn.
-
-Check subn 3 2.
-
-Compute (3 - 2).
-
-Compute 3 - 4.
-
-Goal forall n, 0 - n = 0.
-Proof.
-move=> n.
-by [].
-Qed.
-
-Search _ left_zero subn in ssrnat.
-
-Goal forall n, n - 0 = n.
-Proof.
-case => [|n].
+have H := big_ind.
+have H1 := big_ind2.
+have H2 := big_morph.
+elim/big_ind: _.
 - by [].
-by [].
+- move=> x y.
+  rewrite oddD.
+  case: odd.
+     by [].
+  by [].
+move=> i _.
+by rewrite odd_double.
 Qed.
-
-Search _ (_.+1 - 0 = _) in ssrnat.
-Search _ (_.+1 - _.+1 = _) in ssrnat.
-
-
-(** 
-    Order 
+(**
+#</div>#
+#</div>#
 *)
-
-
-Check leq.
-
-Check (0 <= 2).
-
-Compute (0 <= 2).
-
-Print leq.
-
-(** One overloaded definition *)
-
-Goal forall m n, m >= n -> n <= m.
-Proof.
-by [].
-Qed.
-
-Goal forall m n, m.+1 <= n -> m < n.
-Proof.
-by [].
-Qed.
-
-Goal forall n, n <= n.+1.
-Proof.
-elim=> [|n IH].
-  by [].
-exact: IH.
-Qed.
-
-Search _ (?_1 <= ?_1.+1) in ssrnat.
-
-(** Reflexivity *)
-
-Search _ (?_1 <= ?_1) in ssrnat.
-
-(** Antisymmetric *)
-
-Search _ (~~ _) (_ <= _) in ssrnat.
-Search _ (_ == _) (_ <= _) in ssrnat.
-
-(** Transitivity *)
-
-Search _ nat "trans" in ssrnat.
-
-Goal forall m n p, m < n -> n <= p -> m < p.
-Proof.
-move=> m n p.
-have trans := leq_trans.
-have trans_Sm_n := leq_trans (_ : m < n) (_ : n <= p).
-by [].
-Qed.
-
-Goal forall (P : pred nat), 
-      P 0 ->
-      (forall m,  (forall n, n <= m -> P n) -> P m.+1) ->
-      (forall m, P m).
-Proof.
-move=> P HC IHs m.
-move: (leqnn m).
-move: {-2}m.
-elim: m => [|m IH].
-  by case.
-case=> // n nLm.
-apply: IHs => k kLn.
-apply: IH.
-apply: leq_trans kLn nLm.
-Qed.
-
-Goal forall a b c,
-   a < b -> b < c -> a <= c.
-Proof.
-move=> a b c aLb bLc.
-apply: leq_trans (_ : b <= _).
-  by apply: ltnW.
-by apply: ltnW.
-Qed.
-
-(** Scaling down  *)
-
-Check leq_eqVlt.
-
-Goal forall (P : pred nat) m n, P n ->
-    (forall m, m < n -> P m) -> m <= n -> P m.
-Proof.
-move=> P m n Pn PL.
-rewrite leq_eqVlt.
-move=> /orP[|].
-  move/eqP->.
-  by [].
-exact: PL.
-Qed.
-
-(** Addition *)
-
-Search  _ (_ <= _ + _) in ssrnat.
-
-Goal forall m n, n <= m -> n.*2 <= m + n.
-Proof.
-move=> m n nLm.
-rewrite -addnn.
-rewrite leq_add2r.
-by [].
-Qed.
-
-(** Multiplication *)
-
-Search  _ (_ <= _ * _) in ssrnat.
-
-Goal forall m n, n <= m -> n ^ 2 <= m * n.
-Proof.
-move=> m n nLm.
-rewrite -mulnn.
-rewrite leq_mul2r.
-rewrite nLm.
-rewrite orbT.
-by [].
-Qed.
-
-(** Conditional comparison **)
-
-Check subset_leqif_cards.
-
-Search _ (_ <= _ ?= iff _) (_ && _) in ssrnat.
-
-(** Division **)
-
-Check (modn 21 2).
-Compute 21 %% 2.
-
-Check (divn 21 2).
-Compute 21 %/ 2.
-
-Check (dvdn 2 21).
-Compute 2 %| 21.
-
-Print dvdn.
-
-Search (_ %| _ + _) in div.
-
-Search ((_ + _) %/ _) in div.
-
-Search (?_1 %/ ?_1) in div.
-
-Compute 0 %/ 0.
-
-Search (_ %| _ * _) in div.
-
-Search ((_ * _) %/ _) in div.
-
-(** odd **)
-
-Compute odd 4.
-Compute odd 5.
-Print odd.
-
-Search _ odd (_ %% _) in div.
-
-(** gcd & lcm **)
-
-Compute gcdn 42 49.
-
-Compute lcmn 42 49.
-
-Search _ gcdn lcmn in div.
-
-Search _ gcdn (_ * _) in div.
-
-(** Coprime **)
-
-Check coprime.
-
-Compute coprime 3 5.
-Compute coprime 21 7.
-
-Print coprime.
-
-Search _ coprime (_ %| _) in div prime.
-
-(** Primality **)
-
-Check prime.
-
-Compute prime 21.
-
-Compute prime 22.
-
-Compute prime 23.
-
-Print prime.
-
-Compute primes 23.
-
-Check primeP.
-
-Goal prime 2.
-Proof.
-apply/primeP.
-split.
-  by [].
-move=> d.
-case: d.
-  by [].
-case.
-  by [].
-by case.
-Qed.
-
-Search _ prime (_ %| _) in div prime.
-
-Check logn.
-
-Compute logn 3 8.
-
-Compute logn 3 9.
-
-Search _ logn in prime.
-
 
 
