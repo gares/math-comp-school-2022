@@ -42,11 +42,11 @@ The library has been maintained for more than 10 years now.
 
 ----------------------------------------------------------
 #<div class="slide">#
-** Roadmap of the first 2 lessons
+** Roadmap of the first  lessons
 
   - boolean reflection (small scale reflection)
   - the ssreflect proof language (SSReflect)
-  - basic libraries ([ssrbool], [ssrnat], [seq])
+  - basic libraries ([ssrbool], [seq]) and [==]
 
 #</div>#
 
@@ -92,12 +92,19 @@ provides notable benefits.  First, one can use the program as a
 decision procedure for closed terms. Second, the proofs of such
 predicate are small. E.g. a proof of [prime 17 = true] is just
 [erefl true].
+
 Last, the proofs of these predicates are irrelevant (i.e. unique).
 This means that we can form subtypes without problems. E.g. the
 in habitants of the subtype of prime numbers [{ x | prime x = true }]
 are pairs, the number (relevant) and the proof (always [erefl true]).
 Hence when we compare these pairs we can ignore the proof part, that is,
 prime numbers behave exactly as numbers.
+
+A way to see this is that we are using Coq as a logical framework
+and that we are setting up an environment where one can
+reason classically (as in set theory, EM, subsets..) but also take
+advantage of computations as valid reasoning steps (unlike set theory TT
+manipulates effective programs)
 #</div></div>#
 
 #</div>#
@@ -177,7 +184,7 @@ Proof.
 (*#
 elim: n => [|m IHm].
   by apply: leq0n.  exact: leq0n.
-by rewrite leqSS IHm.
+by rewrite leqSS; rewrite IHm.
 #*)
 by elim: n. Qed.
 
@@ -212,19 +219,24 @@ Notation "~~ b" := (negb b).
 *** Proofs by truth tables
    - we can use EM to reason about boolean predicates
      and connectives
+   - [move=> name]
    - [case:]
-   - bookkeeping [/=]
+   - [move=> /=]
    - naming convention: [C] suffix
 #<div>#
 *)
-Lemma andbC b1 b2 : (b1 && b2) = (b2 && b1).
+Lemma andbC : forall b1 b2, (b1 && b2) = (b2 && b1).
 Proof.
 (*
-case: b1 => /=.
+move=> b1 b2.
+case: b1.
+  move=> /=.
   by case: b2.
 by case: b2.
 *)
-by case: b1; case: b2. Qed.
+by move=> b1 b2; case: b1; case: b2. Qed.
+
+End BooleanReflection.
 
 (** 
 #</div>#
@@ -240,41 +252,10 @@ It is worth mentioning here
 #</div>#
 ------------------------------------------------------
 #<div class="slide">#
-*** Bookkeeping 101
-   - defective case (stack model, the _top_ implicit tactic argument)
-   - tactic=>
-   - tactic:        (caveat: tactic != apply or exact)
-   - "rename", "reorder"
-#<div>#
-*)
-Lemma negb_and :
-  forall b c, ~~ (b && c) = ~~ b || ~~ c.
-Proof.
-(*
-move=> b. move=> c. move: b. move: c.
-move=> c b. move: b c.
-move=> b; case: b; move=> c; case: c.
-*)
-by case; case. Qed.
-
-End BooleanReflection.
-(**
-#</div>#
-
-#<div class="note">(notes)<div class="note-text">#
-We say that the goal (under the horizontal bar) is a stack, since
-items can only be accessed accorrding to a stack discipline.
-If the goal is [forall x y, x = 1 + 2 * y -> odd x] one has to
-deal with [x] and [y] before accessing [x = 1 + 2 * y].
-#</div></div>#
-
-#</div>#
-------------------------------------------------------
-#<div class="slide">#
 ** Recap: formalization approach and basic tactics
    - boolean predicates and connectives
    - think "up to" computation
-   - [case], [elim], [move], [:], [=>], basic [rewrite]
+   - [case], [elim], [move], basic [rewrite]
    - [if-is-then-else], [.+1]
    - naming convetion
 
@@ -285,7 +266,10 @@ deal with [x] and [y] before accessing [x = 1 + 2 * y].
 ** The real MathComp library
   
    Things to know:
-   - [Search head_symbol (pat _ term) "string" name]
+   - [Search something inside library]
+     - patterns [ _ <= _]
+     - names ["SS"]
+     - constants [leq]
    - [(a < b)] is a notation for [(a.+1 <= b)]
    - [==] stands for computable equality (overloaded)
    - [!=] is [~~ (_ == _)]
@@ -293,10 +277,11 @@ deal with [x] and [y] before accessing [x = 1 + 2 * y].
 
 #<div>#
 *)
-Search _ (_ <= _) in ssrnat.
+Search (_ <= _) inside ssrnat.
+Search "SS" inside ssrnat.
 Locate "_ < _".
 Check (forall x, x.+1 <= x).
-Search _ orb "C" in ssrbool.
+Search "orb" "C".
 Print commutative.
 Check (3 == 4) || (3 <= 4).
 Eval compute in (3 == 4) || (3 <= 4).
@@ -316,8 +301,8 @@ Proof. unfold is_true. by []. Qed.
    - privileged role (many lemmas are stated with = or is_true)
    - the [eqP] view: "is_true (a == b)   <->    a = b"
    - [=> /eqP] (both directions)
-   - [=> ->] (on the fly rewrite, "subst")
    - notation [.*2]
+   - [rewrite lem1 lem2]
 
 #<div>#
 *)
@@ -326,11 +311,12 @@ Lemma test_eqP n m :
 Proof.
 (*#
 Check eqP.
-move=> /eqP. move=> /eqP. move=> /eqP Enm. rewrite Enm.
-Search _ (_ + _) _.*2 in ssrnat.
+move=> /eqP. move=> /eqP. move=> /eqP. move=> Enm. rewrite Enm.
+Search (_ + _) _.*2 inside ssrnat.
 exact: addnn.
 #*)
-by move=> /eqP ->; rewrite -addnn. Qed.
+by move=> /eqP; move=> Enm; rewrite Enm -addnn. Qed.
+
 
 (**
 #</div>#
@@ -346,121 +332,166 @@ Lemma test2_eqP b1 b2 :
   b1 == ~~ b2 -> b1 || b2.
 Proof.
 (*
-Search _ orb in ssrbool.
+Search orb negb.
 *)
-by move=> /eqP->; exact: orNb.
+by move=> /eqP; move=> Eb1; rewrite Eb1 orNb.
 Qed.
 
 (**
 #</div>#
 
 #</div>#
-------------------------------------------------------------
-#<div class="slide">#
-** Views are just lemmas 
-   (plus some automatic adaptors)
-   - lemmas like [A -> B] can be used as views too
-   - boolean connectives have associated views
-   - [=> [ ... ]]
 
+-------------------------------------------------------------
+#<div class="slide">#
+ ** connectives like [&&] have a view as well
+   - [andP] and [[]]
 #<div>#
 *)
-
-Lemma test_leqW i j k :
-  (i <= k) && (k.+1 <= j) -> i <= j.+1.
+Lemma test_andP b1 b2 :
+  b1 && b2 -> b1 || b2.
 Proof.
-(*# move=> /andP. case. move=> /leqW. move=> leq_ik1. #*)
-move=> /andP[/leqW leq_ik1 /leqW leq_k1j1].
-exact: leq_trans leq_ik1 leq_k1j1.
+(*
+move=> /andP Hb1b2.
+case: Hb1b2.
+move=> Hb1 Hb2.
+by rewrite Hb1.
+*)
+move=> /andP[Hb1 Hb2].
+by rewrite Hb1.
 Qed.
 
 (**
 #</div>#
 
 #</div>#
-------------------------------------------------------------
+-------------------------------------------------------------
 #<div class="slide">#
-** The reflect predicate
-   - [reflect P b] is the preferred way to state that
-     the predicate [P] (in [Prop]) is logically equivalent
-     to [b=true]
-
+ ** [move:] to move back down to the goal
 #<div>#
 *)
-Module reflect_for_eqP.
-
-Print reflect.
-
-Fixpoint eqn m n :=
-  match m, n with
-  | 0, 0 => true
-  | j.+1,k.+1 => eqn j k
-  | _, _ => false
-  end.
-Arguments eqn !m !n.
-
-(**
-#</div>#
-
-#</div>#
-----------------------------------------------------------
-#<div class="slide">#
-** Proving the reflection lemma for eqn
-    - the convenience lemma [iffP]
-    - the [congr] tactic
-    - trivial branches //
-    - loaded induction [elim: n m]
-#<div>#
-*)
-Lemma myeqP m n : reflect (m = n) (eqn m n).
+Lemma test_move_colon b1 b2 :
+  b1 && (b1 == b2) -> b2.
 Proof.
-(*#
-apply: (iffP idP) => [|->]; last by elim: n.
-elim: m n; first by case.
-move=> n IHn m eq_n1m.
-case: m eq_n1m => // m eq_n1m1.
-congr (_.+1).
-exact: IHn.
-#*)
-apply: (iffP idP) => [|->]; last by elim: n.
-by elim: m n => [|m IHm] // [|n] // /IHm->.
+move=> /andP[Hb1 Hb12].
+move: Hb12.
+move=> /eqP Hb2.
+by rewrite -Hb2 Hb1.
 Qed.
 
-Lemma test_myeqP n m : (eqn n m) -> m = n.
-Proof. by move=> /myeqP ->. Qed.
+(**
+#</div>#
 
-End reflect_for_eqP.
+#</div>#
+
+--------------------------------------------------------
+--------------------------------------------------------
+#<div class="slide">#
+** Sequences
+  - an alias for lists (used to be differnt)
+  - many notations
+
+#<div>#
+*)
+Check [::].
+Check [:: 3 ; 4].
+Check [::] ++ [:: true ; false].
+Eval compute in [seq x.+1 | x <- [:: 1; 2; 3]].
+Eval compute in [seq x <- [::3; 4; 5] | odd x ].
+Eval compute in rcons [:: 4; 5] 3.
+Eval compute in all odd [:: 3; 5].
+
+Module polylist.
+
+(**
+#</div>#
+
+#<div class="note">(notes)<div class="note-text">#
+Notations for sequentes are documented the header of the 
+#<a href="https://math-comp.github.io/htmldoc_1_15_0/mathcomp.ssreflect.seq.html">seq.v</a># file.
+[rcons] is like [cons] but the new element is placed in the last position.
+Indeed it is not a real constructor, but rather a function that appends the singleton list.
+This special case of append has its own name and collection of theorems.
+#</div></div>#
+
+#</div>#
+--------------------------------------------------------
+#<div class="slide">#
+** Polymorphic lists
+   - This statement makes no assumptions on T
+   - we can use [=> ... //] to kill a goal
+   - we can use [=> ... /=] to simplify a goal
+
+#<div>#
+*)
+Lemma size_cat T (s1 s2 : seq T) : size (s1 ++ s2) = size s1 + size s2.
+Proof.
+elim: s1 => [//|x s1 IH /=].
+  (*by [].*)
+(*move=> /=.*)
+by rewrite IH.
+Qed.
+
+End polylist.
+
+Eval compute in 3 \in [:: 7; 4; 3].
+
+Fail Check forall T : Type, forall x : T, x \in [:: x ].
 
 (** 
 #</div>#
 
-#</div># 
---------------------------------------
+#</div>#
+--------------------------------------------------------
 #<div class="slide">#
-** rewrite, one command to rule them all
-  - rewrite
-  - side condition and // ? 
-  - rewrite a boolean predicate (is_true hides an eqaution)
+** Had-hoc polymorphism
+  - T : Type |- l : list T 
+  - T : eqType |- l : list T
+  - eqType means: a type with a decidable equality (_ == _)
 #<div>#
 *)
 
-Lemma test_leq_cond p : prime p -> p.-1.+1 + p = p.*2.
+Check forall T : eqType, forall x : T, x \in [:: x ].
+
+(**
+#</div>#
+
+#<div class="note">(notes)<div class="note-text">#
+Had-hoc polymorphism is a well established concept in object
+oriented programming languages and as well in functional
+languages equipped with type classes like Haskell.
+Whenever [T] is an [eqType], we have a comparison
+function for all terms of type [T] ([x] in the example above).
+#</div></div>#
+
+#</div>#
+--------------------------------------------------------
+#<div class="slide">#
+** The \in notation
+   - overloaded as [(_ == _)]
+   - pushing \in with inE
+   - computable.
+   - rewrite flag [!]
+   - [rewrite !inE] idiom
+#<div>#
+*)
+Lemma test_in l : 3 \in [:: 4; 5] ++ l -> l != [::].
 Proof.
-(*#
-move=> pr_p.
-Search _ predn in ssrnat.
-rewrite prednK.
-  by rewrite addnn.
-Search _ prime leq 0.
-by apply: prime_gt0.
-#*)
-by move=> pr_p; rewrite prednK ?addnn // prime_gt0.
+rewrite inE.
+rewrite inE.
+(*rewrite !inE*)
+move=> /=.
+apply: contraL.
+move=> /eqP El.
+rewrite El.
+by [].
 Qed.
 
 (**
 #</div>#
 
-#</div># 
+#</div>#
+
 ----
 #<div class="slide">#
 ** References for this lesson
