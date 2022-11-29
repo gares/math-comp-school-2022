@@ -35,6 +35,7 @@ check-ocaml-ver-%:
 
 upload: $(FILES) cheat-sheet/cheatsheet.pdf
 	scp $(FILES) FileSaver.js Blob.js local.css cheat-sheet/cheatsheet.pdf roquableu.inria.fr:/net/serveurs/www-sop/teams/marelle/MC-2022/
+	echo 'cd /net/serveurs/www-sop/teams/marelle/MC-2022/;chmod g+w --recursive . *' | ssh roquableu.inria.fr
 
 %.html.tmp: %.v Makefile udoc
 	$(COQC) -w -notation-overridden,-undo-batch-mode $< > /dev/null
