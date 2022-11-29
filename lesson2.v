@@ -51,7 +51,7 @@ Defined.
 
 Lemma empty_i0 (x : 'I_0) : false.
 Proof. 
-case x. 
+case: x. 
 by [].
 Qed.
 
