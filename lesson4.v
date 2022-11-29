@@ -15,6 +15,7 @@ Unset Printing Implicit Defensive.
    - [: name], to prepare the goal for a tactic
    - [rewrite lem -lem]
    - [apply: lem] or [exact: lem]
+   - [apply/view]
  Library
    - naming convention: [addnC], [eqP], [orbN], [orNb], ...
    - notations: [.+1], [if-is-then-else]
