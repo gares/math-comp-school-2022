@@ -1,3 +1,5 @@
+(* this preamble takes some time to load, you may want to
+   run while the teacher does is welcome bla bla... *)
 From elpi Require Import elpi.
 From HB Require Import structures.
 From mathcomp Require Import all_ssreflect.
@@ -7,8 +9,9 @@ Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
 (** 
+-----------------------------------------------------
 #<div class="slide">#
-** Objective of this course
+** Objective of this school
 
   Give you access to the 
   #<a href="http://math-comp.github.io/math-comp/">Mathematical Components library</a>#
@@ -28,6 +31,14 @@ Unset Printing Implicit Defensive.
     library (interfaces, overload, naming conventions, ...)
   - maintainable in the long term (compact, stable, ...)
   - validated on large formalization projects
+
+** Captatio benevolentiae: this is not standard Coq
+
+  - things are done differently, very differently, than usual
+  - it is not easy to appreciate the benefits on small examples,
+    but we will try hard ;-)
+  - not enough time to explain eveything, I'll focus on
+    intuition rather than technical details
 
 #<div class="note">(notes)<div class="note-text">#
 The mathematical components library was used to formalize the
@@ -51,22 +62,11 @@ The library has been maintained for more than 10 years now.
 #</div>#
 
 ----------------------------------------------------------
-#<div class="slide">#
-** Disclaimer: this is not standard Coq
-
-  - things are done differently, very differently, than usual
-  - it is not easy to appreciate the benefits on small examples,
-    but we will try hard ;-)
-  - not enough time to explain eveything, I'll focus on
-    intuition rather than technical details
-#</div>#
-
-----------------------------------------------------------
 ----------------------------------------------------------
 #<div class="slide">#
 ** Boolean reflection
 
-  - when a concept is "computable", lets represent it as a
+  - when a concept is "computable" we represent it as a
     computable function (a program), not as an inductive relation
   - Coq knows how to compute, even symbolically, and computation is
     a very stable form of automation
@@ -176,14 +176,14 @@ Proof. (* simpl. *) by []. Qed.
    - elim with naming and automatic clear of n
    - indentation for subgoals
    - no need to mention lemmas proved by computation
-   - apply, exact, rewrite
+   - apply, rewrite
 #<div>#
 *)
 Lemma leqnn n : (n <= n) = true.
 Proof.
 (*#
 elim: n => [|m IHm].
-  by apply: leq0n.  exact: leq0n.
+  by apply: leq0n.
 by rewrite leqSS; rewrite IHm.
 #*)
 by elim: n. Qed.
@@ -255,9 +255,9 @@ It is worth mentioning here
 ** Recap: formalization approach and basic tactics
    - boolean predicates and connectives
    - think "up to" computation
-   - [case], [elim], [move], basic [rewrite]
-   - [if-is-then-else], [.+1]
-   - naming convetion
+   - [case], [elim], [move], [rewrite]
+   - [if-is-then-else], [.+1], [&&], [||], [~~]
+   - naming convetions [C], [foo0n], [foon0], [fooSS]
 
 #</div>#
 ------------------------------------------------------
@@ -274,6 +274,7 @@ It is worth mentioning here
    - [==] stands for computable equality (overloaded)
    - [!=] is [~~ (_ == _)]
    - [is_true] coercion
+   - [rewrite /concept] to unfold
 
 #<div>#
 *)
@@ -289,7 +290,7 @@ Check (true == false).
 Check (3 != 4).
 
 Lemma test_is_true_coercion : true.
-Proof. unfold is_true. by []. Qed.
+Proof. rewrite /is_true. by []. Qed.
 
 (**
 #</div>#
@@ -300,9 +301,11 @@ Proof. unfold is_true. by []. Qed.
 ** Equality
    - privileged role (many lemmas are stated with = or is_true)
    - the [eqP] view: "is_true (a == b)   <->    a = b"
-   - [=> /eqP] (both directions)
+   - [move=> /eqP] (both directions, on hyps)
+   - [apply/eqP] (both directions, on goal)
    - notation [.*2]
    - [rewrite lem1 lem2]
+   - What is the ugly type for [n] and [m]?
 
 #<div>#
 *)
@@ -311,9 +314,11 @@ Lemma test_eqP n m :
 Proof.
 (*#
 Check eqP.
-move=> /eqP. move=> /eqP. move=> /eqP. move=> Enm. rewrite Enm.
+move=> /eqP. move=> /eqP. move=> /eqP. move=> Enm. 
+apply/eqP. apply/eqP.
+rewrite Enm.
 Search (_ + _) _.*2 inside ssrnat.
-exact: addnn.
+by apply: addnn.
 #*)
 by move=> /eqP; move=> Enm; rewrite Enm -addnn. Qed.
 
@@ -326,6 +331,7 @@ by move=> /eqP; move=> Enm; rewrite Enm -addnn. Qed.
 #<div class="slide">#
  ** Infix [==] is overloaded
    - and [eqP] is too
+   - [move=> /view name]
 #<div>#
 *)
 Lemma test2_eqP b1 b2 :
@@ -334,7 +340,7 @@ Proof.
 (*
 Search orb negb.
 *)
-by move=> /eqP; move=> Eb1; rewrite Eb1 orNb.
+by move=> /eqP Eb1; rewrite Eb1 orNb.
 Qed.
 
 (**
@@ -347,7 +353,6 @@ Qed.
  ** A little bit of gimmicks
    - connectives like [&&] have a view as well
    - [andP] and [[]]
-   - [apply/viewP]
 #<div>#
 *)
 Lemma test_andP b1 b2 :
@@ -357,8 +362,6 @@ Proof.
 move=> /andP Hb1b2.
 case: Hb1b2.
 move=> Hb1 Hb2.
-apply/orP.
-
 by rewrite Hb1.
 *)
 move=> /andP[Hb1 Hb2].
@@ -391,9 +394,9 @@ Qed.
 -------------------------------------------------------------
 #<div class="slide">#
  ** Forward steps:
-    - have
-    - move: (f x)
-    - move=> {}H
+    - [have]
+    - [move: (f x)]
+    - [move=> {}H]
 #<div>#
 *)
 Lemma test_have (b1 b2 b3 : bool) :
@@ -460,22 +463,22 @@ Qed.
 
 End polylist.
 
-Eval compute in 3 \in [:: 7; 4; 3].
-
-Fail Check forall T : Type, forall x : T, x \in [:: x ].
-
 (** 
 #</div>#
 
 #</div>#
 --------------------------------------------------------
 #<div class="slide">#
-** Had-hoc polymorphism
-  - T : Type |- l : list T 
-  - T : eqType |- l : list T
-  - eqType means: a type with a decidable equality (_ == _)
+** Had-hoc polymorphic lists
+  - [T : Type |- l : list T]
+  - [T : eqType |- l : list T]
+  - [eqType] means: a type with a decidable equality [_ == _]
 #<div>#
 *)
+
+Eval compute in 3 \in [:: 7; 4; 3].
+
+Fail Check forall T : Type, forall x : T, x \in [:: x ].
 
 Check forall T : eqType, forall x : T, x \in [:: x ].
 
@@ -493,10 +496,10 @@ function for all terms of type [T] ([x] in the example above).
 #</div>#
 --------------------------------------------------------
 #<div class="slide">#
-** The \in notation
+** The [\in] notation
    - overloaded as [(_ == _)]
-   - pushing \in with inE
-   - computable.
+   - pushing [\in] with [inE]
+   - computable
    - rewrite flag [!]
    - [rewrite !inE] idiom
 #<div>#
