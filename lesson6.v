@@ -32,12 +32,17 @@ Roadmap of the lesson:
 #<div class="slide">#
 ** Definition 
  - P = a_n X^n + ... + a_2 X^2 + a_1 X + a_0 
+
+
+
+
    - list of coefficients (decreasing/increasing  degrees)
    - list of pairs (degree, coef)
 
 ** Math Components library choice:
 
  - P = a_0 + a_1 X + a_2 X^2 + ... + a_n X^n
+
    - A  normalized (i.e. no trailing 0) sequence of coefficients
 <<
 Record polynomial (R : ringType) := 
@@ -74,6 +79,7 @@ Definition P := Polynomial hs.
  
 Polynomials are coercible to sequences:
  - one can directly take the k_th element of a polynomial
+
    -  P'_k i.e. retrieve the coefficient of X^k in P.
 
  - size of a polynomial 
@@ -119,8 +125,9 @@ Check (x*:'X + 1%:P).
 
 #<div class="slide ">#
 ** Definition by extension
- - \poly_(i < n) E i 
+ - [\poly_(i < n) E i] 
     is the polynomial:
+
     - (E 0) + (E 1)  *: 'X + ...  + E (n - 1) *: 'X^(n-1)
 #</div>#
 ----
