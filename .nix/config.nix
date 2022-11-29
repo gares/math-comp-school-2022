@@ -44,7 +44,7 @@
     coq.override.version = "8.16";
     mathcomp.override.version = "hierarchy-builder";
     mathcomp-zify.override.version = "proux01:hierarchy-builder";
-    mathcomp-algebra-tactics.version = "proux01:hierarchy-builder";
+    mathcomp-algebra-tactics.override.version = "proux01:hierarchy-builder";
 
     # deactivating jobs
     coq.job = false;
