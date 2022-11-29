@@ -521,7 +521,7 @@ Qed.
 ----
 #<div class="slide">#
 ** References for this lesson
-  - SSReflect #<a href="https://hal.inria.fr/inria-00258384">manual</a>#
+  - SSReflect #<a href="https://coq.inria.fr/refman/proof-engine/ssreflect-proof-language.html">manual</a>#
   - documentation of the
        #<a href="https://math-comp.github.io/htmldoc_1_15_0/libgraph.html">library</a>#
     - in particular #<a href="https://math-comp.github.io/htmldoc_1_15_0/mathcomp.ssreflect.ssrbool.html">ssrbool</a>#
