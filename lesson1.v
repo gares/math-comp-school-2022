@@ -42,10 +42,10 @@ The library has been maintained for more than 10 years now.
 
 ----------------------------------------------------------
 #<div class="slide">#
-** Roadmap of the first  lessons
+** Roadmap of the first lesson
 
   - boolean reflection (small scale reflection)
-  - the ssreflect proof language (SSReflect)
+  - the ssreflect proof language (SSReflect, part1)
   - basic libraries ([ssrbool], [seq]) and [==]
 
 #</div>#
@@ -344,7 +344,8 @@ Qed.
 
 -------------------------------------------------------------
 #<div class="slide">#
- ** connectives like [&&] have a view as well
+ ** A little bit of gimmicks
+   - connectives like [&&] have a view as well
    - [andP] and [[]]
    - [apply/viewP]
 #<div>#
@@ -370,7 +371,8 @@ Qed.
 #</div>#
 -------------------------------------------------------------
 #<div class="slide">#
- ** [move:] to move back down to the goal
+ ** A little more of gimmicks
+    - [move:] to move back down to the goal
 #<div>#
 *)
 Lemma test_move_colon b1 b2 :
@@ -386,12 +388,33 @@ Qed.
 #</div>#
 
 #</div>#
+-------------------------------------------------------------
+#<div class="slide">#
+ ** Forward steps:
+    - have
+    - move: (f x)
+    - move=> {}H
+#<div>#
+*)
+Lemma test_have (b1 b2 b3 : bool) :
+  b1 -> b2 -> (b1 && b2 -> b3) -> b3 && b1.
+Proof.
+move=> Hb1 Hb2 Hb3.
+have Hb1b2 : b1 && b2.
+  by rewrite Hb1 Hb2.
+move: (Hb3 Hb1b2).
+move=> {}Hb3.
+by rewrite Hb3 Hb1.
+Qed.
 
+(**
+#</div>#
+
+#</div>#
 --------------------------------------------------------
 --------------------------------------------------------
 #<div class="slide">#
-** Sequences
-  - an alias for lists (used to be differnt)
+** Sequences and Ad-Hoc polymorphism
   - many notations
 
 #<div>#

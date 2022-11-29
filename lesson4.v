@@ -30,7 +30,7 @@ Unset Printing Implicit Defensive.
 --------------------------------------------------------
 #<div class="slide">#
 ** Today
-   - more SSReflect
+   - the SSReflect proof language (part 2)
      - stack model and views
      - [rewrite] idioms and patterns
      - forward reasoning with [have]
