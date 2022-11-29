@@ -6,7 +6,7 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
-(** # This is the <a href="http://math-comp.github.io/math-comp/htmldoc/mathcomp.ssreflect.seq.html">doc of seq</a>, use it! #*)
+(** # This is the <a href="https://math-comp.github.io/htmldoc_1_15_0/mathcomp.ssreflect.seq.html">doc of seq</a>, use it! #*)
 
 (**
 
@@ -22,7 +22,7 @@ Proof.
 
 (** Exercise 2:
    - look at the definition of [take] and [size] and prove the following lemma
-   - the proof goes by cases 
+   - the proof goes by cases (recall the spec lemma [leqP])
 *)
 Lemma size_take T n (s : seq T) :
   size (take n s) = if n < size s then n else size s.
@@ -33,12 +33,13 @@ Proof.
 
 (** Exercise 3:
     - another proof by cases 
+    - remark that also [eqP] is a spec lemma
 *)
 Lemma takel_cat T n (s1 s2 : seq T) :
   n <= size s1 -> take n (s1 ++ s2) = take n s1.
 Proof.
 (*D*)move=> Hn; rewrite take_cat ltn_neqAle Hn andbT.
-(*D*)by case: (n =P size s1) => //= ->; rewrite subnn take0 cats0 take_size.
+(*D*)by case: eqP => //= ->; rewrite subnn take0 cats0 take_size.
 (*A*)Qed.
 
 (** Exercise 4:
@@ -101,5 +102,15 @@ Proof.
 (*D*)by apply: ReflectF=> H; apply: IHs => y Hy; apply H; rewrite inE orbC Hy.
 (*A*)Qed.
 
-
+(** *** Exercise 10:
+  - check out the definitions and theory of [leq] and [maxn]
+  - use only [rewrite] and [apply]
+  - proof sketch:
+<<
+   n <= m = n - m == 0
+          = m + n - m == m + 0
+          = maxn m n == m
+>> *)
+Lemma maxn_idPl m n : reflect (maxn m n = m) (m >= n).
+(*D*)Proof. by rewrite -subn_eq0 -(eqn_add2l m) addn0 -maxnE; apply: eqP. Qed.
 
