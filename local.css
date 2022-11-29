@@ -107,6 +107,11 @@ p {
   z-index: -1;
 }
 
+h1 { cursor: crosshair; }
+h2 { cursor: crosshair; }
+h3 { cursor: crosshair; }
+h4 { cursor: crosshair; }
+h5 { cursor: crosshair; }
 	
 .slide-tooltip {
     position: relative;

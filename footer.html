@@ -62,7 +62,7 @@ function find_hx(e) {
     if (x.tagName == "H1" ||
         x.tagName == "H2" ||
         x.tagName == "H3" ||
-        x.tagName == "H4") return x.textContent;
+        x.tagName == "H4") return x;
   } 
   return null;
 }
@@ -89,14 +89,18 @@ function init_slides() {
     s.setAttribute('class','slideno');
     s.setAttribute('onclick','goto_slide('+ i +');');
     var title = find_hx(slides[i]);
-    if (title == null) {
-      title = "goto slide " + i;
+    if (title.textContent == null) {
+      title.textContent = "goto slide " + i;
     }
-    var t = mk_tooltip(i, title);
+    var t = mk_tooltip(i, title.textContent);
     s.appendChild(t)
     tools.appendChild(s);
   }
   select_current();
+  for (var i = 0; i < slides.length; i++) {
+    var title = find_hx(slides[i]);
+    title.setAttribute('onclick','goto_slide('+ i +');');
+  }
 
   // clean button on query window
   var query_panel = document.getElementById('query-panel');
