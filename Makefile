@@ -15,10 +15,10 @@ all: cheat-sheet/cheatsheet.pdf $(FILES)
 install:
 	echo "We do not provide an install target"
 
-# opam: $(OPAMROOT)
-# 	echo "# run these:"
-# 	echo "export OPAMROOT=$(OPAMROOT)"
-# 	echo "eval $$(opam env)"
+opam: $(OPAMROOT)
+	@echo "# run these:"
+	@echo "export OPAMROOT=$(OPAMROOT)"
+	@echo "eval $$(opam env)"
 
 udoc:
 	cd udoc && touch dune-workspace
@@ -58,7 +58,7 @@ $(OPAMROOT):
 	  opam repo add coq https://coq.inria.fr/opam/released;\
 	  opam repo add overlay https://www-sop.inria.fr/teams/marelle/MC-2022-installers/opam/;\
 	  opam update;\
-	  opam install coq-mathcomp-algebra-tactics.hierarchy-builder coq-mathcomp-field -y;\
+	  opam install dune coq-mathcomp-algebra-tactics.hierarchy-builder coq-mathcomp-field -y;\
 	  (opam install coqide -y || true))\
 	|| (rm -rf $(OPAMROOT); exit 1)
 # .PHONY: $(OPAMROOT)
