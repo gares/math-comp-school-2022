@@ -79,15 +79,6 @@ Proof.
 (*D*)by elim: s => //= x s IHs /andP[-> Hs]; rewrite IHs.
 (*A*)Qed.
 
-(** Exercise 8:
-    - induction once more 
-*)
-Lemma mem_cat (T : eqType) (x : T) s1 s2 :
-  (x \in s1 ++ s2) = (x \in s1) || (x \in s2).
-Proof.
-(*D*)by elim: s1 => //= y s1 IHs; rewrite !inE /= -orbA -IHs.
-(*A*)Qed.
-
 (** Exercise 9:
     - prove this by induction on [s] 
 *)

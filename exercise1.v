@@ -73,13 +73,6 @@ Lemma bool_gimmics2 p q r : ~~ p && (r == q) -> q ==> (p || r).
 (*A*)Qed.
 
 (** *** Exercise 7:
-    - look up the definition of [iter]
-    - prove this satement by induction
-*)
-Lemma iterSr A n (f : A -> A) x : iter n.+1 f x = iter n f (f x).
-(*D*)Proof. by elim: n => [//|n IH /=]; rewrite -IH. Qed.
-
-(** *** Exercise 8:
    - the only tactics allowed are [rewrite] and [by]
    - use [Search] to find the relevant lemmas (all are good but for
      [ltn_neqAle]) or browse the #<a href="https://math-comp.github.io/htmldoc_1_15_0/mathcomp.ssreflect.ssrnat.html">online doc</a>#
@@ -92,4 +85,14 @@ Lemma iterSr A n (f : A -> A) x : iter n.+1 f x = iter n f (f x).
 >> *)
 Lemma ltn_neqAle m n : (m < n) = (m != n) && (m <= n).
 (*D*)Proof. by rewrite ltnNge leq_eqVlt negb_or -leqNgt eq_sym. Qed.
+
+(** Exercise 8:
+    - induction on lists
+*)
+Lemma mem_cat (T : eqType) (x : T) s1 s2 :
+  (x \in s1 ++ s2) = (x \in s1) || (x \in s2).
+Proof.
+(*D*)elim: s1 => [//|y s1 IHs /=].
+(*D*)by rewrite !inE /= -orbA -IHs.
+(*A*)Qed.
 
