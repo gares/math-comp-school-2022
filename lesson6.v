@@ -33,15 +33,21 @@ Roadmap of the lesson:
 ** Definition 
  - P = a_n X^n + ... + a_2 X^2 + a_1 X + a_0 
 
-
-
-
+#<div class="note">(notes)<div class="note-text">#
    - list of coefficients (decreasing/increasing  degrees)
    - list of pairs (degree, coef)
+#</div></div>#
+
+#</div>#
+
+----------------------------------------------------------
+#<div class="slide">#
 
 ** Math Components library choice:
 
  - P = a_0 + a_1 X + a_2 X^2 + ... + a_n X^n
+
+   - a list of coefficients (increasing  degrees)
 
    - A  normalized (i.e. no trailing 0) sequence of coefficients
 <<
