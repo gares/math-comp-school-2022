@@ -35,8 +35,8 @@ Unset Printing Implicit Defensive.
      - [rewrite] idioms and patterns
      - forward reasoning with [have]
    - spec lemmas
-     - reflect
-     - fooP
+     - [reflect]
+     - [fooP]
      - idioms
 
 
@@ -73,6 +73,39 @@ deal with [x] and [y] before accessing [x = 1 + 2 * y].
 #</div></div>#
 
 #</div>#
+--------------------------------------------------------
+
+#<div class="slide">#
+*** Induction
+  - [elim] with generalization
+  - [rewrite (lem args)]
+#<div>#
+*)
+Lemma induction_fold (l : seq nat) x :
+  foldl addn x l = x + foldl addn 0 l.
+Proof.
+(*#
+elim: l => [|y ys IH] /=.
+  by rewrite addn0.
+#*)
+elim: l x => [|y ys IH] x /=.
+  by rewrite addn0.
+by rewrite IH (IH y) addnA.
+Qed.
+
+(**
+#</div>#
+
+#<div class="note">(notes)<div class="note-text">#
+Recall that [elim] (or [case]) actually operate on
+the top of the stack, which is the last item generalized
+by [:].
+#</div></div>#
+
+#</div>#
+
+
+
 ------------------------------------------------------------
 #<div class="slide">#
 ** Views are just lemmas (plus some automatic adaptors)
@@ -86,7 +119,7 @@ deal with [x] and [y] before accessing [x = 1 + 2 * y].
 Lemma test_leqW i j k :
   (i <= k) && (k.+1 <= j) -> i <= j.+1.
 Proof.
-(*# move=> /andP. move=> H; case: H. move=> /leqW. move=> leq_ik1. #*)
+(*# move=> /andP H; case: H. move=> /leqW leq_ik1. #*)
 move=> /andP[/leqW leq_ik1 /leqW leq_k1j1].
 exact: leq_trans leq_ik1 leq_k1j1.
 Qed.
@@ -98,10 +131,9 @@ Qed.
 
 --------------------------------------
 #<div class="slide">#
-** rewrite, one command to rule them all
-  - rewrite
-  - side condition and // ? 
-  - rewrite a boolean predicate (is_true hides an eqaution)
+** [rewrite], one command to rule them all
+  - side conditions handling via [//] and [?]
+  - rewrite a boolean predicate ([is_true] hides an eqaution)
 #<div>#
 *)
 
@@ -125,10 +157,10 @@ Qed.
 
 --------------------------------------------------------
 #<div class="slide">#
-** Rewrite on steroids
+** [rewrite] and subterm selection
    - keyed matching
-   - instantiation
-   - localization
+   - instantiation via CH or pattern
+   - localization via contextual pattern
 #<div>#*)
 Lemma subterm_selection n m :
   n + (m * 2).+1 = n * (m + m.+1).
@@ -188,9 +220,9 @@ Arguments eqn !m !n.
 ** Proving the reflection lemma for eqn
     - the convenience lemma [iffP]
     - the [congr] tactic
-    - trivial branches [//]
+    - trivial branches [=> //]
     - rewrite on the fly [->]
-    - loaded induction [elim: n m]
+    - [first by]
     - [congr]
 #<div>#
 *)
@@ -222,6 +254,7 @@ End reflect_for_eqP.
 #<div class="slide">#
 ** Spec lemmas
    - Inductive predicates to drive the proof
+   - [of] syntax
 #<div>#*)
 
 Inductive leq_xor_gtn m n : bool -> bool -> Prop :=
@@ -298,7 +331,7 @@ Proof.
 elim: s => //= x s.
 
 have EM_a : a x || ~~ a x.
-  by exact: orbN.
+  by apply: orbN.
 move: EM_a => /orP EM_a. case: EM_a => [-> | /negbTE-> ] //= _.
 
 (*#
