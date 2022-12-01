@@ -63,7 +63,10 @@ Qed.
   ** Equality
 
     - Every finite type is also an equality type.
-    - For ['I_n], only the value matters
+    - For ['I_n], only the numeric value matters (the proof is irrelevant)
+    - This characteristic comes with the notion of subtype.
+      together with a function val (injection from the subtype to the
+      larger type)
 
 #<div>#
 *)
@@ -89,11 +92,11 @@ Qed.
 #</div>#
 ----
 #<div class="slide">#
-   ** An optimic map from [nat] to [ordinal] : [inord]
+   ** An optimistic map from [nat] to [ordinal] : [inord]
 
-    - If the expected type has shape 'I_n.+1
-    - Takes a natural number as input and return an element of 'I_n.+1
-    - The _same number_ if it is small enough, otherwise 0.
+    - Takes a natural number as input and return an element of ['I_n.+1]
+    - The _same number_ if it is small enough, otherwise [0].
+    - The expected type has to have the shape ['I_n.+1] because ['I_0] is empty
 
 #<div>#
 *)
@@ -111,13 +114,21 @@ Qed.
 
 (** 
 #</div>#
+** Note
+    - The equality in [inordK] is in type [nat]
+    - The equality in [inord_val] is in type ['I_n.+1]
+#<div>#
+*)
+
+(** 
+#</div>#
 #</div>#
 ----
 #<div class="slide">#
   ** Sequence
 
     - a finite type can be seen as a sequence
-    - [enum T] gives this sequence.
+    - if [T] is a finite type, [enum T] gives this sequence.
     - it is duplicate free.
     - it relates to the cardinal of a finite type
 
@@ -127,14 +138,23 @@ Qed.
 Lemma iseq n (x : 'I_n) : x \in 'I_n.
 Proof.
 set l := enum 'I_n.
-move: l; rewrite /= => l.
-have ordinal_finType := [finType of 'I_n].
+rewrite /= in l.
+have ordinal_finType_n := [finType of 'I_n].
 have mem_enum := mem_enum.
 have enum_uniq := enum_uniq.
 have cardT := cardT.
 have cardE := cardE.
 by [].
 Qed.
+
+(** 
+#</div>#
+** Note
+    - None of the lines before [by []] are needed for the proof
+    - [mem_enum] et [enum_uniq] are generic theorems for any predicate
+       on the finite type (practically: subsets)
+#<div>#
+*)
 
 (** 
 #</div>#
@@ -160,15 +180,23 @@ Qed.
 Lemma iexists  (n : nat) : (n == 0) || [exists x: 'I_n, x == 0 :> nat].
 Proof.
 case: n.
-by [].
+  by [].
 move=> n.
 rewrite /=. (* optional, try removing this line. *)
 apply/existsP.
-pose H : 0 < n.+1 := isT.
+pose H : 0 < n.+1 := isT. (* use of small scale reflection. *)
 pose x := Ordinal H.
 exists x.
 by [].  (* mention function ord0. *)
 Qed.
+
+(** 
+#</div>#
+** Note
+    - Small scale reflection is used in several places here.
+    - The equality in [inord_val] is in type ['I_n.+1]
+#<div>#
+*)
 
 (** 
 #</div>#
@@ -183,6 +211,8 @@ Qed.
 Check pick.
 
 Definition izero n (x : 'I_n) := odflt x [pick i : 'I_n | i == 0 :> nat].
+
+Check izero.
 
 Lemma izero_def n (x : 'I_n.+1) : izero x == 0 :> nat.
 Proof.
@@ -203,7 +233,9 @@ Qed.
 ----
 #<div class="slide">#
   ** Building finite types
-    - SSR automatically discovers the pair of two finite types is finite
+    - The property of finiteness is inherited through a large variety of
+      type constructors
+    - For instance, when constructing a cartesian product of finite types
     - For functions there is an explicit construction [ffun x => body]
 #<div>#
 *)
@@ -218,11 +250,14 @@ case.
 rewrite /=.
 move=> a b.
 have H := ltn_mul.
-rewrite -[12]/(3 * 4).
+have -> : 12 = 3 * 4 by [].
 apply: H.
   by [].
 by [].
 Qed.
+
+Check [finType of {ffun 'I_3 -> 'I_4}].
+Fail Check [finType of ('I_3 -> 'I_4)].
 
 Lemma ifun : [exists f : {ffun 'I_3 -> 'I_4}, forall x, f x == x :> nat].
 Proof.
@@ -241,60 +276,16 @@ rewrite /=.
 by [].
 Qed.
 
-(**
+(** 
 #</div>#
-#</div>#
-----
-#<div class="slide">#
-  ** Installing the finite type structure for an arbitrary type
-    - When you have a type that you know is finite, you
-      need some work to make it recognized.
-
+** Note
+    - Equipping an arbitrary type that is provably finite with
+      the [finType] structure will be done in a later lesson
 #<div>#
 *)Inductive forest_monster :=
   Lion | Tiger | Bear.
 
 Fail Check [finType of forest_monster].
-
-(**
-#</div>#
-    - Solution: exhibit an injection into a finite type.
-#<div>#
-*)
-Definition monster_ord m : 'I_3 :=
-  match m with
-    Lion => inord 0 | Tiger => inord 1 | _ => inord 2
-  end.
-
-Definition ord_monster (n : 'I_3) : option forest_monster :=
-  match val n with 0 => Some Lion | 1 => Some Tiger | _ => Some Bear end.
-
-Lemma monster_ord_can : pcancel monster_ord ord_monster.
-Proof.
-case.
-rewrite /=. rewrite /ord_monster. rewrite /= inordK. by []. by [].
-by rewrite /ord_monster /= inordK.
-by rewrite /ord_monster /= inordK.
-Qed.
-
-(**
-#</div>#
-    - The lemma monster_ord_can means that there is an injection from
-      [forest_monster] into a known finite type. This gives a host of structure
-      bridges to [eqType], [choiceType], [countType], [finiteType].
-    - [HB.howto] tells us which interfaces we have to satisfy
-    - we use the [Pcan*Mixin] helpers to do so
-#<div>#
-*)
-
-HB.howto forest_monster finType.
-
-HB.instance Definition _ : hasDecEq    forest_monster := PcanEqMixin monster_ord_can.
-HB.instance Definition _ : hasChoice   forest_monster := PcanChoiceMixin monster_ord_can.
-HB.instance Definition _ : isCountable forest_monster := PcanCountMixin monster_ord_can.
-HB.instance Definition _ : isFinite    forest_monster := PcanFinMixin monster_ord_can.
-
-Check [finType of forest_monster].
 
 (**
 #</div>#
