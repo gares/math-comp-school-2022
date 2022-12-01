@@ -552,23 +552,24 @@ rewrite (bigD1 x).
   rewrite big_mkcond /=.
   rewrite !big_ord_recr /= big_ord0.
   by [].
-by []. (* This about proving that the (hidden) filter predicate of the
-   big operation is satisfied for x *)
+by []. (* This is about proving that the (hidden) filter predicate
+   of the big operation is satisfied for x *)
 Qed.
 
 Lemma bab1 : \sum_(i < 4) (i + i.*2) = 18.
 Proof.
-have H := big_split.
+have big_split' := big_split.
 rewrite big_split /=.
-rewrite !big_ord_recr ?big_ord0 /=.
+rewrite bab.
+rewrite !big_ord_recr big_ord0 /=.
 by [].
 Qed.
 
 Lemma bab2 : \sum_(i < 3) \sum_(j < 4) (i + j) =
                  \sum_(i < 4) \sum_(j < 3) (i + j).
 Proof.
-have H := exchange_big.
-have H1 := reindex_inj.
+have exchange_big' := exchange_big.
+have reindex_inj' := reindex_inj.
 rewrite exchange_big.
 rewrite /=.
 apply: eq_bigr.
@@ -589,7 +590,7 @@ Qed.
 *)
 Lemma bab3 : \sum_(i < 4) (2 * i) = 2 * \sum_(i < 4) i.
 Proof.
-have H := big_distrr.
+have big_distrr' := big_distrr.
 by rewrite big_distrr.
 Qed.
 
@@ -597,8 +598,7 @@ Lemma bab4 :
   (\prod_(i < 3) \sum_(j < 4) (i ^ j)) = 
   \sum_(f : {ffun 'I_3 -> 'I_4}) \prod_(i < 3) (i ^ (f i)).
 Proof.
-have H := big_distr_big.
-have H1 := big_distr_big_dep.
+have big_distr_big' := big_distr_big.
 rewrite  (big_distr_big ord0).
 rewrite /=.
 apply: eq_bigl.
@@ -608,7 +608,6 @@ apply/forallP.
 rewrite /=.
 by [].
 Qed.
-
 
 (**
 #</div>#
@@ -620,9 +619,9 @@ Qed.
 *)
 Lemma bap n : ~~ odd (\sum_(i < n) i.*2). 
 Proof.
-have H := big_ind.
-have H1 := big_ind2.
-have H2 := big_morph.
+have big_ind' := big_ind.
+have big_ind2 := big_ind2.
+have big_morph := big_morph.
 elim/big_ind: _.
 - by [].
 - move=> x y.
