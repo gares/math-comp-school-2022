@@ -298,7 +298,7 @@ Fail Check [finType of forest_monster].
     - this is an encapsulation of the fold function
  #<div>#
 *)
-Section F.
+Section Illustrate_fold.
 
 Definition f (x : nat) := 2 * x.
 Definition g x y := x + y.
@@ -307,12 +307,11 @@ Definition r := [::1; 2; 3].
 Lemma bfold : foldr (fun val res => g (f val) res) 0 r = 12.
 Proof.
 rewrite /=.
-rewrite /f.
 rewrite /g.
 by [].
 Qed.
 
-End F.
+End Illustrate_fold.
 
 (**
 #</div>#
@@ -355,8 +354,8 @@ Qed.
 *)
 Lemma bfoldl1 : \sum_(1 <= i < 4) i.*2 = 12.
 Proof.
-have H := big_ltn.
-have H1 := big_geq.
+have big_ltn' := big_ltn.
+have big_geq' := big_geq.
 rewrite big_ltn.
   rewrite big_ltn.
     rewrite big_ltn.
@@ -374,6 +373,7 @@ rewrite big_ord_recl.
 rewrite /=.
 rewrite big_ord_recl.
 rewrite /=.
+rewrite /bump.
 rewrite big_ord_recl.
 rewrite big_ord_recl.
 rewrite big_ord0.
@@ -396,8 +396,8 @@ Qed.
 *)
 Lemma bfoldl4 : \sum_(i <- [::1; 2; 3; 4; 5; 6] | ~~ odd i) i = 12.
 Proof.
-have big_pred0 := big_pred0.
-have big_hasC := big_hasC.
+have big_pred0' := big_pred0.
+have big_hasC' := big_hasC.
 pose x :=  \sum_(i < 8 | ~~ odd i) i.
 pose y :=  \sum_(0 <= i < 8 | ~~ odd i) i.
 rewrite big_cons.
@@ -425,12 +425,13 @@ Qed.
     - it is possible to change representation (big_nth, big_mkord).
 #<div>#
 *)
-Lemma bswitch :  \sum_(i <- [::1; 2; 3]) i.*2 = \sum_(i < 3) (nth 0 [::1; 2; 3] i).*2.
+Lemma bswitch :  \sum_(i <- [::1; 2; 3]) i.*2 =
+                 \sum_(i < 3) (nth 0 [::1; 2; 3] i).*2.
 Proof.
-have H := big_nth.
+have big_nth' := big_nth.
 rewrite (big_nth 0).
 rewrite /=.
-have H1 := big_mkord.
+have big_mkord' := big_mkord.
 rewrite big_mkord.
 by [].
 Qed.
@@ -447,16 +448,17 @@ Qed.
 Lemma beql : 
   \sum_(i < 4 | odd i || ~~ odd i) i.*2 =  \sum_(i < 4) i.*2.
 Proof.
-have H := eq_bigl.
+have eq_bigl' := eq_bigl.
 apply: eq_bigl.
+rewrite /=.
 move=> u.
-by case: odd.
+by rewrite orbN.
 Qed.
 
 Lemma beqr : 
   \sum_(i < 4) i.*2 = \sum_(i < 4) (i + i).
 Proof.
-have H := eq_bigr.
+have eq_bigr' := eq_bigr.
 apply: eq_bigr.
 rewrite /=.
 move=> u _.
@@ -467,10 +469,13 @@ Qed.
 Lemma beq : 
   \sum_(i < 4 | odd i || ~~ odd i) i.*2 = \sum_(i < 4) (i + i).
 Proof.
-have H := eq_big.
-apply: eq_big => [u|i Hi]; first by case: odd.
-by rewrite addnn.
-
+have eq_big' := eq_big.
+apply: eq_big; rewrite /=.
+  move=> e.
+  by apply: orbN.
+move=> i Hi.
+rewrite addnn.
+by [].
 Qed.
 
 (**
@@ -485,16 +490,19 @@ Qed.
 Lemma bmon1 : \sum_(i <- [::1; 2; 3]) i.*2 = 12.
 Proof.
 have H := big_cat.
-rewrite -[[::1; 2; 3]]/([::1] ++ [::2; 3]).
+have -> : [:: 1; 2; 3] = [::1] ++ [::2; 3].
+  by [].
 rewrite big_cat.
 rewrite /=.
-rewrite !big_cons !big_nil.
+rewrite big_cons.
+rewrite big_nil.
+rewrite !big_cons big_nil.
 by [].
 Qed.
 
 Lemma bmon2 : \sum_(1 <= i < 4) i.*2 = 12.
 Proof.
-have H := big_cat_nat.
+have big_cat_nat' := big_cat_nat.
 rewrite (big_cat_nat _ _ _ (isT: 1 <= 2)).
   rewrite /=.
   rewrite big_ltn //=.
@@ -505,8 +513,9 @@ Qed.
 
 Lemma bmon3 : \sum_(i < 4) i.*2 = 12.
 Proof.
-have H := big_ord_recl.
-have H1 := big_ord_recr.
+have big_ord_recl' := big_ord_recl.
+have big_ord_recr' := big_ord_recr.
+(* Note the added assumption on the operator in big_ord_recr *)
 rewrite big_ord_recr.
 rewrite /=.
 rewrite !big_ord_recr //=.
@@ -516,7 +525,7 @@ Qed.
 
 Lemma bmon4 : \sum_(i < 8 | ~~ odd i) i = 12.
 Proof.
-have H := big_mkcond.
+have big_mkcond' := big_mkcond.
 rewrite big_mkcond.
 rewrite /=.
 rewrite !big_ord_recr /=.
@@ -536,14 +545,15 @@ Qed.
 
 Lemma bab : \sum_(i < 4) i.*2 = 12.
 Proof.
-have H := bigD1.
+have bigD1' := bigD1.
 pose x := Ordinal (isT: 2 < 4).
 rewrite (bigD1 x).
   rewrite /=.
   rewrite big_mkcond /=.
   rewrite !big_ord_recr /= big_ord0.
   by [].
-by [].
+by []. (* This about proving that the (hidden) filter predicate of the
+   big operation is satisfied for x *)
 Qed.
 
 Lemma bab1 : \sum_(i < 4) (i + i.*2) = 18.
