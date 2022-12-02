@@ -1,5 +1,5 @@
 (* this preamble takes some time to load, you may want to
-   run while the teacher does is welcome bla bla... *)
+   run while the teacher does his welcome bla bla... *)
 From elpi Require Import elpi.
 From HB Require Import structures.
 From mathcomp Require Import all_ssreflect.
@@ -77,7 +77,7 @@ The library has been maintained for more than 10 years now.
 #<div>#
 *)
 
-Module BooleanReflection.
+Module BooleanReflectionSanbox.
 (**
 #</div>#
 
@@ -192,10 +192,11 @@ Lemma leqnn n : (n <= n) = true.
 Proof.
 (*#
 elim: n => [|m IHm].
-  by apply: leq0n.
-by rewrite leqSS; rewrite IHm.
+  by apply: leq0n. (* the first lemma we proved by computation *)
+rewrite leqSS. (* the second lemma we proved by computation *)
+rewrite IHm.
 #*)
-by elim: n. Qed.
+by elim: n. Qed. (* computation is for free *)
 
 (** 
 #</div>#
@@ -204,6 +205,10 @@ by elim: n. Qed.
 ------------------------------------------------------
 #<div class="slide">#
 *** Connectives for booleans
+  - since we want statements be in bool, we need to
+    be able to form longer sentences with our basic 
+    predicates (like [leq]) and stay in bool
+  - notations [&&], [||] and [~~]
 
 #<div>#
 *)
@@ -245,7 +250,7 @@ by case: b2.
 *)
 by move=> b1 b2; case: b1; case: b2. Qed.
 
-End BooleanReflection.
+End BooleanReflectionSanbox.
 
 (** 
 #</div>#
@@ -275,7 +280,7 @@ It is worth mentioning here
 ** The real MathComp library
   
    Things to know:
-   - [Search something inside library]
+   - [Search] something inside library
      - patterns [ _ <= _]
      - names ["SS"]
      - constants [leq]
@@ -292,17 +297,25 @@ Search "SS" inside ssrnat.
 Locate "_ < _".
 Check (forall x, x.+1 <= x).
 Search "orb" "C".
-Print commutative.
+Print commutative. (* so that all look the same *)
 Check (3 == 4) || (3 <= 4).
 Eval compute in (3 == 4) || (3 <= 4).
-Check (true == false).
-Check (3 != 4).
+Check (true == false). (* overloaded *)
+Check (3 != 4). (* with negation ~~ *)
 
 Lemma test_is_true_coercion : true.
 Proof. rewrite /is_true. by []. Qed.
 
 (**
 #</div>#
+
+#<div class="note">(notes)<div class="note-text">#
+Unfortunately [Search] does not work "up to" definitions
+like [commutative]. The pattern [(_ + _ = _ + _)] won't work.
+It sad, it may be fidex one day, but now you know it.
+Search for "C" if you need a commutativity law.
+#</div></div>#
+
 
 #</div>#
 -------------------------------------------------------------
@@ -342,7 +355,7 @@ by move=> /eqP; move=> Enm; rewrite Enm -addnn. Qed.
  ** A little bit of gimmicks
    - connectives like [&&] have a view as well
    - [andP] and [[]]
-    - [move:] to move back down to the goal
+   - [move:] to move back down to the goal
 #<div>#
 *)
 Lemma test_andP (b1 b2 : bool) :

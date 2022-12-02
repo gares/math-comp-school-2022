@@ -35,7 +35,7 @@ check-ocaml-ver-%:
 
 upload: $(FILES) cheat-sheet/cheatsheet.pdf
 	scp $(FILES) FileSaver.js Blob.js local.css cheat-sheet/cheatsheet.pdf roquableu.inria.fr:/net/serveurs/www-sop/teams/marelle/MC-2022/
-	echo 'cd /net/serveurs/www-sop/teams/marelle/MC-2022/;chmod g+w --recursive . *' | ssh roquableu.inria.fr
+	echo 'cd /net/serveurs/www-sop/teams/marelle/MC-2022/; (chmod g+w -f --recursive . * || true)' | ssh roquableu.inria.fr
 
 %.html.tmp: %.v Makefile udoc
 	$(COQC) -w -notation-overridden,-undo-batch-mode $< > /dev/null
@@ -82,5 +82,6 @@ exercise%-todo.v: exercise%.v
 serve: node_modules
 	python3 -m http.server
 
-node_modules:
-	tar -xzf deploy-v0.0.1.tgz
+node_modules: deploy-v0.0.1-4-g33af4c8.tgz
+	rm -rf node_modules
+	tar -xzf deploy-v0.0.1-4-g33af4c8.tgz
