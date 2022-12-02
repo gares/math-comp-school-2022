@@ -49,7 +49,7 @@ Unset Printing Implicit Defensive.
 (** -------------------------------------------- *)
 (** #<div class='slide'>#
 
-** [lia]: linear integer arithmetic (a.k.a. Presburger arithmetic)
+** [lia]: linear integer arithmetic (a.k.a. Presburger arithmetic) solver
 
 This tactic provides a certifying decision procedure for quantifier-free linear
 integer arithmetic.
@@ -130,13 +130,13 @@ Qed.
 (** -------------------------------------------- *)
 (** #<div class='slide'>#
 
-** [nia]: non-linear integer arithmetic
+** [nia]: non-linear integer arithmetic solver
 
 The [nia] tactic is an extension of the [lia] tactic that allows for some
 non-linear reasoning by propagating positivity and negativity conditions through
 multiplication and exponentiation.
 
-<div>
+#<div>#
 *)
 Goal forall m n : int, (0 <= m -> 0 <= n -> 0 <= m * n)%R.
 Proof.
@@ -164,7 +164,7 @@ Qed.
 
 ** Instructing the [zify] tactic to pre-process new arithmetic operators
 
-<div>
+#<div>#
 *)
 
 (* TODO *)
@@ -175,7 +175,7 @@ Qed.
 
 ** [ring]: polynomial equation solver
 
-<div>
+#<div>#
 *)
 
 (* TODO *)
@@ -186,7 +186,7 @@ Qed.
 
 ** Some advanced features of the [ring] tactic
 
-<div>
+#<div>#
 *)
 
 (* TODO *)
@@ -197,7 +197,29 @@ Qed.
 
 ** [field]: rational equation solver
 
-<div>
+#<div>#
+*)
+
+(* TODO *)
+
+(** #</div></div># *)
+(** -------------------------------------------- *)
+(** #<div class='slide'>#
+
+** [lra] and [nra]: linear and non-linear real arithmetic
+
+#<div>#
+*)
+
+(* TODO *)
+
+(** #</div></div># *)
+(** -------------------------------------------- *)
+(** #<div class='slide'>#
+
+** How do they work? -- proof by large-scale reflection
+
+#<div>#
 *)
 
 (* TODO *)
@@ -207,11 +229,7 @@ Qed.
 (** -------------------------------------------- *)
 (** #<div class='slide'>#
 
-** [lra] and [nra]: linear and non-linear real arithmetic
+** Further reading
 
-<div>
+#</div>#
 *)
-
-(* TODO *)
-
-(** #</div></div># *)
