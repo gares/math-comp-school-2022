@@ -1,5 +1,5 @@
 (* this preamble takes some time to load, you may want to
-   run while the teacher does is welcome bla bla... *)
+   run while the teacher does his welcome bla bla... *)
 From elpi Require Import elpi.
 From HB Require Import structures.
 From mathcomp Require Import all_ssreflect.
