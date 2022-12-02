@@ -147,13 +147,21 @@ Qed.
 #</div>#
 *)
  
-(** Addition *)
+
+(**
+----------------------------------------------------------
+#<div class="slide">#
+** Natural numbers  
+
+  Addition
+#<div>#
+*)
 
 Check addn.
-
-Check addn 2 3.
+(* addn : nat -> nat -> nat *)
 
 Compute 2 + 3.
+(* 5 : nat *)
 
 Goal forall m n, m.+1 + n = (m + n).+1.
 Proof.
@@ -162,6 +170,13 @@ by [].
 Qed.
 
 Search _ (_.+1 + _ = _.+1) in ssrnat.
+(*
+add1n: forall n : nat, 1 + n = n.+1
+addSn: forall m n : nat, m.+1 + n = (m + n).+1
+add2n: forall m : nat, 2 + m = m.+2
+add3n: forall m : nat, 3 + m = m.+3
+add4n: forall m : nat, 4 + m = m.+4
+*)
 
 Goal forall m n, m + n.+1 = (m + n).+1.
 Proof.
@@ -174,18 +189,40 @@ by [].
 Qed.
 
 Search _ (_ + _.+1 = _.+1) in ssrnat.
+(*
+addn1: forall n : nat, n + 1 = n.+1
+addnS: forall m n : nat, m + n.+1 = (m + n).+1
+addn2: forall m : nat, m + 2 = m.+2
+addn3: forall m : nat, m + 3 = m.+3
+addn4: forall m : nat, m + 4 = m.+4
+*)
 
 Search _ (_.+1 + _ = _ + _.+1) in ssrnat.
+(* addSnnS: forall m n : nat, m.+1 + n = m + n.+1*)
 
-(** Subtraction *)
+(**
+----------------------------------------------------------
+#</div>#
+#</div>#
+*)
+
+(**
+----------------------------------------------------------
+#<div class="slide">#
+** Natural Numbers  
+  Subtraction 
+  
+#<div>#
+*)
 
 Check subn.
+(* subn : nat -> nat -> nat *)
 
-Check subn 3 2.
-
-Compute (3 - 2).
+Compute 3 - 2.
+(* 1 : nat *)
 
 Compute 3 - 4.
+(* 0 : nat *)
 
 Goal forall n, 0 - n = 0.
 Proof.
@@ -194,6 +231,7 @@ by [].
 Qed.
 
 Search _ left_zero subn in ssrnat.
+(* sub0n: left_zero 0 subn *)
 
 Goal forall n, n - 0 = n.
 Proof.
@@ -202,8 +240,14 @@ case => [|n].
 by [].
 Qed.
 
-Search _ (_.+1 - 0 = _) in ssrnat.
 Search _ (_.+1 - _.+1 = _) in ssrnat.
+(* sub0n: left_zero 0 subn *)
+
+(**
+----------------------------------------------------------
+#</div>#
+#</div>#
+*)
 
 
 (** 
