@@ -46,9 +46,9 @@ Unset Printing Implicit Defensive.
 #<div class="slide">#
 *** Bookkeeping 101
    - the goal is a stack
-   - defective case (the _top_ implicit tactic argument)
-   - tactic=> this that
-   - tactic: this that     (caveat: tactic != apply or exact)
+   - defective case/elim (the _top_ implicit tactic argument)
+   - tactical [=>] for post processing
+   - tactical [:] for pre processing
    - "rename", "reorder"
 #<div>#
 *)
@@ -58,7 +58,7 @@ Proof.
 (*
 move=> b. move=> c. move: b. move: c.
 move=> c b. move: b c.
-move=> b; case: b; move=> c; case: c.
+move=> b; case: b. move=> c; case: c.
 *)
 by case; case. Qed.
 
@@ -78,7 +78,7 @@ deal with [x] and [y] before accessing [x = 1 + 2 * y].
 #<div class="slide">#
 *** Induction
   - [elim] with generalization
-  - [rewrite (lem args)]
+  - [rewrite (lem args)] to specialize a lemma
 #<div>#
 *)
 Lemma induction_fold (l : seq nat) x :
@@ -87,6 +87,7 @@ Proof.
 (*#
 elim: l => [|y ys IH] /=.
   by rewrite addn0.
+(* we are stuck *)
 #*)
 elim: l x => [|y ys IH] x /=.
   by rewrite addn0.
@@ -111,7 +112,6 @@ by [:].
 ** Views are just lemmas (plus some automatic adaptors)
    - lemmas like [A -> B] can be used as views too
    - boolean connectives have associated views ("P" suffix)
-   - [=> [ ... ]]
 
 #<div>#
 *)
@@ -127,11 +127,18 @@ Qed.
 (**
 #</div>#
 
+#<div class="note">(notes)<div class="note-text">#
+There is nothin special with the [/andP[H1 H2]] we did
+in lesson 1, it is just the composition of [/view]
+followed by a case split [[]] (in this case only one branch)
+#</div></div>#
+
 #</div>#
 
 --------------------------------------
 #<div class="slide">#
 ** [rewrite], one command to rule them all
+  - 1/3 of the lines of Math Comp proofs are [rewrite]
   - side conditions handling via [//] and [?]
   - rewrite a boolean predicate ([is_true] hides an eqaution)
 #<div>#
@@ -158,8 +165,9 @@ Qed.
 --------------------------------------------------------
 #<div class="slide">#
 ** [rewrite] and subterm selection
-   - keyed matching
-   - instantiation via CH or pattern
+   - keyed matching drives the search
+   - specialization
+   - specialization via pattern
    - localization via contextual pattern
 #<div>#*)
 Lemma subterm_selection n m :
@@ -187,6 +195,12 @@ Abort.
 
 (**
 #</div>#
+
+#<div class="note">(notes)<div class="note-text">#
+The details can be found in the reference #<a href="https://coq.inria.fr/refman/proof-engine/ssreflect-proof-language.html">manual</a>#
+or in the #<a href="https://hal.inria.fr/hal-00652286">paper</a>#
+#</div></div>#
+
 #</div>#
 
 ------------------------------------------------------------
@@ -195,7 +209,7 @@ Abort.
 ** The reflect predicate
    - [reflect P b] is the preferred way to state that
      the predicate [P] (in [Prop]) is logically equivalent
-     to [b=true]
+     to [b = true]
 
 #<div>#
 *)
@@ -203,6 +217,7 @@ Module reflect_for_eqP.
 
 Print reflect.
 
+(* we use this boolean predicate in the examples below *)
 Fixpoint eqn m n :=
   match m, n with
   | 0, 0 => true
@@ -217,7 +232,7 @@ Arguments eqn !m !n.
 #</div>#
 ----------------------------------------------------------
 #<div class="slide">#
-** Proving the reflection lemma for eqn
+** Proving the reflection lemma for [eqn]
     - the convenience lemma [iffP]
     - the [congr] tactic
     - trivial branches [=> //]
@@ -253,8 +268,10 @@ End reflect_for_eqP.
 --------------------------------------------------------
 #<div class="slide">#
 ** Spec lemmas
-   - Inductive predicates to drive the proof
-   - [of] syntax
+   - Inductive predicates to drive the proof:
+     - you chose how many branches
+     - you chose which equations are automatically applied
+   - [of] syntax for inductives
 #<div>#*)
 
 Inductive leq_xor_gtn m n : bool -> bool -> Prop :=
@@ -269,10 +286,10 @@ Axiom leqP : forall m n : nat, leq_xor_gtn m n (m <= n) (n < m).
 #</div>#
 --------------------------------------------------------
 #<div class="slide">#
-** Let's try out leqP on an ugly goal
-   - matching of indexes
-   - generalization of unresolved implicits
-   - instantiation by matching
+** Let's try out [leqP] on an ugly goal
+   - matching of indexes uses the same discipline of [rewrite]
+   - generalization of unresolved implicits after [/leq_trans]
+   - specialization of the top stack item via [/(_ arg)]
 #<div>#*)
 Lemma test_leqP m n1 n2 :
   (m <= (if n1 < n2 then n1 else n2)) =
@@ -285,6 +302,12 @@ Qed.
 
 (**
 #</div>#
+
+#<div class="note">(notes)<div class="note-text">#
+While I presonally find [/leq_trans] too clever and
+likely unnecessary, it is used in the library, hence this slide
+#</div></div>#
+
 #</div>#
 --------------------------------------------------------
 #<div class="slide">#
@@ -328,19 +351,27 @@ A lemma linking the two concepts
 Lemma all_count (T : Type) (a : pred T) s :
   all a s = (count a s == size s).
 Proof.
+(* common start *)
 elim: s => //= x s.
 
+(* first try at using EM *)
 have EM_a : a x || ~~ a x.
   by apply: orbN.
 move: EM_a => /orP EM_a. case: EM_a => [-> | /negbTE-> ] //= _.
 
 (*#
+(* second try using views and have *)
 have /orP[ ax | /negbTE n_ax ] : a x || ~~ a x by case: (a x).
   by rewrite ax.
 rewrite n_ax /= => ?.
 #*)
-(*#have [ax//|n_ax ?] := boolP (a x).#*)
 
+(*#
+(* this is the best way of doing it *)
+have [ax//|n_ax ?] := boolP (a x).
+#*)
+
+(* common conclusion *)
 by rewrite add0n eqn_leq ltnNge count_size /= andbC.
 Qed.
 
@@ -359,7 +390,7 @@ Qed.
 #</div>#
 --------------------------------------------------------
 #<div class="slide">#
-** Demo:
+** Demo (time permitting)
    - you should be now able to read this proof
 
 #<div>#*)
@@ -381,6 +412,13 @@ Qed.
     
 (** 
 #</div># 
+
+#<div class="note">(notes)<div class="note-text">#
+This proof is also explained in the
+#<a href="https://math-comp.github.io/mcb/">Math Comp Book</a>#
+#</div></div>#
+
+
 #</div># 
 *)
 
