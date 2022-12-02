@@ -33,15 +33,19 @@ Roadmap of the lesson:
 ** Definition 
  - P = a_n X^n + ... + a_2 X^2 + a_1 X + a_0 
 
-
-
-
+#<div class="note">(notes)<div class="note-text">#
    - list of coefficients (decreasing/increasing  degrees)
    - list of pairs (degree, coef)
+#</div></div>#
 
+#</div>#
+----
+#<div class="slide">#
 ** Math Components library choice:
 
  - P = a_0 + a_1 X + a_2 X^2 + ... + a_n X^n
+   
+   - list of coefficients (increasing  degrees)
 
    - A  normalized (i.e. no trailing 0) sequence of coefficients
 <<
@@ -85,13 +89,17 @@ Polynomials are coercible to sequences:
  - size of a polynomial 
  - the degree of a polynomial is its size minus 1
 #<div>#
+
+#<div class="note">(notes)<div class="note-text">#
+   Look theorems ans definitions about size, lead_coef in poly.v
+  #</div></div>#
 *)
+
 Check (size P).
 
 Eval compute in (size P).
 
 Eval compute in  P`_1.
-
 
 Definition deg (Q : polynomial R):= ((size Q) - 1)%N.
 
