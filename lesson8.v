@@ -1,6 +1,7 @@
+From Coq Require Import ZArith_base. (* Required only for better printing of Z constants and operators. *)
 From elpi Require Import elpi.
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect ssralg ssrnum ssrint.
+From mathcomp Require Import all_ssreflect ssralg ssrnum ssrint intdiv.
 From mathcomp Require Import zify ring lra.
 
 Set Implicit Arguments.
@@ -55,34 +56,162 @@ integer arithmetic.
 
 <div>
 *)
+Goal forall m n : nat, n <= m -> n.*2 <= m + n.
+Proof.
+lia.
+(*
+move=> m n lenm.
+Zify.zify.
+lia.
+*)
+Qed.
 
-(* TODO: some examples on nat and int *)
-
+Goal forall m n : int, (n <= m -> n * 2 <= m + n)%R.
+Proof.
+lia.
+Qed.
 (** #</div>#
 
-TODO: normalization with respect to (semi)ring axioms
+The [zify] and [lia] tactics support some [bool] operators.
 
 #<div>#
 *)
+Goal forall m n : nat, (n <= m) = ~~ (m.*2 < n.*2).
+Proof.
+lia.
+Qed.
+(** #</div></div># *)
+(** -------------------------------------------- *)
+(** #<div class='slide'>#
 
-(* TODO: examples *)
+** Some advanced features of the [lia] tactic
 
+The [lia] tactic performs normalization with respect to (semi)ring axioms, and
+can actually solve some non-linear problems.
+
+#<div>#
+ *)
+Goal forall m n : nat, m * n = n * m.
+Proof.
+lia.
+Qed.
+
+Goal forall m n : nat, (m + n) ^ 2 = m ^ 2 + n ^ 2 + 2 * m * n.
+Proof.
+lia.
+Qed.
 (** #</div>#
 
-TODO: euclidean division
+The Mczify library also pre-processes Euclidean division and the divisibility
+relation.
 
 #<div>#
 *)
+Goal forall m : nat, m %/ 2 <= m.
+Proof.
+lia.
+(*
+move=> m.
+Zify.zify.
+lia.
+*)
+Qed.
 
-(* TODO: examples *)
+Goal forall m : nat, 6 %| m -> 4 %| m -> 12 %| m.
+Proof.
+lia.
+Qed.
 
+Goal forall m : nat, (6 %| m) && (4 %| m) = (12 %| m).
+Proof.
+lia.
+Qed.
 (** #</div></div># *)
 (** -------------------------------------------- *)
 (** #<div class='slide'>#
 
 ** [nia]: non-linear integer arithmetic
 
+The [nia] tactic is an extension of the [lia] tactic that allows for some
+non-linear reasoning by propagating positivity and negativity conditions through
+multiplication and exponentiation.
+
 <div>
 *)
+Goal forall m n : int, (0 <= m -> 0 <= n -> 0 <= m * n)%R.
+Proof.
+nia.
+Qed.
+
+Goal forall (m : int) (n : nat), (0 <= (m ^+ 2) ^+ n)%R.
+Proof.
+nia.
+Qed.
+
+Goal forall m n : nat, n <= m -> n ^ 2 <= m * n.
+Proof.
+nia.
+Qed.
+
+Goal forall m n p : int,
+  (0 <= n)%R -> (m %/ (n * p))%Z = ((m %/ n) %/ p)%Z.
+Proof.
+nia.
+Qed.
+(** #</div></div># *)
+(** -------------------------------------------- *)
+(** #<div class='slide'>#
+
+** Instructing the [zify] tactic to pre-process new arithmetic operators
+
+<div>
+*)
+
+(* TODO *)
+
+(** #</div></div># *)
+(** -------------------------------------------- *)
+(** #<div class='slide'>#
+
+** [ring]: polynomial equation solver
+
+<div>
+*)
+
+(* TODO *)
+
+(** #</div></div># *)
+(** -------------------------------------------- *)
+(** #<div class='slide'>#
+
+** Some advanced features of the [ring] tactic
+
+<div>
+*)
+
+(* TODO *)
+
+(** #</div></div># *)
+(** -------------------------------------------- *)
+(** #<div class='slide'>#
+
+** [field]: rational equation solver
+
+<div>
+*)
+
+(* TODO *)
+
+(** #</div></div># *)
+
+(** -------------------------------------------- *)
+(** #<div class='slide'>#
+
+** [lra] and [nra]: linear and non-linear real arithmetic
+
+<div>
+*)
+
+(* TODO *)
 
 (** #</div></div># *)
