@@ -15,10 +15,10 @@ all: cheat-sheet/cheatsheet.pdf $(FILES)
 install:
 	echo "We do not provide an install target"
 
-# opam: $(OPAMROOT)
-# 	echo "# run these:"
-# 	echo "export OPAMROOT=$(OPAMROOT)"
-# 	echo "eval $$(opam env)"
+opam: $(OPAMROOT)
+	@echo "# run these:"
+	@echo "export OPAMROOT=$(OPAMROOT)"
+	@echo "eval $$(opam env)"
 
 udoc:
 	cd udoc && touch dune-workspace
@@ -35,7 +35,7 @@ check-ocaml-ver-%:
 
 upload: $(FILES) cheat-sheet/cheatsheet.pdf
 	scp $(FILES) FileSaver.js Blob.js local.css cheat-sheet/cheatsheet.pdf roquableu.inria.fr:/net/serveurs/www-sop/teams/marelle/MC-2022/
-	echo 'cd /net/serveurs/www-sop/teams/marelle/MC-2022/;chmod g+w --recursive . *' | ssh roquableu.inria.fr
+	echo 'cd /net/serveurs/www-sop/teams/marelle/MC-2022/; (chmod g+w -f --recursive . * || true)' | ssh roquableu.inria.fr
 
 %.html.tmp: %.v Makefile udoc
 	$(COQC) -w -notation-overridden,-undo-batch-mode $< > /dev/null
@@ -56,9 +56,9 @@ $(OPAMROOT):
 	(opam init --bare -n -j8;\
 	  opam switch create mc2022 4.09.1 -y;\
 	  opam repo add coq https://coq.inria.fr/opam/released;\
-	  opam repo add overlay file://$$PWD/opam-overlay;\
+	  opam repo add overlay https://www-sop.inria.fr/teams/marelle/MC-2022-installers/opam/;\
 	  opam update;\
-	  opam install coq-mathcomp-algebra-tactics.hierarchy-builder coq-mathcomp-field -y;\
+	  opam install dune coq-mathcomp-algebra-tactics.hierarchy-builder coq-mathcomp-field -y;\
 	  (opam install coqide -y || true))\
 	|| (rm -rf $(OPAMROOT); exit 1)
 # .PHONY: $(OPAMROOT)
@@ -82,5 +82,6 @@ exercise%-todo.v: exercise%.v
 serve: node_modules
 	python3 -m http.server
 
-node_modules:
-	tar -xzf deploy-v0.0.1.tgz
+node_modules: deploy-v0.0.1-4-g33af4c8.tgz
+	rm -rf node_modules
+	tar -xzf deploy-v0.0.1-4-g33af4c8.tgz

@@ -8,69 +8,144 @@ Unset Printing Implicit Defensive.
 
 (** 
 
-----
-** Lesson 4 Arithmetics
+----------------------------------------------------------
+#<div class="slide">#
+** Roadmap of the second lesson 
+
+  Playing with basic arithmetics
+
   - Order
   - Division
   - Primality
 
+#</div>#
+----------------------------------------------------------
 *)
-
 
 (**
-  ** Reminder  
-*)
+----------------------------------------------------------
+#<div class="slide">#
+** Reminder  
 
+  Natural numbers
+
+#<div>#
+*)
 Check nat.
+(* nat : Set *)
 
 Print nat.
+(* Inductive nat : Set :=
+   O : nat | S : nat -> nat *)
 
 Check O.
+(* 0 : nat *)
 
 Check S O.
+(* 1 : nat *)
 
 Check S (S O).
+(* 2 : nat *)
 
-Compute 3.+1.
+Check 2.+1.
+(* 3 : nat *)
 
-(**  Proof by case *)
+Set Printing All.
+Check 4.
+(* S (S (S O)) : nat *)
+
+Unset Printing All.
+Check 5.
+(* 5 : nat *)
+
+(**
+#</div></div>#
+----------------------------------------------------------
+*)
+
+(**
+----------------------------------------------------------
+#<div class="slide">#
+** Reminder  
+
+  Proof by case 
+
+#<div>#
+*)
 
 Goal forall (P : pred nat), 
-     (P 0) -> (forall n, P n.+1) -> forall n, P n.
+     P 0 -> (forall n, P n.+1) -> forall n, P n.
 Proof.
-move=> P H0 SH n.
+move=> P HP0 HPS n.
 case: n => [|n].
-  exact: H0.
-by apply: SH.
+  exact: HP0.
+by apply: HPS.
 Qed.
 
-(**  Proof by induction *)
+(**
+----------------------------------------------------------
+#</div>#
+#</div>#
+*)
+
+(**
+----------------------------------------------------------
+#<div class="slide">#
+** Reminder  
+
+  Proof by induction 
+
+#<div>#
+*)
 
 Goal forall (P : pred nat), 
-     (P 0) -> (forall n, P n -> P n.+1) -> forall n, P n.
+     P 0 -> (forall n, P n -> P n.+1) -> forall n, P n.
 Proof.
-move=> P H0 SH n.
+move=> P HP0 HPS n.
 elim: n => [|n IH].
-  exact: H0.
-by apply: SH.
+  exact: HP0.
+by apply: HPS.
 Qed.
 
+(**
+----------------------------------------------------------
+#</div>#
+#</div>#
+*)
 
-(** Eqtype *)
+(**
+----------------------------------------------------------
+#<div class="slide">#
+** Reminder  
+
+  Eq type 
+
+#<div>#
+*)
 
 Check eqn.
-
-Compute 1 == 1.
-
-Compute 2 == 3.
+(* eqn : nat -> nat -> bool *)
 
 Print eqn.
+(* fix eqn (m n : nat) {struct m} : bool :=
+   match m with ... end. *)
+
+Compute 1 == 1.
+(* false : bool *)
+
+Compute 2 == 3.
+(* true : bool *)
 
 Goal forall m n, m.+1 == n.+1 -> m == n.
 Proof.
 move=> m n mEn.
 exact: mEn.
 Qed.
+(**
+----------------------------------------------------------
+#</div>#
+#</div>#
+*)
  
 (** Addition *)
 

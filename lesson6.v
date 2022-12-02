@@ -47,6 +47,8 @@ Roadmap of the lesson:
    
    - list of coefficients (increasing  degrees)
 
+   - a list of coefficients (increasing  degrees)
+
    - A  normalized (i.e. no trailing 0) sequence of coefficients
 <<
 Record polynomial (R : ringType) := 

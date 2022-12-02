@@ -1,5 +1,5 @@
 (* this preamble takes some time to load, you may want to
-   run while the teacher does is welcome bla bla... *)
+   run while the teacher does his welcome bla bla... *)
 From elpi Require Import elpi.
 From HB Require Import structures.
 From mathcomp Require Import all_ssreflect.
@@ -16,7 +16,7 @@ Unset Printing Implicit Defensive.
   Give you access to the 
   #<a href="http://math-comp.github.io/math-comp/">Mathematical Components library</a>#
 
-  - formalization principles
+  - formalization techniques
   - proof language
   - familiarize with some theories
 
@@ -37,8 +37,8 @@ Unset Printing Implicit Defensive.
   - things are done differently, very differently, than usual
   - it is not easy to appreciate the benefits on small examples,
     but we will try hard ;-)
-  - not enough time to explain eveything, I'll focus on
-    intuition rather than technical details
+  - not enough time to explain eveything, we may focus on
+    intuition rather than technical details (aka handwaving)
 
 #<div class="note">(notes)<div class="note-text">#
 The mathematical components library was used to formalize the
@@ -55,9 +55,9 @@ The library has been maintained for more than 10 years now.
 #<div class="slide">#
 ** Roadmap of the first lesson
 
-  - boolean reflection (small scale reflection)
-  - the ssreflect proof language (SSReflect, part1)
-  - basic libraries ([ssrbool], [seq]) and [==]
+  - formalization technique: boolean reflection (aka small scale reflection)
+  - proof language: basic SSReflect (part 1)
+  - libraries: conventions, notations, ad-hoc polymorphism
 
 #</div>#
 
@@ -70,14 +70,14 @@ The library has been maintained for more than 10 years now.
     computable function (a program), not as an inductive relation
   - Coq knows how to compute, even symbolically, and computation is
     a very stable form of automation
-  - functions (to bool) are a "simple" concept in type theory
+  - expressions in bool are a "simple" concept in type theory
     - Excluded Middle (EM) just holds
     - Uniqueness of Identity Proofs holds uniformly
 
 #<div>#
 *)
 
-Module BooleanReflection.
+Module BooleanReflectionSanbox.
 (**
 #</div>#
 
@@ -154,6 +154,11 @@ Proof. (* compute. *) by []. Qed.
 (**
 #</div>#
 
+#<div class="note">(notes)<div class="note-text">#
+Note that [0 <= n] is a symbolic expression, [n] is
+unknown, but Coq can still compute its value
+#</div></div>#
+
 #</div>#
 ------------------------------------------------------
 #<div class="slide">#
@@ -169,24 +174,29 @@ Proof. (* simpl. *) by []. Qed.
 (**
 #</div>#
 
+#<div class="note">(notes)<div class="note-text">#
+Again, Coq can compute on symbolic expressions
+#</div></div>#
+
 #</div>#
 ------------------------------------------------------
 #<div class="slide">#
-** Lets (not) use these lemmas
-   - elim with naming and automatic clear of n
+** It is nice to have a lemma, it is even better to don't need it
+   - [elim] with naming and automatic clear of [n]
    - indentation for subgoals
    - no need to mention lemmas proved by computation
-   - apply, rewrite
+   - [apply], [rewrite]
 #<div>#
 *)
 Lemma leqnn n : (n <= n) = true.
 Proof.
 (*#
 elim: n => [|m IHm].
-  by apply: leq0n.
-by rewrite leqSS; rewrite IHm.
+  by apply: leq0n. (* the first lemma we proved by computation *)
+rewrite leqSS. (* the second lemma we proved by computation *)
+rewrite IHm.
 #*)
-by elim: n. Qed.
+by elim: n. Qed. (* computation is for free *)
 
 (** 
 #</div>#
@@ -194,7 +204,11 @@ by elim: n. Qed.
 #</div>#
 ------------------------------------------------------
 #<div class="slide">#
-*** Connectives can be booleans too 
+*** Connectives for booleans
+  - since we want statements be in bool, we need to
+    be able to form longer sentences with our basic 
+    predicates (like [leq]) and stay in bool
+  - notations [&&], [||] and [~~]
 
 #<div>#
 *)
@@ -236,7 +250,7 @@ by case: b2.
 *)
 by move=> b1 b2; case: b1; case: b2. Qed.
 
-End BooleanReflection.
+End BooleanReflectionSanbox.
 
 (** 
 #</div>#
@@ -266,7 +280,7 @@ It is worth mentioning here
 ** The real MathComp library
   
    Things to know:
-   - [Search something inside library]
+   - [Search] something inside library
      - patterns [ _ <= _]
      - names ["SS"]
      - constants [leq]
@@ -283,17 +297,25 @@ Search "SS" inside ssrnat.
 Locate "_ < _".
 Check (forall x, x.+1 <= x).
 Search "orb" "C".
-Print commutative.
+Print commutative. (* so that all look the same *)
 Check (3 == 4) || (3 <= 4).
 Eval compute in (3 == 4) || (3 <= 4).
-Check (true == false).
-Check (3 != 4).
+Check (true == false). (* overloaded *)
+Check (3 != 4). (* with negation ~~ *)
 
 Lemma test_is_true_coercion : true.
 Proof. rewrite /is_true. by []. Qed.
 
 (**
 #</div>#
+
+#<div class="note">(notes)<div class="note-text">#
+Unfortunately [Search] does not work "up to" definitions
+like [commutative]. The pattern [(_ + _ = _ + _)] won't work.
+It sad, it may be fidex one day, but now you know it.
+Search for "C" if you need a commutativity law.
+#</div></div>#
+
 
 #</div>#
 -------------------------------------------------------------
@@ -303,13 +325,14 @@ Proof. rewrite /is_true. by []. Qed.
    - the [eqP] view: "is_true (a == b)   <->    a = b"
    - [move=> /eqP] (both directions, on hyps)
    - [apply/eqP] (both directions, on goal)
+   - [move=> /view name]
    - notation [.*2]
    - [rewrite lem1 lem2]
    - What is the ugly type for [n] and [m]?
 
 #<div>#
 *)
-Lemma test_eqP n m :
+Lemma test_eqP (n m : nat) :
   n == m -> n.+1 + m.+1 = m.+1.*2.
 Proof.
 (*#
@@ -329,34 +352,14 @@ by move=> /eqP; move=> Enm; rewrite Enm -addnn. Qed.
 #</div>#
 -------------------------------------------------------------
 #<div class="slide">#
- ** Infix [==] is overloaded
-   - and [eqP] is too
-   - [move=> /view name]
-#<div>#
-*)
-Lemma test2_eqP b1 b2 :
-  b1 == ~~ b2 -> b1 || b2.
-Proof.
-(*
-Search orb negb.
-*)
-by move=> /eqP Eb1; rewrite Eb1 orNb.
-Qed.
-
-(**
-#</div>#
-
-#</div>#
-
--------------------------------------------------------------
-#<div class="slide">#
  ** A little bit of gimmicks
    - connectives like [&&] have a view as well
    - [andP] and [[]]
+   - [move:] to move back down to the goal
 #<div>#
 *)
-Lemma test_andP b1 b2 :
-  b1 && b2 -> b1 || b2.
+Lemma test_andP (b1 b2 : bool) :
+b1 && (b1 == b2) -> b2.
 Proof.
 (*
 move=> /andP Hb1b2.
@@ -364,23 +367,6 @@ case: Hb1b2.
 move=> Hb1 Hb2.
 by rewrite Hb1.
 *)
-move=> /andP[Hb1 Hb2].
-by rewrite Hb1.
-Qed.
-
-(**
-#</div>#
-
-#</div>#
--------------------------------------------------------------
-#<div class="slide">#
- ** A little more of gimmicks
-    - [move:] to move back down to the goal
-#<div>#
-*)
-Lemma test_move_colon b1 b2 :
-  b1 && (b1 == b2) -> b2.
-Proof.
 move=> /andP[Hb1 Hb12].
 move: Hb12.
 move=> /eqP Hb2.
@@ -413,11 +399,18 @@ Qed.
 (**
 #</div>#
 
+#<div class="note">(notes)<div class="note-text">#
+Unlike with [_ /\ _] we rarely use [split] to prove
+a conjunction. It is typically simpler to rewrite
+[_ && _] to true.
+#</div></div>#
+
+
 #</div>#
 --------------------------------------------------------
 --------------------------------------------------------
 #<div class="slide">#
-** Sequences and Ad-Hoc polymorphism
+** Sequences
   - many notations
 
 #<div>#
@@ -477,9 +470,12 @@ End polylist.
 *)
 
 Eval compute in 3 \in [:: 7; 4; 3].
+Eval compute in true \in [:: false; true; true].
 
+Fail Check forall T : Type, forall x : T, x == x .
 Fail Check forall T : Type, forall x : T, x \in [:: x ].
 
+Check forall T : eqType, forall x : T, x == x.
 Check forall T : eqType, forall x : T, x \in [:: x ].
 
 (**

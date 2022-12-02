@@ -13,6 +13,7 @@ Implicit Type m n a b c : nat.
     - use no lemma to prove the following statement
 *)
 Lemma orbC p q : p || q = q || p.
+(*D*)(* proof by truth table *)
 (*D*)Proof. by case: p; case: q. Qed.
 
 (** *** Exercise 2:
@@ -20,12 +21,14 @@ Lemma orbC p q : p || q = q || p.
    - prove that as you like
 *)
 Lemma Peirce p q : ((p ==> q) ==> p) ==> p.
+(*D*)(* we have classical logic *)
 (*D*)Proof. by case: p; case: q. Qed. 
 
 (** *** Exercise 3:
     - look for lemmas supporting contrapositive reasoning
 *)
 Lemma bool_gimmics1 a : a != a.-1 -> a != 0.
+(*D*)(* Search "contra", and use /eqP *)
 (*D*)Proof.
 (*D*)apply: contra.
 (*D*)move => /eqP Ha.
@@ -38,6 +41,7 @@ Lemma bool_gimmics1 a : a != a.-1 -> a != 0.
     - now find another proof without the view
 *)
 Lemma find_me p q :  ~~ p = q -> p (+) q.
+(*D*)(* Locate "(+)", Seach addb *)
 (*D*)Proof.
 (*D*)move=> Hq.
 (*D*)by rewrite -Hq addbN negb_add eqxx.
@@ -61,6 +65,7 @@ Lemma view_gimmics1 p a b : p -> (p ==> (a == b.*2)) -> a./2 = b.
     - then prove that without using [case:]
 *)
 Lemma bool_gimmics2 p q r : ~~ p && (r == q) -> q ==> (p || r).
+(*D*)(* Views, /andP[], move: ... gimmicks *)
 (*D*)Proof.
 (*D*)move=> /andP[Hp Hr].
 (*D*)move: Hp.
@@ -73,13 +78,6 @@ Lemma bool_gimmics2 p q r : ~~ p && (r == q) -> q ==> (p || r).
 (*A*)Qed.
 
 (** *** Exercise 7:
-    - look up the definition of [iter]
-    - prove this satement by induction
-*)
-Lemma iterSr A n (f : A -> A) x : iter n.+1 f x = iter n f (f x).
-(*D*)Proof. by elim: n => [//|n IH /=]; rewrite -IH. Qed.
-
-(** *** Exercise 8:
    - the only tactics allowed are [rewrite] and [by]
    - use [Search] to find the relevant lemmas (all are good but for
      [ltn_neqAle]) or browse the #<a href="https://math-comp.github.io/htmldoc_1_15_0/mathcomp.ssreflect.ssrnat.html">online doc</a>#
@@ -92,4 +90,15 @@ Lemma iterSr A n (f : A -> A) x : iter n.+1 f x = iter n f (f x).
 >> *)
 Lemma ltn_neqAle m n : (m < n) = (m != n) && (m <= n).
 (*D*)Proof. by rewrite ltnNge leq_eqVlt negb_or -leqNgt eq_sym. Qed.
+
+(** Exercise 8:
+    - induction on lists
+*)
+Lemma mem_cat (T : eqType) (x : T) s1 s2 :
+  (x \in s1 ++ s2) = (x \in s1) || (x \in s2).
+Proof.
+(*D*)(* rewrite inE, // and /= *)
+(*D*)elim: s1 => [//|y s1 IHs /=].
+(*D*)by rewrite !inE /= -orbA -IHs.
+(*A*)Qed.
 
