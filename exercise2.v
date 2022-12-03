@@ -14,27 +14,29 @@ Definition elements {A} (f : _ -> A) n :=
 (** Triangular number *)
 Definition delta n := (n.+1 * n)./2.
 
+Lemma deltaE n : delta n =  (n.+1 * n)./2.
+Proof. by []. Qed.
+
+Lemma delta1 : delta 1 = 1.
+Proof. by []. Qed.
+
+
 Compute elements delta 10.
 
 (** Hints : halfD half_bit_double *)
 Lemma deltaS n : delta n.+1 = delta n + n.+1.
 Proof.
-(*D*)rewrite /delta -addn2 mulnDl mulnC halfD.
+(*D*)rewrite !deltaE -addn2 mulnDl mulnC halfD.
 (*D*)rewrite !oddM andbF add0n mul2n.
-(*D*)by rewrite -{4}(half_bit_double n.+1 false).
+(*D*)suff -> : ((n.+1).*2)./2 = n.+1 by [].
+(*D*)by rewrite -[RHS](half_bit_double n.+1 false).
 (*A*)Qed.
 
-(** Hints   big_ord_recr big_ord_recl big_ord0 *)
-Lemma deltaE n : delta n = \sum_(i < n.+1) i.
-Proof.
-(*D*)elim: n => [|n IH]; first by rewrite big_ord_recl big_ord0.
-(*D*)by rewrite big_ord_recr /= -IH deltaS.
-(*A*)Qed.
 
 (* Hints half_leq *)
 Lemma leq_delta m n : m <= n -> delta m <= delta n.
 Proof.
-(*D*)by move=> H; apply/half_leq/leq_mul.
+(*D*)by move=> H; apply: half_leq; apply: leq_mul.
 (*A*)Qed.
 
 (** Hints sqrnD *)
@@ -56,6 +58,10 @@ Definition troot n :=
  let l := iota 0 n.+2 in
  (find (fun x => n < delta x) l).-1.
 
+Lemma trootE n :
+  troot n = (find (fun x => n < delta x) (iota 0 n.+2)).-1.
+Proof. by []. Qed.
+
 Compute elements troot 10.
 
 Lemma troot_gt0 n : 0 < n -> 0 < troot n.
@@ -66,9 +72,9 @@ Proof.
 (** Hints before_find find_size size_iota nth_iota *)
 Lemma leq_delta_root m : delta (troot m) <= m.
 Proof.
-(*D*)rewrite /troot leqNgt.
+(*D*)rewrite trootE leqNgt.
 (*D*)set l := iota _ _; set f := (fun _ => _).
-(*D*)case E : _.-1 => [|n] //.
+(*D*)case E : (find f l).-1 => [|n] //.
 (*D*)have  /(before_find 0) : 
 (*D*)   (find f l).-1 < find f l by rewrite prednK // E.
 (*D*)rewrite E  nth_iota // /f => [->//|].
@@ -108,25 +114,28 @@ Proof.
 (*D*)by move=> mLn; rewrite leq_root_delta (leq_trans (leq_delta_root _)).
 (*A*)Qed.
 
-Lemma trootE m n : (troot m == n) = (delta n <= m < delta n.+1).
+Lemma troot_delta m n : (troot m == n) = (delta n <= m < delta n.+1).
 Proof.
 (*D*)by rewrite ltnNge -!leq_root_delta -ltnNge ltnS -eqn_leq eq_sym.
 (*A*)Qed.
 
 Lemma troot_deltaK n : troot (delta n) = n.
 Proof.
-(*D*)by apply/eqP; rewrite trootE leqnn deltaS -addn1 leq_add2l.
+(*D*)by apply/eqP; rewrite troot_delta leqnn deltaS -addn1 leq_add2l.
 (*A*)Qed.
 
 (**  The modulo for triangular numbers *)
 Definition tmod n := n - delta (troot n).
 
+Lemma tmodE n : tmod n = n - delta (troot n).
+Proof. by []. Qed.
+
 Lemma tmod_delta n : tmod (delta n) = 0.
 Proof.
-(*D*)by rewrite /tmod troot_deltaK subnn.
+(*D*)by rewrite tmodE troot_deltaK subnn.
 (*A*)Qed.
 
-Lemma tmodE n : n = delta (troot n) + tmod n.
+Lemma delta_tmod n : n = delta (troot n) + tmod n.
 Proof.
 (*D*)by rewrite addnC (subnK (leq_delta_root _)).
 (*A*)Qed.
@@ -139,12 +148,15 @@ Proof.
 Lemma ltn_troot m n : troot m < troot n -> m < n.
 Proof.
 (*D*)rewrite leq_root_delta deltaS => /(leq_trans _) -> //.
-(*D*)by rewrite {1}[m]tmodE ltn_add2l ltnS leq_tmod_troot.
+(*D*)by rewrite [X in X < _]delta_tmod ltn_add2l ltnS leq_tmod_troot.
 (*A*)Qed.
 
 Lemma leq_tmod m n : troot m = troot n -> (tmod m <= tmod n) = (m <= n).
 Proof.
-(*D*)by move=> tmEtn; rewrite {2}[m]tmodE {2}[n]tmodE tmEtn leq_add2l.
+(*D*)move=> tmEtn.
+(*D*)rewrite [X in _ = (X <= _)]delta_tmod.
+(*D*)rewrite [X in _ = (_ <= X)]delta_tmod.
+(*D*)by rewrite tmEtn leq_add2l.
 (*A*)Qed.
 
 Lemma leq_troot_mod m n : 
@@ -160,7 +172,8 @@ Proof.
 (*D*)  by apply: leq_delta_root.
 (*D*)rewrite leq_eqVlt => /orP[/eqP dnEdm|dmLdn].
 (*D*)  rewrite dnEdm eqxx /=.
-(*D*)  by rewrite {1}[m]tmodE {1}[n]tmodE dnEdm leq_add2l.
+(*D*)  rewrite [X in (X <= _) = _]delta_tmod [X in _ <= X = _]delta_tmod.
+       by rewrite dnEdm leq_add2l.
 (*D*)rewrite (gtn_eqF dmLdn) /=.
 (*D*)apply/idP/negP.
 (*D*)rewrite -ltnNge.
@@ -172,6 +185,9 @@ Proof.
 (** Fermat Numbers *)
 
 Definition fermat n := (2 ^ (2 ^ n)).+1.
+
+Lemma fermatE n : fermat n = (2 ^ (2 ^ n)).+1.
+Proof. by []. Qed.
 
 Compute elements (prime \o fermat) 4.
 
@@ -188,7 +204,7 @@ move=> aP kO.
 (*D*)  rewrite mulnSr -expnD !addSn subnBA ?expn_gt0 ?aP //.
 (*D*)  by rewrite addnAC addnK addn1.
 (*D*)rewrite dvdn_sub ?dvdn_mull //.
-(*D*)by rewrite -{2}[1](exp1n 2) subn_sqr addn1 dvdn_mull.
+(*D*)by rewrite -[X in _ %| _ - X](exp1n 2) subn_sqr addn1 dvdn_mull.
 (*A*)Qed.
 
 (** Hints: logn_gt0 mem_primes dvdn2 *)
@@ -243,7 +259,8 @@ Proof.
 Lemma dvdn_exp2m1 a k : a.+1 %| (a ^ (2 ^ k.+1)).-1.
 Proof.
 (*D*)elim: k => /= [|k IH].
-(*D*)  rewrite expn1 -subn1 -{2}[1](exp1n 2) subn_sqr addn1 dvdn_mull //.
+(*D*)  rewrite expn1 -subn1 -[X in _ %| _ - X](exp1n 2).
+(*D*)  by rewrite subn_sqr addn1 dvdn_mull //.
 (*D*)rewrite -subn1 -{2}[1](exp1n 2) expnS mulnC expnM subn_sqr.
 (*D*)by rewrite dvdn_mulr // subn1.
 (*A*)Qed.
@@ -252,7 +269,7 @@ Proof.
 Lemma dvdn_fermat m n : m < n -> fermat m %| (fermat n).-2.
 Proof.
 (*D*)move=> mLn.
-(*D*)rewrite /fermat /= -(subnK mLn) -addSnnS addnC.
+(*D*)rewrite fermatE /= -(subnK mLn) -addSnnS addnC.
 (*D*)by rewrite expnD expnM dvdn_exp2m1.
 (*A*)Qed.
 
