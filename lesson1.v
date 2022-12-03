@@ -124,6 +124,9 @@ Fixpoint leq (n m : nat) : bool :=
     else false
   else true.
 
+(* Coq prints it "raw" *)  
+Print leq.
+
 Arguments leq !n !m.
 Infix "<=" := leq.
 
@@ -242,11 +245,11 @@ Notation "~~ b" := (negb b).
 Lemma andbC : forall b1 b2, (b1 && b2) = (b2 && b1).
 Proof.
 (*
-move=> b1 b2.
-case: b1.
-  move=> /=.
-  by case: b2.
-by case: b2.
+move=> b1 b2.  (* name hyps *)
+case: b1.      (* reason on b1 by cases *)
+  move=> /=.   (* simplify the goal *)
+  by case: b2. (* reason on b2 by cases *)
+by case: b2.   (* reason on b2 by cases *)
 *)
 by move=> b1 b2; case: b1; case: b2. Qed.
 
@@ -261,6 +264,9 @@ It is worth mentioning here
 - [C] for commutativity
 - [A] for associativity
 - [K] for cancellation
+
+When doing "truth table" proofs, it is handy to
+combine calls to [case] with [;], as we do in the last line.
 #</div></div>#
 
 #</div>#
@@ -281,12 +287,12 @@ It is worth mentioning here
   
    Things to know:
    - [Search] something inside library
-     - patterns [ _ <= _]
-     - names ["SS"]
-     - constants [leq]
-   - [(a < b)] is a notation for [(a.+1 <= b)]
-   - [==] stands for computable equality (overloaded)
-   - [!=] is [~~ (_ == _)]
+     - patterns, eg [ _ <= _]
+     - names, eg ["SS"]
+     - constants, eg [leq]
+   - [a < b] is a notation for [a.+1 <= b]
+   - [_ == _] stands for computable equality (overloaded)
+   - [_ != _] is [~~ (_ == _)]
    - [is_true] coercion
    - [rewrite /concept] to unfold
 
@@ -297,7 +303,7 @@ Search "SS" inside ssrnat.
 Locate "_ < _".
 Check (forall x, x.+1 <= x).
 Search "orb" "C".
-Print commutative. (* so that all look the same *)
+Print commutative. (* for consistency *)
 Check (3 == 4) || (3 <= 4).
 Eval compute in (3 == 4) || (3 <= 4).
 Check (true == false). (* overloaded *)
@@ -312,7 +318,7 @@ Proof. rewrite /is_true. by []. Qed.
 #<div class="note">(notes)<div class="note-text">#
 Unfortunately [Search] does not work "up to" definitions
 like [commutative]. The pattern [(_ + _ = _ + _)] won't work.
-It sad, it may be fidex one day, but now you know it.
+It's sad, it may be fidex one day, but now you know it.
 Search for "C" if you need a commutativity law.
 #</div></div>#
 
@@ -321,14 +327,13 @@ Search for "C" if you need a commutativity law.
 -------------------------------------------------------------
 #<div class="slide">#
 ** Equality
-   - privileged role (many lemmas are stated with = or is_true)
+   - privileged role (many lemmas are stated with [=] or [is_true])
    - the [eqP] view: "is_true (a == b)   <->    a = b"
    - [move=> /eqP] (both directions, on hyps)
    - [apply/eqP] (both directions, on goal)
-   - [move=> /view name]
+   - [move=> /view name] to name after applying the view
    - notation [.*2]
-   - [rewrite lem1 lem2]
-   - What is the ugly type for [n] and [m]?
+   - [rewrite lem1 lem2] to chain rules
 
 #<div>#
 *)
@@ -336,14 +341,15 @@ Lemma test_eqP (n m : nat) :
   n == m -> n.+1 + m.+1 = m.+1.*2.
 Proof.
 (*#
-Check eqP.
-move=> /eqP. move=> /eqP. move=> /eqP. move=> Enm. 
-apply/eqP. apply/eqP.
+Check eqP. (* reflect is, for now, like [<->] *)
+move=> /eqP. move=> /eqP. move=> /eqP. move=> Enm. (* back and forth *) 
+apply/eqP. apply/eqP. (* back and forth *)
 rewrite Enm.
-Search (_ + _) _.*2 inside ssrnat.
+Search (_ + _) _.*2 inside ssrnat. (* look for lemmas linking + and .*2 *)
 by apply: addnn.
 #*)
-by move=> /eqP; move=> Enm; rewrite Enm -addnn. Qed.
+(* clean script *)
+by move=> /eqP Enm; rewrite Enm -addnn. Qed.
 
 
 (**
@@ -359,18 +365,19 @@ by move=> /eqP; move=> Enm; rewrite Enm -addnn. Qed.
 #<div>#
 *)
 Lemma test_andP (b1 b2 : bool) :
-b1 && (b1 == b2) -> b2.
+  b1 && (b1 == b2) -> b2.
 Proof.
 (*
-move=> /andP Hb1b2.
-case: Hb1b2.
-move=> Hb1 Hb2.
-by rewrite Hb1.
+move=> /andP Hb1b2. (* process [&&] *)
+case: Hb1b2.        (* separate hyps *)
+move=> Hb1 Hb2.     (* name both *)
+(* too boring *)
 *)
-move=> /andP[Hb1 Hb12].
-move: Hb12.
-move=> /eqP Hb2.
-by rewrite -Hb2 Hb1.
+move=> /andP[Hb1 Hb12]. (* process [&&] and separate*)
+
+move: Hb12.          (* move down *)
+move=> /eqP Hb2.     (* process with view *)
+by rewrite -Hb2 Hb1. (* conclude, remmark hidden [.. = true] *)
 Qed.
 
 (**
@@ -389,10 +396,10 @@ Lemma test_have (b1 b2 b3 : bool) :
   b1 -> b2 -> (b1 && b2 -> b3) -> b3 && b1.
 Proof.
 move=> Hb1 Hb2 Hb3.
-have Hb1b2 : b1 && b2.
+have Hb1b2 : b1 && b2. (* like Lemma, but inside a proof *)
   by rewrite Hb1 Hb2.
-move: (Hb3 Hb1b2).
-move=> {}Hb3.
+move: (Hb3 Hb1b2). (* move down a specialized Hb3 *)
+move=> {}Hb3.      (* replace Hb3 *)
 by rewrite Hb3 Hb1.
 Qed.
 
@@ -418,8 +425,8 @@ a conjunction. It is typically simpler to rewrite
 Check [::].
 Check [:: 3 ; 4].
 Check [::] ++ [:: true ; false].
-Eval compute in [seq x.+1 | x <- [:: 1; 2; 3]].
-Eval compute in [seq x <- [::3; 4; 5] | odd x ].
+Eval compute in [seq x.+1 | x <- [:: 1; 2; 3]].  (* map *)
+Eval compute in [seq x <- [::3; 4; 5] | odd x ]. (* filter *)
 Eval compute in rcons [:: 4; 5] 3.
 Eval compute in all odd [:: 3; 5].
 
@@ -440,7 +447,7 @@ This special case of append has its own name and collection of theorems.
 --------------------------------------------------------
 #<div class="slide">#
 ** Polymorphic lists
-   - This statement makes no assumptions on T
+   - no assumptions on T
    - we can use [=> ... //] to kill a goal
    - we can use [=> ... /=] to simplify a goal
 
@@ -463,20 +470,23 @@ End polylist.
 --------------------------------------------------------
 #<div class="slide">#
 ** Had-hoc polymorphic lists
-  - [T : Type |- l : list T]
-  - [T : eqType |- l : list T]
+  - [T : Type |- l : list T] v.s. [T : eqType |- l : list T]
   - [eqType] means: a type with a decidable equality [_ == _]
+  - if [T] is an [eqType] then [list T] also is an [eqType]
+  - [x \in l] requires the type of [x] to be an [eqType]
+  - overloaded as [(_ == _)]
 #<div>#
 *)
 
+Fail Check forall T : Type,   forall x : T, x == x .
+Fail Check forall T : Type,   forall x : T, x \in [:: x ].
+
+     Check forall T : eqType, forall x : T, x == x.
+     Check forall T : eqType, forall x : T, x \in [:: x ].
+
+(* overloaded and computable *)
 Eval compute in 3 \in [:: 7; 4; 3].
 Eval compute in true \in [:: false; true; true].
-
-Fail Check forall T : Type, forall x : T, x == x .
-Fail Check forall T : Type, forall x : T, x \in [:: x ].
-
-Check forall T : eqType, forall x : T, x == x.
-Check forall T : eqType, forall x : T, x \in [:: x ].
 
 (**
 #</div>#
@@ -492,12 +502,11 @@ function for all terms of type [T] ([x] in the example above).
 #</div>#
 --------------------------------------------------------
 #<div class="slide">#
-** The [\in] notation
-   - overloaded as [(_ == _)]
+** Working with the [\in] notation
    - pushing [\in] with [inE]
-   - computable
    - rewrite flag [!]
    - [rewrite !inE] idiom
+   - [\notin] notation
 #<div>#
 *)
 Lemma test_in l : 3 \in [:: 4; 5] ++ l -> l != [::].
@@ -506,9 +515,10 @@ rewrite inE.
 rewrite inE.
 (*rewrite !inE*)
 move=> /=.
-apply: contraL.
+apply: contraL. (* l = [::] is in conflict with 3 \in l *)
 move=> /eqP El.
 rewrite El.
+(*compute*)
 by [].
 Qed.
 
