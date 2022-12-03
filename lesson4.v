@@ -56,9 +56,9 @@ Lemma negb_and :
   forall b c, ~~ (b && c) = ~~ b || ~~ c.
 Proof.
 (*
-move=> b. move=> c. move: b. move: c.
-move=> c b. move: b c.
-move=> b; case: b. move=> c; case: c.
+move=> b. move=> c. move: b. move: c. (* up and down *)
+move=> c b. move: b c.  (* reverse order, it's a stack *)
+move=> b; case: b. move=> c; case: c. (* no need to name _top_, it's the default subject *)
 *)
 by case; case. Qed.
 
@@ -85,13 +85,13 @@ Lemma induction_fold (l : seq nat) x :
   foldl addn x l = x + foldl addn 0 l.
 Proof.
 (*#
-elim: l => [|y ys IH] /=.
+elim: l => [|y ys IH] /=. (* first attempt *)
   by rewrite addn0.
 (* we are stuck *)
 #*)
-elim: l x => [|y ys IH] x /=.
+elim: l x => [|y ys IH] x /=. (* better attempt, generalize and re-introduce x *)
   by rewrite addn0.
-by rewrite IH (IH y) addnA.
+by rewrite IH (IH y) addnA. (* IH is now quantified *)
 Qed.
 
 (**
@@ -120,7 +120,7 @@ Lemma test_leqW i j k :
   (i <= k) && (k.+1 <= j) -> i <= j.+1.
 Proof.
 (*# move=> /andP H; case: H. move=> /leqW leq_ik1. #*)
-move=> /andP[/leqW leq_ik1 /leqW leq_k1j1].
+move=> /andP[/leqW leq_ik1 /leqW leq_k1j1]. (* process fully, then name *)
 exact: leq_trans leq_ik1 leq_k1j1.
 Qed.
 
@@ -149,11 +149,12 @@ Proof.
 (*#
 move=> pr_p.
 Search predn inside ssrnat.
-rewrite prednK.
-  by rewrite addnn.
+rewrite prednK. (* main step *)
+  by rewrite addnn. (* side condition *)
 Search prime leq 0.
-by apply: prime_gt0.
+by apply: prime_gt0. (* conclusion *)
 #*)
+(* idiomatic use of conditional rewrite rules *)
 by move=> pr_p; rewrite prednK ?addnn // prime_gt0.
 Qed.
 
@@ -166,9 +167,10 @@ Qed.
 #<div class="slide">#
 ** [rewrite] and subterm selection
    - keyed matching drives the search
-   - specialization
+   - specialization via argument passing
    - specialization via pattern
-   - localization via contextual pattern
+   - localization via contextual pattern (approximate or precise)
+   - LHS and RHS notations
 #<div>#*)
 Lemma subterm_selection n m :
   n + (m * 2).+1 = n * (m + m.+1).
@@ -184,13 +186,13 @@ Abort.
 Lemma occurrence_selection n m :
   n + m = n + m.
 Proof.
-rewrite addnC.
-rewrite [in RHS]addnC.
+rewrite addnC. (* all occurrecens of the rule are replaced *)
+rewrite [in RHS]addnC. (* limit to RHS of the goal *)
 Abort.
 
 Lemma no_pattern_from_the_rewrite_rule n : n + 0 = n.
 Proof.
-rewrite -[n in RHS]addn0.
+rewrite -[n in RHS]addn0. (* precise patterns for ambiguous rules *)
 Abort.
 
 (**
@@ -247,8 +249,8 @@ Proof.
 apply: (iffP idP) => [|->]; last by elim: n.
 elim: m n; first by case.
 move=> n IHn m eq_n1m.
-case: m eq_n1m => // m eq_n1m1.
-congr (_.+1).
+case: m eq_n1m => // m eq_n1m1. (* case with generalization *)
+congr (_.+1). (* cleanup of the goal *)
 exact: IHn.
 #*)
 apply: (iffP idP) => [|->]; last by elim: n.
@@ -271,6 +273,7 @@ End reflect_for_eqP.
    - Inductive predicates to drive the proof:
      - you chose how many branches
      - you chose which equations are automatically applied
+     - you chose which extra assumption a branch has
    - [of] syntax for inductives
 #<div>#*)
 
@@ -288,6 +291,8 @@ Axiom leqP : forall m n : nat, leq_xor_gtn m n (m <= n) (n < m).
 #<div class="slide">#
 ** Let's try out [leqP] on an ugly goal
    - matching of indexes uses the same discipline of [rewrite]
+
+   Bonus (time permitting):
    - generalization of unresolved implicits after [/leq_trans]
    - specialization of the top stack item via [/(_ arg)]
 #<div>#*)
@@ -295,6 +300,12 @@ Lemma test_leqP m n1 n2 :
   (m <= (if n1 < n2 then n1 else n2)) =
   (m <= n1) && (m <= n2) && ((n1 < n2) || (n2 <= n1)).
 Proof.
+(* the indexes of [leqP] give rise to patterns, which are matched
+   right to left. So the first one is [_ < _] which finds [n1 < n2]
+   and replaces it with [false] in the first branch and [true] in the
+   second. Then it is the turn of [n2 <= n1].
+   
+   use: Set Debug "ssreflect". for a slow motion *)
 case: leqP => [leqn21 | /ltnW ltn12 ]; rewrite /= andbT.
   by rewrite andb_idl // => /leq_trans /(_ leqn21).
 by rewrite andb_idr // => /leq_trans->.
@@ -320,6 +331,7 @@ likely unnecessary, it is used in the library, hence this slide
 Lemma test_ifP n m : if n <= m then 0 <= m - n else m - n == 0.
 Proof.
 case: ifP => //.
+(* MC idiom: don't introduce hyps if not necessary *)
 by move=> /negbT; rewrite subn_eq0 leqNgt negbK=> /ltnW.
 Qed.
 
@@ -330,9 +342,9 @@ Qed.
 --------------------------------------------------------
 #<div class="slide">#
 ** Forward reasoning
-   - have
-   - have :=
-   - have + views
+   - [have : statement.]
+   - [have := proof]
+   - [have /view ... : .. := ..] and variations
 
 Definition of all
 <<
@@ -390,7 +402,7 @@ Qed.
 #</div>#
 --------------------------------------------------------
 #<div class="slide">#
-** Demo (time permitting)
+** Demo (time permitting, or as an exercise)
    - you should be now able to read this proof
 
 #<div>#*)
