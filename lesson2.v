@@ -599,7 +599,7 @@ Compute 2 %| 21.
 
 Print dvdn.
 (*
-dvdn = fun d m : nat => m %% d == 0
+dvdn = fun d m : nat => m \%\% d == 0
 	 : nat -> nat -> bool
 *)
 
