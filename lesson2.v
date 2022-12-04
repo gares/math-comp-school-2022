@@ -604,7 +604,7 @@ dvdn = fun d m : nat => m %% d == 0
 #*)
 
 Search (_ %| _ + _) in div.
-(* 
+(*# 
 dvdn_add: forall [d m n : nat], d %| m -> d %| n -> d %| m + n
 dvdn_add_eq: forall [d m n : nat], d %| m + n -> (d %| m) = (d %| n)
 dvdn_addl: forall [n d : nat] (m : nat), d %| n -> (d %| m + n) = (d %| m)
@@ -615,10 +615,10 @@ Bezoutl:
 Bezoutr:
   forall (m : nat) [n : nat],
   0 < n -> {a : nat | a < n & n %| gcdn m n + a * m}
-*)
+#*)
 
 Search ((_ + _) %/ _) in div.
-(*
+(*#
 divnDr:
   forall (m : nat) [n d : nat], d %| n -> (m + n) %/ d = m %/ d + n %/ d
 divnDl:
@@ -630,16 +630,16 @@ divnMDl: forall (q m : nat) [d : nat], 0 < d -> (q * d + m) %/ d = q + m %/ d
 divnD:
   forall (m n : nat) [d : nat],
   0 < d -> (m + n) %/ d = m %/ d + n %/ d + (d <= m %% d + n %% d)
-*)
+#*)
 
 Search (?_1 %/ ?_1) in div.
-(* divnn: forall d : nat, d %/ d = (0 < d) *)
+(*# divnn: forall d : nat, d %/ d = (0 < d) #*)
 
 Compute 0 %/ 0.
-(* 0 : nat *)
+(*# 0 : nat #*)
 
 Search (_ %| _ * _) in div.
-(* 
+(*# 
 dvdn_mulr: forall [d m : nat] (n : nat), d %| m -> d %| m * n
 dvdn_mull: forall [d : nat] (m : nat) [n : nat], d %| n -> d %| m * n
 dvdn_mul:
@@ -654,10 +654,10 @@ dvdn_pmul2r: forall [p d m : nat], 0 < p -> (d * p %| m * p) = (d %| m)
 dvdn_divLR:
   forall [p d : nat] (m : nat),
   0 < p -> p %| d -> (d %/ p %| m) = (d %| m * p)
-*)
+#*)
 
 Search ((_ * _) %/ _) in div.
-(*
+(*#
 divnA: forall (m : nat) [n p : nat], p %| n -> m %/ (n %/ p) = (m * p) %/ n
 muln_divA:
   forall [d : nat] (m : nat) [n : nat], d %| n -> m * (n %/ d) = (m * n) %/ d
@@ -666,7 +666,7 @@ mulKn: forall (m : nat) [d : nat], 0 < d -> (d * m) %/ d = m
 mulnK: forall (m : nat) [d : nat], 0 < d -> (m * d) %/ d = m
 divnMl: forall [p m d : nat], 0 < p -> (p * m) %/ (p * d) = m %/ d
 divnMr: forall [p m d : nat], 0 < p -> (m * p) %/ (d * p) = m %/ d
-*)
+#*)
 
 (**
 ----------------------------------------------------------
@@ -702,10 +702,10 @@ fix odd (n : nat) : bool :=
 *)
 
 Search odd (_ %% _) in div.
-(* 
+(*# 
 modn2: forall m : nat, m %% 2 = odd m
 odd_mod: forall (m : nat) [d : nat], odd d = false -> odd (m %% d) = odd m
-*)
+#*)
 
 (**
 ----------------------------------------------------------
@@ -735,7 +735,7 @@ muln_lcm_gcd: forall m n : nat, lcmn m n * gcdn m n = m * n
 *)
 
 Search gcdn (_ * _) in div.
-(* 
+(*# 
 gcdnMr: forall n m : nat, gcdn n (n * m) = n
 gcdnMl: forall n m : nat, gcdn n (m * n) = n
 muln_lcm_gcd: forall m n : nat, lcmn m n * gcdn m n = m * n
@@ -755,7 +755,7 @@ Bezoutr:
 EgcdnSpec:
   forall [m n km kn : nat],
   km * m = kn * n + gcdn m n -> kn * gcdn m n < m -> egcdn_spec m n (km, kn)
-*)
+#*)
 
 (**
 ----------------------------------------------------------
@@ -789,7 +789,7 @@ coprime = fun m n : nat => gcdn m n == 1
 *)
 
 Search coprime (_ %| _) in div prime.
-(*
+(*#
 coprime_dvdr: forall [m n p : nat], m %| n -> coprime p n -> coprime p m
 coprime_dvdl: forall [m n p : nat], m %| n -> coprime n p -> coprime m p
 prime_coprime:
@@ -802,7 +802,7 @@ Gauss_dvdl:
 Gauss_dvd:
   forall [m n : nat] (p : nat),
   coprime m n -> (m * n %| p) = (m %| p) && (n %| p)
-*)
+#*)
 
 Check prime.
 (* prime : nat -> bool *)
@@ -848,11 +848,11 @@ Compute primes 23.
 (* [:: 23] : seq nat *)
 
 Check primeP.
-(* 
+(*# 
 primeP
 	 : reflect (1 < ?p /\ (forall d : nat, d %| ?p -> (d == 1) || (d == ?p)))
          (prime ?p)
-*)
+#*)
 
 Goal prime 2.
 Proof.
@@ -868,7 +868,7 @@ by case.
 Qed.
 
 Search prime (_ %| _) in div prime.
-(*
+(*#
 Euclid_dvd1: forall [p : nat], prime p -> (p %| 1) = false
 prime_coprime:
   forall [p : nat] (m : nat), prime p -> coprime p m = ~~ (p %| m)
@@ -920,7 +920,7 @@ Euclid_dvd_prod:
 mem_prime_decomp:
   forall [n : nat] [p e : nat_eqType],
   (p, e) \in prime_decomp n -> [/\ prime p, 0 < e & p ^ e %| n]
-*)
+#*)
 
 Check logn.
 (* logn : nat -> nat -> nat*)
@@ -931,7 +931,7 @@ Compute logn 3 9.
 (* 2 : nat *)
 
 Search logn in prime.
-(* 
+(*# 
 logn0: forall p : nat, logn p 0 = 0
 logn1: forall p : nat, logn p 1 = 0
 pfactor_dvdnn: forall p n : nat, p ^ logn p n %| n
@@ -989,7 +989,7 @@ widen_partn:
 eq_partn_from_log:
   forall [m n : nat] [pi : nat_pred],
   0 < m -> 0 < n -> {in pi, logn^~ m =1 logn^~ n} -> m`_pi = n`_pi
-*)
+#*)
 
 (**
 ----------------------------------------------------------
