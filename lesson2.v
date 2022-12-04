@@ -131,10 +131,10 @@ Print eqn.
    match m with ... end. *)
 
 Compute 1 == 1.
-(* false : bool *)
+(* true : bool *)
 
 Compute 2 == 3.
-(* true : bool *)
+(* false : bool *)
 
 Goal forall m n, m.+1 == n.+1 -> m == n.
 Proof.
