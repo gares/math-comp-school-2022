@@ -821,22 +821,9 @@ Print prime.
 prime = 
 fun p : nat =>
 match prime_decomp p with
-| [::] => false
-| p0 :: l =>
-	let (_, n0) := p0 in
-    match n0 with
-    | 0 => false
-    | n1.+1 =>
-        match n1 with
-        | 0 => match l with
-               | [::] => true
-               | _ :: _ => false
-               end
-        | _.+1 => false
-        end
-    end
-end
-     : nat -> bool
+| [:: (_, 1)]  => true
+| _ => false
+end     : nat -> bool
 #*)
 
 Compute primes 21.
