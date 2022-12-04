@@ -598,10 +598,10 @@ Check (dvdn 2 21).
 Compute 2 %| 21.
 
 Print dvdn.
-(*
-dvdn = fun d m : nat => m &percent;&percent; d == 0
+(*#
+dvdn = fun d m : nat => m %% d == 0
 	 : nat -> nat -> bool
-*)
+#*)
 
 Search (_ %| _ + _) in div.
 (* 
