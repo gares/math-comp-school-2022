@@ -332,7 +332,7 @@ ltnSn: forall n : nat, n < n.+1
 *)
 
 Search (~~ _) (_ <= _) in ssrnat.
-(*
+(*#
 ltnNge: forall m n : nat, (m < n) = ~~ (n <= m)
 leqNgt: forall m n : nat, (m <= n) = ~~ (n < m)
 lt0n_neq0: forall [n : nat], 0 < n -> n != 0
@@ -348,10 +348,10 @@ contraNltn: forall [b : bool] [m n : nat], (n <= m -> b) -> ~~ b -> m < n
 contra_ltnN: forall [b : bool] [m n : nat], (b -> m <= n) -> n < m -> ~~ b
 contraTltn: forall [b : bool] [m n : nat], (n <= m -> ~~ b) -> b -> m < n
 contra_leqN: forall [b : bool] [m n : nat], (b -> m < n) -> n <= m -> ~~ b
-*)
+#*)
 
 Search (_ == _ = _) (_ <= _) in ssrnat.
-(*
+(*#
 subn_eq0: forall m n : nat, (m - n == 0) = (m <= n)
 eqn0Ngt: forall n : nat_eqType, (n == 0) = ~~ (0 < n)
 eqn_leq: forall m n : nat_eqType, (m == n) = (m <= n <= m)
@@ -364,7 +364,7 @@ eqn_exp2r: forall (m n : nat) [e : nat], 0 < e -> (m ^ e == n ^ e) = (m == n)
 eqn_pmul2r: forall [m n1 n2 : nat], 0 < m -> (n1 * m == n2 * m) = (n1 == n2)
 eqn_exp2l:
   forall [m : nat] (n1 n2 : nat), 1 < m -> (m ^ n1 == m ^ n2) = (n1 == n2)
-*)
+#*)
 
 (**
 #</div>#
@@ -376,14 +376,14 @@ eqn_exp2l:
 *)
 
 Search nat "trans" in ssrnat.
-(*
+(*#
 leq_trans: forall [n m p : nat], m <= n -> n <= p -> m <= p
 leqif_trans:
   forall [m1 m2 m3 : nat] [C12 C23 : bool],
   m1 <= m2 ?= iff C12 -> m2 <= m3 ?= iff C23 -> m1 <= m3 ?= iff C12 && C23
 leq_ltn_trans: forall [n m p : nat], m <= n -> n < p -> m < p
 ltn_trans: forall [n m p : nat], m < n -> n < p -> m < p
-*)
+#*)
 
 Goal forall m n p, m < n -> n <= p -> m < p.
 Proof.
@@ -484,7 +484,7 @@ Qed.
 *)
 
 Search (_ <= _ + _) in ssrnat.
-(*
+(*#
 leq_addr: forall m n : nat, n <= n + m
 leq_addl: forall m n : nat, n <= m + n
 leq_add2r: forall p m n : nat, (m + p <= n + p) = (m <= n)
@@ -499,7 +499,7 @@ leq_add:
 addn_gt0: forall m n : nat, (0 < m + n) = (0 < m) || (0 < n)
 ltn_subLR: forall [m n : nat] (p : nat), n <= m -> (m - n < p) = (m < n + p)
 ltn_psubLR: forall (m n : nat) [p : nat], 0 < p -> (m - n < p) = (m < n + p)
-*)
+#*)
 
 Goal forall m n, n <= m -> n.*2 <= m + n.
 Proof.
@@ -519,7 +519,7 @@ Qed.
 *)
 
 Search  _ (_ <= _ * _) in ssrnat.
-(*
+(*#
 leq_pmulr: forall (m : nat) [n : nat], 0 < n -> m <= m * n
 leq_pmull: forall (m : nat) [n : nat], 0 < n -> m <= n * m
 leq_mul:
@@ -536,7 +536,7 @@ ltn_mul2l: forall m n1 n2 : nat, (m * n1 < m * n2) = (0 < m) && (n1 < n2)
 ltn_mul2r: forall m n1 n2 : nat, (n1 * m < n2 * m) = (0 < m) && (n1 < n2)
 ltn_pmul2r: forall [m n1 n2 : nat], 0 < m -> (n1 * m < n2 * m) = (n1 < n2)
 ltn_pmul2l: forall [m n1 n2 : nat], 0 < m -> (m * n1 < m * n2) = (n1 < n2)
-*)
+#*)
 
 Goal forall m n, n <= m -> n ^ 2 <= m * n.
 Proof.
@@ -551,7 +551,7 @@ Qed.
 (** Conditional comparison **)
 
 Search (_ <= _ ?= iff _) (_ && _) in ssrnat.
-(*
+(*#
 eqif_trans:
   forall [m1 m2 m3 : nat] [C12 C23 : bool],
   m1 <= m2 ?= iff C12 -> m2 <= m3 ?= iff C23 -> m1 <= m3 ?= iff C12 && C23
@@ -563,7 +563,7 @@ leqif_mul:
   forall [m1 n1 : nat] [C1 : bool] [m2 n2 : nat] [C2 : bool],
   m1 <= n1 ?= iff C1 ->
   m2 <= n2 ?= iff C2 -> m1 * m2 <= n1 * n2 ?= iff (n1 * n2 == 0) || C1 && C2
-*)
+#*)
 
 (**
 ----------------------------------------------------------
@@ -817,7 +817,7 @@ Compute prime 23.
 (* true : bool *)
 
 Print prime.
-(*
+(*#
 prime = 
 fun p : nat =>
 match prime_decomp p with
@@ -837,15 +837,15 @@ match prime_decomp p with
     end
 end
      : nat -> bool
-*)
+#*)
 
 Compute primes 21.
-(* [:: 3, 7] : seq nat *)
+(*# [:: 3, 7] : seq nat #*)
 Compute primes 22.
-(* [:: 2; 11] : seq nat*)
+(*# [:: 2; 11] : seq nat #*)
 
 Compute primes 23.
-(* [:: 23] : seq nat *)
+(*# [:: 23] : seq nat #*)
 
 Check primeP.
 (*# 
