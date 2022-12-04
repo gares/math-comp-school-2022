@@ -12,7 +12,13 @@ Unset Printing Implicit Defensive.
 (**
 Try to define a next function over 'I_n that correspond to the
 successor function over the natural plus the special case that
-"n -1" is mapped to zero *)
+"n -1" is mapped to zero
+
+Hint: potentially useful theorems are: [ltn_neqAle], [ltnS], [negbT], [ifP]
+
+Hint: potentially useful tactics are [case], [move], [rewrite]
+
+Hint: you may also need to use the val function (or \val notation) *)
 
 Definition onext n (x : 'I_n) : 'I_n.
 Proof.
@@ -20,11 +26,26 @@ refine (
 (* sub takes two arguments: a value and a proof *)
   sub
 (* Write the valued in the following line *)
-(*D*)(x.+1 %% n)
+(*D*)(if val x == n.-1 then 0 else x.+1)
 (* Leave _ for the proof, you will fill it in by tactics later *)
 _
 ).
-(*D*) by case: x => [m /= ltmn]; rewrite ltn_mod (leq_trans _ ltmn).
+(*D*)case: x => [m /=].
+(*D*)case: n => [ | n] /=.
+(*D*)  by [].
+(*D*)case: ifP.
+(*D*)  move/eqP=> misn.
+(*D*)  move=> _.
+(*D*)  by [].
+(*D*)move=> test_false.
+(*D*)rewrite ltnS.
+(*D*)move=> mlen.
+(*D*)rewrite ltnS.
+(*D*)have neq := negbT test_false.
+(*D*)rewrite ltn_neqAle.
+(*D*)rewrite neq.
+(*D*)rewrite mlen.
+(*D*)by [].
 Defined.
 
 Eval compute in val (onext (Ordinal (isT : 2 < 4))).
@@ -36,8 +57,15 @@ Eval compute in val (onext (Ordinal (isT : 3 < 4))).
 *)
 
 (**
-   Show that injectivity is decidable for a function f : aT -> rT
-   with  aT a finite
+   Show that injectivity is decidable for a function [f : aT -> rT]
+   when [aT] is a finite type.
+
+   As a first step, we exhibit a boolean formulation of injectivity:
+   a boolean formula, based on boolean "forall", "exists", and "==>" and
+   boolean equality, which expresses the property of injectivity.
+
+   We then show that this boolean formula is equivalent to th existing notion
+   of [injective], which is not injective in general.
 *)
 
 Module MyInj.
@@ -50,25 +78,48 @@ Definition injectiveb (aT : finType) (rT : eqType) (f : aT -> rT) : bool :=
 Lemma injectiveP (aT : finType) (rT : eqType) (f : aT -> rT) :
   reflect (injective f) (injectiveb f).
 Proof.
-(*D*)apply: (iffP forallP) => [Ibf x y Efxy|If x].
-(*D*)  by move: Ibf => /(_ x) /forallP /(_ y); rewrite Efxy eqxx => /eqP.
-(*D*)by apply/forallP=> y; apply/implyP => /eqP Efxy; apply/eqP; apply: If.
+apply: (iffP forallP).
+(*D*)  move=> Ibf.
+(*D*)  move=> x.
+(*D*)  move=> y.
+(*D*)  move=> Efxy.
+(*D*)  have {Ibf}:= Ibf x.
+(*D*)  move=>/forallP Ibf'.
+(*D*)  have {Ibf'} := Ibf' y.
+(*D*)  move=>/implyP.
+(*D*)  rewrite Efxy.
+(*D*)  rewrite eqxx.
+(*D*)  move=>Ibf''.
+(*D*)  have{Ibf''} := Ibf'' isT.
+(*D*)  move/eqP.
+(*D*)  by [].
+(*D*)move=> If x.
+(*D*)apply/forallP=> y.
+(*D*)apply/implyP=> /eqP Efxfy.
+(*D*)apply/eqP.
+(*D*)apply: If.
+(*D*)by [].
 (*A*)Qed.
 
 End MyInj.
-
 (**
   ----
   ** Exercise 3
 
   Build a function that maps an element of an ordinal to another element
   of the same ordinal with a p subtracted from it.
+
+  Hint: if [i] has type ['I_n], then [i] can also be used for type [nat]
+  and [i < n] is given by theorem [ltn_ord].  Others potentially useful
+  theorems are [leq_ltn_trans] and [leq_subr]
 *)
 
 Lemma neg_offset_ord_proof n (i : 'I_n) (p : nat) : i - p < n.
 Proof.
-(*D*)apply: leq_ltn_trans (ltn_ord i).
-(*D*)apply: leq_subr.
+(*D*)have : i < n.
+(*D*)  apply: ltn_ord.
+(*D*)apply: leq_ltn_trans.
+(*D*)by apply: leq_subr.
 (*A*)Qed.
 
 Definition neg_offset_ord n (i : 'I_n) p := Ordinal (neg_offset_ord_proof i p).
@@ -78,6 +129,91 @@ Eval compute in (val (neg_offset_ord (Ordinal (isT : 7 < 9)) 4)).
 (**
   ----
   ** Exercise 4
+*)
+
+(**
+   Prove the following statement by induction in several ways.
+   - a proof by induction
+   - a proof by reorganization:
+     2 * (1 + 2 ... + n) = (1 + 2 ... + (n - 1) + n) +
+                           (n + (n - 1) ... + 2 + 1)
+                         =  (1 + n) + (2 + n - 1) + ... + (n + 1)
+                         = n * (1 + n)
+   Hint: potentially useful theorems: [big_ord0], [big_ord_recr],
+     [doubleD], [muln2], [mulnDr], [addn2], [mulnC], [leq_trans],
+     [ltnS], [leq_subr], [neg_offset_ord], [reindex_inj], [ord_max],
+     [val_eqP], [eqP], [subKn], [ltnS], [big_split], [eqxx], [subnK],
+     [eq_bigr], [sum_nat_const], [card_ord], [rev_ord_inj], [subSS]
+                         
+ *)
+
+Lemma gauss_ex_p1 : forall n, (\sum_(i < n) i).*2 = n * n.-1.
+Proof.
+(*D*)elim=> [|n IH].
+(*D*)  rewrite big_ord0.
+(*D*)  by [].
+(*D*)rewrite big_ord_recr /=.
+(*D*)rewrite doubleD.
+(*D*)rewrite {}IH.
+(*D*)case: n => [| n /=].
+(*D*)  by [].
+(*D*)rewrite -muln2.
+(*D*)rewrite -mulnDr.
+(*D*)rewrite addn2.
+(*D*)rewrite mulnC.
+(*D*)by [].
+(*A*)Qed.
+
+Lemma gauss_ex_p2 : forall n, (\sum_(i < n) i).*2 = n * n.-1.
+Proof.
+(*D*)case=> [|n/=].
+(*D*)  by rewrite big_ord0.
+(*D*)rewrite -addnn.
+(*D*)have Hf i : n - i < n.+1.
+(*D*)  rewrite ltnS.
+(*D*)  by apply: leq_subr.
+(*D*)pose f (i : 'I_n.+1) := neg_offset_ord (@ord_max n) i.
+(*D*)have f_inj : injective f.
+(*D*)  move=> x y.
+(*D*)  rewrite /f /=.
+(*D*)  move=>/val_eqP/eqP /= Efxfy.
+(*D*)  apply/val_eqP => /=.
+(*D*)  have -> : \val x = n - (n - x).
+(*D*)    rewrite subKn.
+(*D*)      by [].
+(*D*)    rewrite -ltnS.
+(*D*)    by [].
+(*D*)  rewrite Efxfy.
+(*D*)  rewrite subKn.
+(*D*)  rewrite eqxx.
+(*D*)  by [].
+(*D*)rewrite -ltnS.
+(*D*)by [].
+(*D*)rewrite {1}(reindex_inj f_inj) /=.
+(*D*)rewrite -big_split /=.
+(*D*)have ext_eq : forall i : 'I_n.+1, true -> n - i + i = n.
+(*D*)  move=> i _.
+(*D*)  rewrite subnK.
+(*D*)    by [].
+(*D*)  rewrite -ltnS.
+(*D*)  by [].
+(*D*)rewrite (eq_bigr (fun _ => n) ext_eq).
+(*D*)rewrite sum_nat_const.
+(*D*)rewrite card_ord.
+(*D*)by[].
+Qed.
+
+Lemma gauss_ex_p3 : forall n, (\sum_(i < n) i).*2 = n * n.-1.
+Proof.
+(*D*)case=> [|n/=]; first by rewrite big_ord0.
+(*D*)rewrite -addnn {1}(reindex_inj rev_ord_inj) -big_split /=.
+(*D*)rewrite -[X in _ = X * _]card_ord -sum_nat_const.
+(*D*)by apply: eq_bigr => i _; rewrite subSS subnK // -ltnS.
+(*A*)Qed.
+
+(**
+  ----
+  ** Exercise 5
 *)
 
 (**
@@ -111,6 +247,7 @@ Definition sumC n (p : parking n) j := \sum_(i < n) p i j.
 
 Lemma leq_sumL n (p : parking n) i : sumL p i < n.+1.
 Proof.
+
 (*D*)have {2}<-: \sum_(i < n) 1 = n by rewrite -[X in _ = X]card_ord sum1_card.
 (*D*)by apply: leq_sum => k; case: (p _ _).
 (*A*)Qed.
@@ -144,47 +281,6 @@ Proof.
 (*D*)by exists i, j; do ?[exact: Or31|exact: Or32|exact: Or33].
 (*A*)Qed.
 
-(**
-  ----
-  ** Exercise 5
-*)
-
-(**
-   Prove the following state by induction and by following Gauss proof.
- *)
-
-Lemma gauss_ex_p1 : forall n, (\sum_(i < n) i).*2 = n * n.-1.
-Proof.
-(*D*)elim=> [|n IH]; first by rewrite big_ord0.
-(*D*)rewrite big_ord_recr /= doubleD {}IH.
-(*D*)case: n => [|n /=]; first by rewrite muln0.
-(*D*)by rewrite -muln2 -mulnDr addn2 mulnC.
-(*A*)Qed.
-
-Lemma gauss_ex_p2 : forall n, (\sum_(i < n) i).*2 = n * n.-1.
-Proof.
-(*D*)case=> [|n/=]; first by rewrite big_ord0.
-(*D*)rewrite -addnn.
-(*D*)have Hf i : n - i < n.+1.
-(*D*)  by apply: leq_trans (leq_subr _ _) _.
-(*D*)pose f (i : 'I_n.+1) := Ordinal (Hf i).
-(*D*)have f_inj : injective f.
-(*D*)  move=> x y /val_eqP/eqP H.
-(*D*)  apply/val_eqP => /=.
-(*D*)  rewrite -(eqn_add2l (n - x)) subnK -1?ltnS  //.
-(*D*)  by rewrite [n - x]H subnK -1?ltnS.
-(*D*)rewrite {1}(reindex_inj f_inj) -big_split /=.
-(*D*)rewrite -[X in _ = X * _]card_ord -sum_nat_const.
-(*D*)by apply: eq_bigr => i _; rewrite subnK // -ltnS.
-(*A*)Qed.
-
-Lemma gauss_ex_p3 : forall n, (\sum_(i < n) i).*2 = n * n.-1.
-Proof.
-(*D*)case=> [|n/=]; first by rewrite big_ord0.
-(*D*)rewrite -addnn {1}(reindex_inj rev_ord_inj) -big_split /=.
-(*D*)rewrite -[X in _ = X * _]card_ord -sum_nat_const.
-(*D*)by apply: eq_bigr => i _; rewrite subSS subnK // -ltnS.
-(*A*)Qed.
 
 (**
   ----
@@ -219,7 +315,7 @@ Proof.
  ** Exercise 8
 *)
 
-(** Prove the following state by induction and by using a similar trick
+(** Prove the following statement by induction and by using a similar trick
    as for Gauss noticing that n ^ 3 = n * (n ^ 2) *)
 
 Lemma bound_square : forall n, \sum_(i < n) i ^ 2 <= n ^ 3.
