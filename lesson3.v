@@ -153,6 +153,9 @@ Qed.
     - None of the lines before [by []] are needed for the proof
     - [mem_enum] et [enum_uniq] are generic theorems for any predicate
        on the finite type (practically: subsets)
+    - In this excerpt, we start a habit of making some theorems appear
+      in the context, under the same or a similar name, just for
+      scrutiny (here [mem_enum], [enum_uniq], [cardT], and [cardE]
 #<div>#
 *)
 
@@ -620,8 +623,8 @@ Qed.
 Lemma bap n : ~~ odd (\sum_(i < n) i.*2). 
 Proof.
 have big_ind' := big_ind.
-have big_ind2 := big_ind2.
-have big_morph := big_morph.
+have big_ind2' := big_ind2.
+have big_morph' := big_morph.
 elim/big_ind: _.
 - by [].
 - move=> x y.
