@@ -469,7 +469,7 @@ End polylist.
 #</div>#
 --------------------------------------------------------
 #<div class="slide">#
-** Had-hoc polymorphic lists
+** Ad-hoc polymorphic lists
   - [T : Type |- l : list T] v.s. [T : eqType |- l : list T]
   - [eqType] means: a type with a decidable equality [_ == _]
   - if [T] is an [eqType] then [list T] also is an [eqType]
@@ -492,7 +492,7 @@ Eval compute in true \in [:: false; true; true].
 #</div>#
 
 #<div class="note">(notes)<div class="note-text">#
-Had-hoc polymorphism is a well established concept in object
+Ad-hoc polymorphism is a well established concept in object
 oriented programming languages and as well in functional
 languages equipped with type classes like Haskell.
 Whenever [T] is an [eqType], we have a comparison
