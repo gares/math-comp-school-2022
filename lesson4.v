@@ -396,8 +396,8 @@ Qed.
 ** References for this lesson:
   - SSReflect #<a href="https://coq.inria.fr/refman/proof-engine/ssreflect-proof-language.html">manual</a>#
   - documentation of the
-       #<a href="https://math-comp.github.io/htmldoc_1_15_0/libgraph.html">library</a>#
-    - in particular #<a href="https://math-comp.github.io/htmldoc_1_15_0/mathcomp.ssreflect.seq.html">seq</a>#
+       #<a href="https://math-comp.github.io/htmldoc_2_0_alpha1/libgraph.html">library</a>#
+    - in particular #<a href="https://math-comp.github.io/htmldoc_2_0_alpha1/mathcomp.ssreflect.seq.html">seq</a>#
 
 #</div>#
 --------------------------------------------------------

@@ -16,8 +16,8 @@ Local Open Scope ring_scope.
 * Linear algebra in mathematical components
 
 Extensive documentation in the header of:
- - the library #<a href="https://math-comp.github.io/htmldoc_1_15_0/mathcomp.algebra.matrix.html">matrix</a>#
- - and the library #<a href="https://math-comp.github.io/htmldoc_1_15_0/mathcomp.algebra.mxalgebra.html">mxalgebra</a>#
+ - the library #<a href="https://math-comp.github.io/htmldoc_2_0_alpha1/mathcomp.algebra.matrix.html">matrix</a>#
+ - and the library #<a href="https://math-comp.github.io/htmldoc_2_0_alpha1/mathcomp.algebra.mxalgebra.html">mxalgebra</a>#
 
 
 * Roadmap for the lesson:
@@ -264,7 +264,7 @@ End MatrixProperties.
  - A specificity of the mathematical components library is to allow to
   reason on matrices as if they represented their own image.
 
- - The doc and the code are in #<a href="https://math-comp.github.io/htmldoc_1_15_0/mathcomp.algebra.mxalgebra.html">mxalgebra</a>#
+ - The doc and the code are in #<a href="https://math-comp.github.io/htmldoc_2_0_alpha1/mathcomp.algebra.mxalgebra.html">mxalgebra</a>#
 
  - rows can be seen as vectors, and matrix can be seen as the familiy
   of its row vectors.

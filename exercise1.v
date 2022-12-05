@@ -80,7 +80,7 @@ Lemma bool_gimmics2 p q r : ~~ p && (r == q) -> q ==> (p || r).
 (** *** Exercise 7:
    - the only tactics allowed are [rewrite] and [by]
    - use [Search] to find the relevant lemmas (all are good but for
-     [ltn_neqAle]) or browse the #<a href="https://math-comp.github.io/htmldoc_1_15_0/mathcomp.ssreflect.ssrnat.html">online doc</a>#
+     [ltn_neqAle]) or browse the #<a href="https://math-comp.github.io/htmldoc_2_0_alpha1/mathcomp.ssreflect.ssrnat.html">online doc</a>#
    - proof sketch:
 <<
         m < n = ~~ (n <= m)

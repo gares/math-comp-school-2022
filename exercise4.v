@@ -6,7 +6,7 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
-(** # This is the <a href="https://math-comp.github.io/htmldoc_1_15_0/mathcomp.ssreflect.seq.html">doc of seq</a>, use it! #*)
+(** # This is the <a href="https://math-comp.github.io/htmldoc_2_0_alpha1/mathcomp.ssreflect.seq.html">doc of seq</a>, use it! #*)
 
 (**
 

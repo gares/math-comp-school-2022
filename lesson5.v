@@ -37,8 +37,8 @@ Unset Printing Implicit Defensive.
 - #<a href="http://www-sop.inria.fr/teams/marelle/advanced-coq-16/mc_hieralg.pdf">  Here is a picture of the begining of the hierarchy</a>#
 
   Extensive documentation in the header of:
- - #<a href="https://math-comp.github.io/htmldoc_1_15_0/mathcomp.algebra.ssralg.html">ssralg</a>#
- - #<a href="https://math-comp.github.io/htmldoc_1_15_0/mathcomp.algebra.ssrnum.html">ssrnum</a>#
+ - #<a href="https://math-comp.github.io/htmldoc_2_0_alpha1/mathcomp.algebra.ssralg.html">ssralg</a>#
+ - #<a href="https://math-comp.github.io/htmldoc_2_0_alpha1/mathcomp.algebra.ssrnum.html">ssrnum</a>#
 
 - In addition there are structures for maps (additive morphisms, ring
   morphisms, etc...), and substructures (subgroup, subsemiring, subring,
@@ -379,7 +379,7 @@ Local Open Scope ring_scope.
 #</div>#
 ** Extensions of rings
 
-- read the documentation of  #<a href="https://math-comp.github.io/htmldoc_1_15_0/mathcomp.algebra.ssralg.html">ssralg</a># and #<a href="https://math-comp.github.io/htmldoc_1_15_0/mathcomp.algebra.ssrnum.html">ssrnum</a># (algebraic structures with order and absolute value)
+- read the documentation of  #<a href="https://math-comp.github.io/htmldoc_2_0_alpha1/mathcomp.algebra.ssralg.html">ssralg</a># and #<a href="https://math-comp.github.io/htmldoc_2_0_alpha1/mathcomp.algebra.ssrnum.html">ssrnum</a># (algebraic structures with order and absolute value)
 
 - Canonical instances in the library are:
  - integers (int) (forms an integral domain)

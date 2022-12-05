@@ -10,7 +10,7 @@ Unset Printing Implicit Defensive.
 (** 
 #<div class="slide">#
  ** The Polynomials Library : 
-#<a href="https://math-comp.github.io/htmldoc_1_15_0/mathcomp.algebra.poly.html">poly.v</a>#
+#<a href="https://math-comp.github.io/htmldoc_2_0_alpha1/mathcomp.algebra.poly.html">poly.v</a>#
   - A  library for univariate polynomials over
     ring  structures
   - with extensions for  polynomials whose coefficients range over
@@ -282,7 +282,7 @@ Admitted.
 ----
 #<div class="slide  ">#
 ** Division
-- division and its theory are in the #<a href="https://math-comp.github.io/htmldoc_1_15_0/mathcomp.algebra.polydiv.html">polydiv.v</a># file
+- division and its theory are in the #<a href="https://math-comp.github.io/htmldoc_2_0_alpha1/mathcomp.algebra.polydiv.html">polydiv.v</a># file
 
 #</div>#
 *)

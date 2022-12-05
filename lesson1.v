@@ -437,7 +437,7 @@ Module polylist.
 
 #<div class="note">(notes)<div class="note-text">#
 Notations for sequentes are documented the header of the 
-#<a href="https://math-comp.github.io/htmldoc_1_15_0/mathcomp.ssreflect.seq.html">seq.v</a># file.
+#<a href="https://math-comp.github.io/htmldoc_2_0_alpha1/mathcomp.ssreflect.seq.html">seq.v</a># file.
 [rcons] is like [cons] but the new element is placed in the last position.
 Indeed it is not a real constructor, but rather a function that appends the singleton list.
 This special case of append has its own name and collection of theorems.
@@ -532,9 +532,9 @@ Qed.
 ** References for this lesson
   - SSReflect #<a href="https://coq.inria.fr/refman/proof-engine/ssreflect-proof-language.html">manual</a>#
   - documentation of the
-       #<a href="https://math-comp.github.io/htmldoc_1_15_0/libgraph.html">library</a>#
-    - in particular #<a href="https://math-comp.github.io/htmldoc_1_15_0/mathcomp.ssreflect.ssrbool.html">ssrbool</a>#
-    - in particular #<a href="https://math-comp.github.io/htmldoc_1_15_0/mathcomp.ssreflect.ssrnat.html">ssrnat</a>#
+       #<a href="https://math-comp.github.io/htmldoc_2_0_alpha1/libgraph.html">library</a>#
+    - in particular #<a href="https://math-comp.github.io/htmldoc_2_0_alpha1/mathcomp.ssreflect.ssrbool.html">ssrbool</a>#
+    - in particular #<a href="https://math-comp.github.io/htmldoc_2_0_alpha1/mathcomp.ssreflect.ssrnat.html">ssrnat</a>#
   - #<a href="http://math-comp.github.io/mcb/">Book</a># (draft) on the Mathematical Components library
     #<img src="https://math-comp.github.io/mcb/cover-front-web.png"/>#
 #</div># 
