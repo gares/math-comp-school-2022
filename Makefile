@@ -2,9 +2,9 @@
 COQC=coqc
 MC=
 
-VS=$(filter-out %tmp.v,$(filter-out %-todo.v,$(wildcard *.v)))
-EX=$(filter-out %tmp.v,$(filter-out %-todo.v,$(wildcard exercise*.v)))
-FILES=$(VS:%.v=%.html) $(VS) $(EX:%.v=%-todo.v) $(EX:%.v=%-solution.html) demo-support-master.png
+VS=$(filter-out %tmp.v,$(filter-out %_todo.v,$(wildcard *.v)))
+EX=$(filter-out %tmp.v,$(filter-out %_todo.v,$(wildcard exercise*.v)))
+FILES=$(VS:%.v=%.html) $(VS) $(EX:%.v=%_todo.v) $(EX:%.v=%-solution.html) demo-support-master.png
 
 
 OPAMROOT=$(shell pwd)/opam
@@ -76,7 +76,7 @@ exercise%.html: exercise%.html.tmp
 	@sed -e '/^(\*D\*).*$$/d' -e 's/^(\*A\*).*$$/Admitted./' -e 's/^(\*a\*).*$$/  admit./'  $< > $@
 exercise%-solution.html: exercise%.html.tmp
 	@cp $< $@
-exercise%-todo.v: exercise%.v
+exercise%_todo.v: exercise%.v
 	@sed -e '/^(\*D\*).*$$/d' -e 's/^(\*A\*).*$$/Admitted./' -e 's/^(\*a\*).*$$/  admit./'  $< > $@
 
 serve: node_modules
