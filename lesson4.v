@@ -12,9 +12,9 @@ Unset Printing Implicit Defensive.
 
  Proof language
    - [move=>] [name] [/view] [//] [/=] [[..|..]] to name/change the goal
-   - [: name], to prepare the goal for a tactic
+   - [: name], [: (lem arg)]
    - [rewrite lem -lem]
-   - [apply: lem] or [exact: lem]
+   - [apply: lem]
    - [apply/view]
  Library
    - naming convention: [addnC], [eqP], [orbN], [orNb], ...
@@ -78,6 +78,7 @@ deal with [x] and [y] before accessing [x = 1 + 2 * y].
 #<div class="slide">#
 *** Induction
   - [elim] with generalization
+  - [in x *] alternative
   - [rewrite (lem args)] to specialize a lemma
 #<div>#
 *)
@@ -121,7 +122,7 @@ Lemma test_leqW i j k :
 Proof.
 (*# move=> /andP H; case: H. move=> /leqW leq_ik1. #*)
 move=> /andP[/leqW leq_ik1 /leqW leq_k1j1]. (* process fully, then name *)
-exact: leq_trans leq_ik1 leq_k1j1.
+by apply: leq_trans leq_ik1 leq_k1j1.
 Qed.
 
 (**
@@ -251,7 +252,7 @@ elim: m n; first by case.
 move=> n IHn m eq_n1m.
 case: m eq_n1m => // m eq_n1m1. (* case with generalization *)
 congr (_.+1). (* cleanup of the goal *)
-exact: IHn.
+by apply: IHn.
 #*)
 apply: (iffP idP) => [|->]; last by elim: n.
 by elim: m n => [|m IHm] // [|n] // /IHm->.
