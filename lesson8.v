@@ -1,12 +1,16 @@
-From Coq Require Import ZArith_base. (* Required only for better printing of Z constants and operators. *)
+From Coq Require Import ZifyClasses ZArith_base.
 From elpi Require Import elpi.
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect ssralg ssrnum ssrint intdiv.
+From mathcomp Require Import all_ssreflect ssralg ssrnum ssrint rat intdiv.
 From mathcomp Require Import zify ring lra.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
+
+Import GRing.Theory.
+
+Local Delimit Scope Z_scope with coqZ.
 (** #<div class='slide'>#
 * Lesson 8: Proof automation
 
@@ -67,9 +71,7 @@ lia.
 Qed.
 
 Goal forall m n : int, (n <= m -> n * 2 <= m + n)%R.
-Proof.
-lia.
-Qed.
+Proof. lia. Qed.
 (** #</div>#
 
 The [zify] and [lia] tactics support some [bool] operators.
@@ -77,9 +79,7 @@ The [zify] and [lia] tactics support some [bool] operators.
 #<div>#
 *)
 Goal forall m n : nat, (n <= m) = ~~ (m.*2 < n.*2).
-Proof.
-lia.
-Qed.
+Proof. lia. Qed.
 (** #</div></div># *)
 (** -------------------------------------------- *)
 (** #<div class='slide'>#
@@ -92,14 +92,10 @@ can actually solve some non-linear problems.
 #<div>#
  *)
 Goal forall m n : nat, m * n = n * m.
-Proof.
-lia.
-Qed.
+Proof. lia. Qed.
 
 Goal forall m n : nat, (m + n) ^ 2 = m ^ 2 + n ^ 2 + 2 * m * n.
-Proof.
-lia.
-Qed.
+Proof. lia. Qed.
 (** #</div>#
 
 The Mczify library also pre-processes Euclidean division and the divisibility
@@ -118,14 +114,10 @@ lia.
 Qed.
 
 Goal forall m : nat, 6 %| m -> 4 %| m -> 12 %| m.
-Proof.
-lia.
-Qed.
+Proof. lia. Qed.
 
 Goal forall m : nat, (6 %| m) && (4 %| m) = (12 %| m).
-Proof.
-lia.
-Qed.
+Proof. lia. Qed.
 (** #</div></div># *)
 (** -------------------------------------------- *)
 (** #<div class='slide'>#
@@ -139,58 +131,113 @@ multiplication and exponentiation.
 #<div>#
 *)
 Goal forall m n : int, (0 <= m -> 0 <= n -> 0 <= m * n)%R.
-Proof.
-nia.
-Qed.
+Proof. nia. Qed.
 
 Goal forall (m : int) (n : nat), (0 <= (m ^+ 2) ^+ n)%R.
-Proof.
-nia.
-Qed.
+Proof. nia. Qed.
 
 Goal forall m n : nat, n <= m -> n ^ 2 <= m * n.
-Proof.
-nia.
-Qed.
+Proof. nia. Qed.
 
 Goal forall m n p : int,
   (0 <= n)%R -> (m %/ (n * p))%Z = ((m %/ n) %/ p)%Z.
 Proof.
-nia.
-Qed.
+(* Too slow in jsCoq: *)
+(* nia. *)
+Abort.
 (** #</div></div># *)
 (** -------------------------------------------- *)
 (** #<div class='slide'>#
 
 ** Instructing the [zify] tactic to pre-process new arithmetic operators
 
+The [zify] and [lia] tactics do not recognize user-defined operators out of the box:
+
 #<div>#
 *)
+Definition triple (n : nat) : nat := n * 3.
 
-(* TODO *)
+Goal forall n, triple (triple n) = n * 9.
+Proof.
+Fail lia.
+Zify.zify.
+Abort.
+(** #</div>#
 
+Declare an instance of type [UnOp triple], and register it through the
+[Add Zify UnOp] command:
+
+#<div>#
+*)
+Fact Op_triple_subproof (n : nat) : Z.of_nat (triple n) = (3 * Z.of_nat n)%coqZ.
+Proof. rewrite /triple; lia. Qed.
+
+#[global]
+Instance Op_triple : UnOp triple :=
+  { TUOp := Z.mul 3; TUOpInj := Op_triple_subproof }.
+Add Zify UnOp Op_triple.
+(** #</div>#
+
+Then, the [zify] tactic starts recognizing the new operator [triple]:
+
+#<div>#
+*)
+Goal forall n, triple (triple n) = n * 9.
+Proof. lia. Qed.
 (** #</div></div># *)
 (** -------------------------------------------- *)
 (** #<div class='slide'>#
 
 ** [ring]: polynomial equation solver
 
+This tactic provides a certified decision procedure for polynomial equations
+over commutative rings.
+
 #<div>#
 *)
+Goal forall a b : int, ((a + b) ^+ 2 = a ^+ 2 + b ^+ 2 + 2 * a * b :> int)%R.
+Proof. move=> a b; ring. Qed.
+(** #</div>#
 
-(* TODO *)
+It works for any abstract or concrete commutative rings:
 
+#<div>#
+*)
+Goal forall a b : rat, ((a + b) ^+ 2 = a ^+ 2 + b ^+ 2 + 2 * a * b :> rat)%R.
+Proof. move=> a b; ring. Qed.
+
+Goal forall (R : comRingType) (a b : R),
+    ((a + b) ^+ 2 = a ^+ 2 + b ^+ 2 + 2 * a * b :> R)%R.
+Proof. move=> R a b; ring. Qed.
+
+Goal forall (R : comRingType) (a : R) (b : R * int),
+    (((a, 1) + b) ^+ 2 = (a, 1) ^+ 2 + b ^+ 2 + 2 * (a, 1) * b :> R * int)%R.
+Proof. move=> R a b; ring. Qed.
 (** #</div></div># *)
 (** -------------------------------------------- *)
 (** #<div class='slide'>#
 
 ** Some advanced features of the [ring] tactic
 
+The [ring] tactic can prove polynomial equations modulo monomial equalities:
+
 #<div>#
 *)
+Goal forall a b : int, (a * b = 15 -> (a + b) ^+ 2 = a ^+ 2 + b ^+ 2 + 30)%R.
+Proof. move=> a b H; ring: H. Qed.
+(** #</div>#
 
-(* TODO *)
+The [ring] tactic can also automatically push down homomorphism applications:
 
+#<div>#
+*)
+Goal forall (R : ringType) (S : comRingType) (f : {rmorphism R -> S}) (a b : R),
+    (f ((a + b) ^+ 2) = f a ^+ 2 + f b ^+ 2 + 2%:R * f a * f b)%R.
+Proof.
+move=> R S f a b.
+rewrite rmorphX rmorphD. (* This line can be removed. *)
+ring.
+Qed.
 (** #</div></div># *)
 (** -------------------------------------------- *)
 (** #<div class='slide'>#
