@@ -27,8 +27,10 @@ refine (
   sub
 (* Write the valued in the following line *)
 (*D*)(if val x == n.-1 then 0 else x.+1)
+
 (* Leave _ for the proof, you will fill it in by tactics later *)
 _
+(* more precisely: sub must have two arguments, the second one being _ *)
 ).
 (*D*)case: x => [m /=].
 (*D*)case: n => [ | n] /=.
@@ -46,8 +48,11 @@ _
 (*D*)rewrite neq.
 (*D*)rewrite mlen.
 (*D*)by [].
+(* Finish the proof with the Defined keyword, so that we can compute this
+  function in tests afterward. *)
 Defined.
 
+(** These should return 3 and 0 respectively. *)
 Eval compute in val (onext (Ordinal (isT : 2 < 4))).
 Eval compute in val (onext (Ordinal (isT : 3 < 4))).
 
@@ -135,16 +140,21 @@ Eval compute in (val (neg_offset_ord (Ordinal (isT : 7 < 9)) 4)).
    Prove the following statement by induction in several ways.
    - a proof by induction
    - a proof by reorganization:
+<<
      2 * (1 + 2 ... + n) = (1 + 2 ... + (n - 1) + n) +
                            (n + (n - 1) ... + 2 + 1)
-                         =  (1 + n) + (2 + n - 1) + ... + (n + 1)
+                         =  (1 + n) + (2 + n - 1) +
+                              ... + (n + 1)
                          = n * (1 + n)
+>>
+   - Two variants of proof by reorganization are possible: one using
+     [neg_offset_ord], the other using [rev_ord]
+
    Hint: potentially useful theorems: [big_ord0], [big_ord_recr],
      [doubleD], [muln2], [mulnDr], [addn2], [mulnC], [leq_trans],
      [ltnS], [leq_subr], [neg_offset_ord], [reindex_inj], [ord_max],
      [val_eqP], [eqP], [subKn], [ltnS], [big_split], [eqxx], [subnK],
      [eq_bigr], [sum_nat_const], [card_ord], [rev_ord_inj], [subSS]
-                         
  *)
 
 Lemma gauss_ex_p1 : forall n, (\sum_(i < n) i).*2 = n * n.-1.
