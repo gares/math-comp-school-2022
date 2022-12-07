@@ -518,7 +518,7 @@ Section ReasoningModuloInZp.
 Import ssralg zmodp GRing.Theory.
 Local Open Scope ring_scope.
 
-Lemma pred_Zp k : 1 < k -> (k.-1%:R = - 1 :> 'Z_k)%R.
+Lemma pred_Zp k : 1 < k -> k.-1%:R = - 1 :> 'Z_k.
 Proof. by case: k => // k k_gt0; rewrite -subn1 natrB ?char_Zp ?sub0r. Qed.
 
 Lemma dvd_exp_odd a k : 0 < a -> odd k -> (a.+1 %| (a ^ k).+1).
