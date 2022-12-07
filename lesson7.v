@@ -269,8 +269,8 @@ End MatrixProperties.
  - rows can be seen as vectors, and matrix can be seen as the familiy
   of its row vectors.
 
- - #<b>WARNING</b># Following the english convention (which is
-    opposite to the french convention), composition/application of
+ - #<b>WARNING</b># Following the diagramatic convention (which is
+    opposite to the usual convention), composition/application of
     linear maps represented by matrices should be done left to right:
     applying A to u is <pre>u *m A</pre>
 
