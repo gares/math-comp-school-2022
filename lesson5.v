@@ -1,7 +1,7 @@
 From elpi Require Import elpi.
 From HB Require Import structures.
 From mathcomp Require Import all_ssreflect.
-From mathcomp Require ssralg ssrnum. (* all_algebra *)
+From mathcomp Require ssralg ssrnum zmodp. (* all_algebra *)
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -56,7 +56,7 @@ Unset Printing Implicit Defensive.
  - instantiation of a structure in the library
  - exploration of the theory provided by this structure and naming
    conventions
- - creation of a subalgebraic structure predicate and use
+ - creation of a algebraic substructure and predicate and their use
 #</div>#
 *)
 (** -------------------------------------------- *)
@@ -189,12 +189,14 @@ to define a [Funny.type].
    mathematical structures that integers satisfy.
 
  - In order to minimize the work of the user, the library lets you inhabit
-   structures by instanciating mixins and factory at a time.
-   Each time we build structures, we provide only the
-   mixin/factory. The structures will be automatically instantiated.
+   structures by instanciating mixins and factory, one at a time.
+   Each time we want to build structures, we only declare the
+   mixin/factory as an [HB.instance].
+   One or several structures will be automatically instantiated.
 
- - We now show four different ways to build mixins here, an
-   additional fifth will be shown in the exercices, and the last one won't be shown.
+ - We catagorize five different ways to build structures.
+   Th three first will be shown here.
+   The fourth will be shown in the exercices, and the fifth one won't be shown.
 
   - using a partially isomorphic structure (and providing the witness).
   - by instanciating just the required mixin from scratch,
@@ -225,8 +227,8 @@ Notation "n %:Z" := (Posz n)
 
 ** Equality, countable and choice types, by injection
 
-We provide an injection with explicit partial inverse, grom int to nat
-+ nat, this will be enough to provide the mixins for equality,
+We provide an injection with explicit partial inverse,
+from [int] to [nat + nat], this will be enough to provide the mixins for equality,
 countable and choice types.
 
 #</div><div># *)
@@ -266,23 +268,6 @@ the required properties.
 #<div># *)
 Module intZmod.
 Section intZmod.
-
-Definition addz (m n : int) :=
-  match m, n with
-    | Posz m', Posz n' => Posz (m' + n')
-    | Negz m', Negz n' => Negz (m' + n').+1
-    | Posz m', Negz n' => if n' < m' then Posz (m' - n'.+1)
-                          else Negz (n' - m')
-    | Negz n', Posz m' => if n' < m' then Posz (m' - n'.+1)
-                          else Negz (n' - m')
-  end.
-
-Definition oppz m := nosimpl
-  match m with
-    | Posz n => if n is (n'.+1)%N then Negz n' else Posz 0
-    | Negz n => Posz (n.+1)%N
-  end.
-
 HB.about GRing.isZmodule.Build.
 (*# HB: arguments: GRing.isZmodule.Build V [zero] [opp] [add] addrA addrC add0r addNr
     - V : Type
@@ -292,9 +277,18 @@ HB.about GRing.isZmodule.Build.
     - addrA : associative +%R
     - addrC : commutative +%R
     - add0r : left_id 0 +%R
-    - addNr : left_inverse 0 -%R +%R
-#*)
+    - addNr : left_inverse 0 -%R +%R #*)
 
+Definition addz (m n : int) := match m, n with
+  | Posz m', Posz n' => Posz (m' + n')
+  | Negz m', Negz n' => Negz (m' + n').+1
+  | Posz m', Negz n' => if n' < m' then Posz (m' - n'.+1)
+                        else Negz (n' - m')
+  | Negz n', Posz m' => if n' < m' then Posz (m' - n'.+1)
+                          else Negz (n' - m') end.
+Definition oppz m := match m with
+    | Posz n => if n is (n'.+1)%N then Negz n' else Posz 0
+    | Negz n => Posz (n.+1)%N end.
 Lemma addzC : commutative addz. Admitted.
 Lemma add0z : left_id (Posz 0) addz. Admitted.
 Lemma oppzK : involutive oppz. Admitted.
@@ -302,27 +296,17 @@ Lemma addzA : associative addz. Admitted.
 Lemma addNz : left_inverse (Posz 0) oppz addz. Admitted.
 
 Definition Mixin := GRing.isZmodule.Build int addzA addzC add0z addNz.
-
 End intZmod.
 End intZmod.
-
+(* We declare the instance *)
 HB.instance Definition _ := intZmod.Mixin.
-
-(* We can check that int can be converted to a zmodType *)
-Check (int : zmodType).
-(** #</div><div>#
+(*# We can check that int can be converted to a [zmodType] #*)
+Check (int : zmodType). (** #</div><div>#
 
 Remark: we may develop here a piece of abelian group theory which is
-specific to the theory of integers.
-
-#</div><div># *)
-Section intZmoduleTheory.
-
-Lemma PoszD : {morph Posz : n m / (n + m)%N >-> n + m}.
-Proof. by []. Qed.
-
-End intZmoduleTheory.
-(** #</div></div># *)
+specific to the theory of integers. E.g.
+#</div><div># *)Lemma PoszD : {morph Posz : n m / (n + m)%N >-> n + m}.
+Proof. by []. Qed. (** #</div></div># *)
 (** -------------------------------------------- *)
 (** #<div class='slide'>#
 *** Ring and Commutative ring structure, the stronger the better
@@ -339,16 +323,13 @@ Module intRing.
 Section intRing.
 
 HB.howto comRingType.
-(*#
-HB: no solution found at depth 3 looking at depth 4
+(*# HB: no solution found at depth 3 looking at depth 4
 HB: solutions (use 'HB.about F.Build' to see the arguments of each factory F):
     - hasDecEq; hasChoice; GRing.isRing; GRing.Ring_hasCommutativeMul
-    - hasDecEq; hasChoice; GRing.isZmodule; GRing.Zmodule_isComRing
-#*)
+    - hasDecEq; hasChoice; GRing.isZmodule; GRing.Zmodule_isComRing #*)
 
 HB.about GRing.Zmodule_isComRing.Build.
-(*#
-HB: arguments: GRing.Zmodule_isComRing.Build R [one] [mul] mulrA mulrC mul1r mulrDl oner_neq0
+(*# HB: arguments: GRing.Zmodule_isComRing.Build R [one] [mul] mulrA mulrC mul1r mulrDl oner_neq0
     - R : Type
     - one : R
     - mul : R -> R -> R
@@ -356,17 +337,13 @@ HB: arguments: GRing.Zmodule_isComRing.Build R [one] [mul] mulrA mulrC mul1r mul
     - mulrC : commutative mul
     - mul1r : left_id one mul
     - mulrDl : left_distributive mul +%R
-    - oner_neq0 : is_true (one != 0)
-#*)
+    - oner_neq0 : is_true (one != 0) #*)
 
-Definition mulz (m n : int) :=
-  match m, n with
+Definition mulz (m n : int) := match m, n with
     | Posz m', Posz n' => (m' * n')%N%:Z
     | Negz m', Negz n' => (m'.+1%N * n'.+1%N)%N%:Z
     | Posz m', Negz n' => - (m' * (n'.+1%N))%N%:Z
-    | Negz n', Posz m' => - (m' * (n'.+1%N))%N%:Z
-  end.
-
+    | Negz n', Posz m' => - (m' * (n'.+1%N))%N%:Z end.
 Lemma mulzA : associative mulz. Admitted.
 Lemma mulzC : commutative mulz. Admitted.
 Lemma mul1z : left_id (Posz 1) mulz. Admitted.
@@ -374,17 +351,15 @@ Lemma mulz_addl : left_distributive mulz (+%R). Admitted.
 Lemma onez_neq0 : (Posz 1) != 0. Proof. by []. Qed.
 
 Definition comMixin := GRing.Zmodule_isComRing.Build int mulzA mulzC mul1z mulz_addl onez_neq0.
-
 End intRing.
 End intRing.
-
+(* We declare the instance *)
 HB.instance Definition _ := intRing.comMixin.
-
-(*# We can check that [int] can be converted to a [ringType] #*)
+(*# We can check that [int] can be converted to a [ringType] and a [comRingType] #*)
+Check (int : ringType).
 Check (int : comRingType).
 
-End InstantiationInteger.
-(** #</div># *)
+End InstantiationInteger. (** #</div># *)
 (** #</div># *)
 (** -------------------------------------------- *)
 (** #<div class='slide'>#
@@ -396,23 +371,23 @@ Import ssralg GRing.Theory.
 Local Open Scope ring_scope.
 (**
 #</div>#
-** Extensions of rings
+** About other algebraic structures:
 
 - read the documentation of  #<a href="https://math-comp.github.io/htmldoc_2_0_alpha1/mathcomp.algebra.ssralg.html">ssralg</a># and #<a href="https://math-comp.github.io/htmldoc_2_0_alpha1/mathcomp.algebra.ssrnum.html">ssrnum</a># (algebraic structures with order and absolute value)
 
 - Canonical instances in the library are:
- - integers (int) (forms an integral domain)
- - rationals (rat) (forms an archimedian field)
- - algebraic numbers (algC) (forms an algebraically closed field)
- - polynomials {poly R} (forms an integral domain under sufficient hypothesis on the base ring)
- - matrices 'M[R]_(m, n) (forms a module / a finite dimension vector space)
- - square matrices 'M[R]_n (forms an algebra)
+ - integers ([int]) (forms an integral domain)
+ - rationals ([rat]) (forms an archimedian field)
+ - algebraic numbers ([algC]) (forms an algebraically closed field)
+ - polynomials [{poly R}] (forms an integral domain under sufficient hypothesis on the base ring)
+ - matrices ['M[R]_(m, n)] (forms a module / a finite dimension vector space)
+ - square matrices ['M[R]_n] (forms an algebra, if [n := m.+1])
 
-** Group theory (not in this course)
+** Group theory (not in this course):
 
 - see fingroup, perm, action, ...
 
-** Structures for morphisms
+** Structures for morphisms:
 #<div>#
 *)
 Search "linear" in ssralg.
@@ -422,12 +397,8 @@ Search "raddf" in ssralg.
 Search "rmorph" in ssralg.
 
 HB.about GRing.RMorphism.
-
-(** #</div></div># *)
-(** -------------------------------------------- *)
-(** #<div class='slide'>#
-
-** Stability
+(** #</div>
+** Structure preserving predicates:
 #<div># *)
 Print GRing.subring_closed.
 Print GRing.subr_2closed.
@@ -522,8 +493,7 @@ Abbreviations are in the header of the file which introduce them. We list here t
 #<div>#
 *)
 Module Conventions.
-Import ssralg ssrnum.
-Import GRing.Theory.
+Import ssralg ssrnum GRing.Theory.
 Local Open Scope ring_scope.
 
 Search *%R "A" in GRing.Theory.
@@ -537,6 +507,27 @@ Search "rmorph" "M" in ssralg.
 Search "rpred" "D" in ssralg.
 
 End Conventions.
+(** #</div></div># *)
+(** -------------------------------------------- *)
+(** #<div class='slide'>#
+** Revisiting an exercise from session 2
+
+Instead of reasonning using [(_ %| _)] and [(_ %% _)], we switch to ['Z_p]
+#<div># *)
+Section ReasoningModuloInZp.
+Import ssralg zmodp GRing.Theory.
+Local Open Scope ring_scope.
+
+Lemma pred_Zp k : 1 < k -> (k.-1%:R = - 1 :> 'Z_k)%R.
+Proof. by case: k => // k k_gt0; rewrite -subn1 natrB ?char_Zp ?sub0r. Qed.
+
+Lemma dvd_exp_odd a k : 0 < a -> odd k -> (a.+1 %| (a ^ k).+1).
+Proof.
+move=> aP kO; apply/eqP; rewrite -val_Zp_nat//.
+by rewrite -natr1 natrX pred_Zp// -signr_odd kO addNr.
+Qed.
+
+End ReasoningModuloInZp.
 (** #</div></div># *)
 (** -------------------------------------------- *)
 (** #<div class='slide'>#
@@ -579,7 +570,7 @@ See the [hierarchy.dot], use [HB.about], [HB.howto] or read documentation header
   #<code>Record sT := ST {x : T; px : P x}</code>#.
 
  - In mathcomp, to deal with subtypes independently from how they are
-   form, we have a canonical structure.
+   formed, we have a structure.
 #<div>#
 *)
 HB.about Sub.
@@ -623,7 +614,7 @@ About insubdK.
 
 Substructures are subtypes that happen to have the same structure as their base type.
 
-There are special factories to instanciate them easily.
+There are special factories to instantiate them easily.
 
 #<div>#
 **)
