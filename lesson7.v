@@ -89,7 +89,7 @@ functions by "trivial subTyping".
 Definition mx_val R m n (A : 'M[R]_(m,n)) : {ffun 'I_m * 'I_n -> R} :=
   let: Matrix g := A in g.
 
-HB.instance Definition _ R m n := [isNew for (@mx_val R m n)].
+HB.instance Definition _ R m n := [isNew for @mx_val R m n].
 
 HB.instance Definition _ (R : eqType) m n     := [Equality of 'M[R]_(m, n) by <:].
 HB.instance Definition _ (R : choiceType) m n := [Choice of 'M[R]_(m, n) by <:].
@@ -101,7 +101,7 @@ HB.instance Definition _ (R : finType) m n    := [Finite of 'M[R]_(m, n) by <:].
 Test overloaded "_ == _" notation
 *)
 (** #<div># *)
-Check [eqType of 'M[nat]_2].
+Check 'M[nat]_2 : eqType.
 Check forall A : 'M[nat]_2, A == A.
 (** #</div># *)
 (**
