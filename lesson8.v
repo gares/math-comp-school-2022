@@ -391,6 +391,7 @@ which is called _reification_.
 
   This paper explains the implementation of the [lia], [nia], [lra], [nra], and
   [psatz] tactics.
+
 - Kazuhiko Sakaguchi.
   #<a href="https://drops.dagstuhl.de/opus/volltexte/2022/16738/">Reflexive tactics for algebra, revisited</a>#.
   In: ITP 2022.
@@ -404,6 +405,28 @@ which is called _reification_.
   - the application of Mczify and Algebra Tactics to
     #<a href="https://github.com/coq-community/apery">the formal proof of the irrationality of ζ(3)</a>#.
 
+  The insights from the following papers are the key ingredients of reification
+  in the presence of overloaded operators:
+  - Reynald Affeldt, Cyril Cohen, Marie Kerjean, Assia Mahboubi,
+    Damien Rouhling, Kazuhiko Sakaguchi.
+    #<a href="https://hal.inria.fr/hal-02463336">Competing Inheritance Paths in Dependent Type Theory: A Case Study in Functional Analysis</a>#.
+    In: IJCAR 2020.
+  - Georges Gonthier, Enrico Tassi.
+    #<a href="https://hal.inria.fr/hal-00652286/">A Language of Patterns for Subterm Selection</a>#.
+    In: ITP 2012.
+
 - Enrico Tassi. #<a href="https://github.com/LPCIC/coq-elpi">Coq-Elpi</a>#.
+
+#</div><div class='slide'>#
+
+** A takeaway
+
+A better understanding of the principles of MathComp leads us to better design
+and implementation of tools for MathComp. In my opinion, the principles of
+MathComp are that:
+- relying on the computational power of the logic (dependent type theory) makes
+  formal proofs easier and more efficient to check, and
+- to properly do so, we have to carefully design computational behaviors of our
+  definitions.
 
 #</div># *)
