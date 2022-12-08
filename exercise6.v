@@ -229,9 +229,3 @@ Qed.
 
 End Algebraic_part.
 
-(*D*)(* 
-(*D*)*** Local Variables: ***
-(*D*)*** coq-prog-args: ("-emacs-U" "-R" "/Users/lrg/coq/math-comp/mathcomp" "mathcomp" "-I" "/Users/lrg/coq/math-comp/mathcomp" ) ***
-(*D*)*** End: ***
-(*D*)*)
-
