@@ -44,8 +44,6 @@ Roadmap of the lesson:
 ** Math Components library choice:
 
  - P = a_0 + a_1 X + a_2 X^2 + ... + a_n X^n
-   
-   - list of coefficients (increasing  degrees)
 
    - a list of coefficients (increasing  degrees)
 
