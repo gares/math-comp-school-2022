@@ -82,6 +82,6 @@ exercise%_todo.v: exercise%.v
 serve: node_modules
 	python3 -m http.server
 
-node_modules: deploy-v0.0.1-8-gb1608e3.tgz
+node_modules: deploy-v0.0.1-9-gf271906.tgz
 	rm -rf node_modules
-	tar -xzf deploy-v0.0.1-8-gb1608e3.tgz
+	tar -xzf deploy-v0.0.1-9-gf271906.tgz
