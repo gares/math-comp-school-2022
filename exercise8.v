@@ -57,10 +57,9 @@ Proof.
 Use induction and the [ring] tactic to prove the following lemma (it is also
 possible to use [lia] though).
 
-_Caveat_: there is a bug in the [ring] tactic of Algebra Tactics that it does
-not recognize [_.+1] (successor) inside [_%:R] (generic embedding of natural
-numbers to ring). You have to explicitly rewrite it by the [natr1] lemma for
-now.
+_NB_: there is a bug in the [ring] tactic of Algebra Tactics that it does not
+recognize [_.+1] (successor) inside [_%:R] (generic embedding of natural numbers
+to ring). You have to explicitly rewrite it by the [natr1] lemma for now.
 *)
 
 Lemma gauss_ex_int1 (n : nat) (m : int) :
@@ -90,13 +89,19 @@ Proof.
 (*D*)rewrite mulSn add2n /= big_ord_recr /= {}IHn; nia.
 (*A*)Qed.
 
-Lemma sum_cubes_p1 (n : nat) : (\sum_(i < n) i ^ 3) * 4 = (n * n.-1)^ 2.
+Lemma sum_cubes_p1 (n : nat) : (\sum_(i < n) i ^ 3) * 4 = (n * n.-1) ^ 2.
 Proof.
 (*D*)elim: n => [|n IHn]; first by rewrite big_ord0.
 (*D*)rewrite big_ord_recr /= mulnDl {}IHn; nia.
 (*A*)Qed.
 
-(** Use induction and the [lia] tactic to prove the following lemma. *)
+(**
+Use induction and the [lia] tactic to prove the following lemma.
+
+_NB_: Apparently, [nia] is not powerful enough to deal with nonlinearity and
+division by 2 at the same time in this problem. You have to deal with division
+by 2 manually.
+*)
 
 Lemma sum_cubes_p2 (n : nat) : \sum_(i < n) i ^ 3 = ((n * n.-1) %/ 2) ^ 2.
 Proof.

@@ -288,7 +288,7 @@ modulo monomial equalities.
 
 ** [lra] and [nra]: linear and non-linear real arithmetic
 
-NB: The support for the [lra] and [nra] tactics in Algebra Tactics is
+_NB_: The support for the [lra] and [nra] tactics in Algebra Tactics is
 experimental for the moment.
 
 #<div># *)
