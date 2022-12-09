@@ -115,5 +115,5 @@ operator [(_ *: _)]. You have to explicitly rewrite them.
 Lemma polyeq_p1 (R : comRingType) :
   (4 *: 'X^3 - 3 *: 'X + 1)%R = (('X + 1) * (2 *: 'X - 1) ^+ 2)%R :> {poly R}.
 Proof.
-rewrite -!mul_polyC; ring.
-Qed.
+(*D*)rewrite -!mul_polyC; ring.
+(*A*)Qed.
