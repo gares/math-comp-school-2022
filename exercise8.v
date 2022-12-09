@@ -90,7 +90,15 @@ Proof.
 (*D*)rewrite mulSn add2n /= big_ord_recr /= {}IHn; nia.
 (*A*)Qed.
 
-Lemma sum_cubes (n : nat) : \sum_(i < n) i ^ 3 = ((n * n.-1) %/ 2) ^ 2.
+Lemma sum_cubes_p1 (n : nat) : (\sum_(i < n) i ^ 3) * 4 = (n * n.-1)^ 2.
+Proof.
+(*D*)elim: n => [|n IHn]; first by rewrite big_ord0.
+(*D*)rewrite big_ord_recr /= mulnDl {}IHn; nia.
+(*A*)Qed.
+
+(** Use induction and the [lia] tactic to prove the following lemma. *)
+
+Lemma sum_cubes_p2 (n : nat) : \sum_(i < n) i ^ 3 = ((n * n.-1) %/ 2) ^ 2.
 Proof.
 (*D*)elim: n => [|n IHn]; first by rewrite big_ord0.
 (*D*)rewrite big_ord_recr /= {}IHn; case: n => //= n.
