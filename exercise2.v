@@ -26,10 +26,7 @@ Compute elements delta 10.
 (** Hints : halfD half_bit_double *)
 Lemma deltaS n : delta n.+1 = delta n + n.+1.
 Proof.
-(*D*)rewrite !deltaE -addn2 mulnDl mulnC halfD.
-(*D*)rewrite !oddM andbF add0n mul2n.
-(*D*)suff -> : ((n.+1).*2)./2 = n.+1 by [].
-(*D*)by rewrite -[RHS](half_bit_double n.+1 false).
+(*D*)by rewrite !deltaE -addn2 mulnDl mulnC halfD !oddM mul2n doubleK /= andNb.
 (*A*)Qed.
 
 
@@ -102,11 +99,9 @@ Proof.
 
 Lemma leq_root_delta m n : (n <= troot m) = (delta n <= m).
 Proof.
-(*D*)case: leqP => [/leq_delta/leq_trans->//|dmLn].
-(*D*)  apply: leq_delta_root.
-(*D*)apply/sym_equal/idP/negP.
-(*D*)rewrite -ltnNge.
-(*D*)by apply: leq_trans (ltn_delta_root _) (leq_delta dmLn).
+(*D*)apply/idP/idP.
+(*D*)  by move=> /leq_delta/leq_trans; apply; apply: leq_delta_root.
+(*D*)by apply: contra_leq => /leq_delta; apply: leq_trans; apply: ltn_delta_root.
 (*A*)Qed.
 
 Lemma leq_troot m n : m <= n -> troot m <= troot n.
@@ -147,9 +142,7 @@ Proof.
 
 Lemma ltn_troot m n : troot m < troot n -> m < n.
 Proof.
-(*D*)rewrite leq_root_delta deltaS => /(leq_trans _) -> //.
-(*D*)by rewrite [X in X < _]delta_tmod ltn_add2l ltnS leq_tmod_troot.
-(*A*)Qed.
+(*A*)by apply: contra_ltn; apply: leq_troot. Qed.
 
 Lemma leq_tmod m n : troot m = troot n -> (tmod m <= tmod n) = (m <= n).
 Proof.
@@ -163,23 +156,8 @@ Lemma leq_troot_mod m n :
    m <= n = 
    ((troot m < troot n) || ((troot m == troot n) && (tmod m <= tmod n))).
 Proof.
-(*D*)case: leqP => [|dmGdn] /= ; last first.
-(*D*)  apply/idP.
-(*D*)  apply: (leq_trans (_ : _ <= delta (troot m).+1)).
-(*D*)    by rewrite ltnW // ltn_delta_root.
-(*D*)  apply: (leq_trans (_ : _ <= delta (troot n))).
-(*D*)    by apply: leq_delta.
-(*D*)  by apply: leq_delta_root.
-(*D*)rewrite leq_eqVlt => /orP[/eqP dnEdm|dmLdn].
-(*D*)  rewrite dnEdm eqxx /=.
-(*D*)  rewrite [X in (X <= _) = _]delta_tmod [X in _ <= X = _]delta_tmod.
-       by rewrite dnEdm leq_add2l.
-(*D*)rewrite (gtn_eqF dmLdn) /=.
-(*D*)apply/idP/negP.
-(*D*)rewrite -ltnNge.
-(*D*)apply: (leq_trans (ltn_delta_root _)).
-(*D*)apply: (leq_trans _ (leq_delta_root _)).
-(*D*)by apply: leq_delta.
+(*D*)case: ltngtP => //= [||rmn]; do ?by move=> /ltn_troot; case: ltngtP.
+(*D*)by rewrite leq_tmod.
 (*A*)Qed.
 
 (** Fermat Numbers *)
@@ -207,14 +185,10 @@ move=> aP kO.
 (*D*)by rewrite -[X in _ %| _ - X](exp1n 2) subn_sqr addn1 dvdn_mull.
 (*A*)Qed.
 
-(** Hints: logn_gt0 mem_primes dvdn2 *)
+(** Hints: pfactor_dvdn dvdn2 *)
 Lemma odd_log_eq0 n : 0 < n -> logn 2 n = 0 -> odd n.
 Proof.
-(*D*)case: n => // n _ HL.
-(*D*)have : 2 \notin primes n.+1.
-(*D*)  rewrite -logn_gt0.
-(*D*)  by case: (logn 2 n.+1) HL.
-(*D*)by rewrite mem_primes /= dvdn2 negbK.
+(*D*)by move=> ?; apply: contra_eqT => ?; rewrite -lt0n -pfactor_dvdn ?dvdn2.
 (*A*)Qed.
 
 (** Hints pfactor_dvdnn logn_div pfactorK *)
@@ -252,7 +226,7 @@ Proof.
 (** Hints oddX neq_ltn expn_gt0 *)
 Lemma odd_fermat n : odd (fermat n).
 Proof.
-(*D*)by rewrite /= oddX negb_or eq_sym neq_ltn expn_gt0.
+(*D*)by rewrite oddS oddX orbF expn_eq0.
 (*A*)Qed.
 
 (** Hint subn_sqr *)
